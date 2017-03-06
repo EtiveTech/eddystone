@@ -1,0 +1,16 @@
+    body {
+        font-family: sans-serif;
+    }
+
+    h1 {
+        margin-right:110px;
+    }
+
+    .evo-image {
+        position:fixed;
+        right:5px;
+        top:5px;
+        width:100px;
+        height:auto;
+        background:white;
+    }

@@ -1,0 +1,22 @@
+{
+    "prepare_queue": {
+        "installed": [],
+        "uninstalled": []
+    },
+    "config_munge": {
+        "files": {}
+    },
+    "installed_plugins": {
+        "cordova-plugin-whitelist": {
+            "PACKAGE_NAME": "org.etive.city4age.app"
+        },
+        "cordova-plugin-eddystone": {
+            "PACKAGE_NAME": "org.etive.city4age.app"
+        }
+    },
+    "dependent_plugins": {
+        "cordova-plugin-ble": {
+            "PACKAGE_NAME": "org.etive.city4age.app"
+        }
+    }
+}
