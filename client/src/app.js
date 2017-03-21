@@ -1,189 +1,145 @@
-// Application code starts here. The code is wrapped in a
-// function closure to prevent overwriting global objects.
+"use strict"
 
-(function()
-    {
-        // Dictionary of beacons.
-        var beacons = {};
+const os = require('./os').os;
+const applyiOS7LayoutHack = require('./os').applyiOS7LayoutHack;
+const logger = require('./utility').logger;
 
-        // Timer that displays list of beacons.
-        var timer = null;
+// JavaScript code for the BLE Scan example app.
 
-        function onDeviceReady()
-        {
-            // Start tracking beacons!
-            setTimeout(startScan, 500);
+// Application object.
+let app = {};
 
-            // Timer that refreshes the display.
-            timer = setInterval(updateBeaconList, 500);
-        }
+// Device list.
+app.devices = {};
 
-        function onBackButtonDown()
-        {
-            evothings.eddystone.stopScan();
-            navigator.app.exitApp();
-        }
+// UI methods.
+app.ui = {};
 
-        function startScan()
-        {
-            showMessage('Scan in progress.');
-            evothings.eddystone.startScan(
-                function(beacon)
-                {
-                    // Update beacon data.
-                    beacon.timeStamp = Date.now();
-                    beacons[beacon.address] = beacon;
-                },
-                function(error)
-                {
-                    showMessage('Eddystone scan error: ' + error);
-                });
-        }
+// Timer that updates the device list and removes inactive
+// devices in case no devices are found by scan.
+app.ui.updateTimer = null;
 
-        // Map the RSSI value to a value between 1 and 100.
-        function mapBeaconRSSI(rssi)
-        {
-            if (rssi >= 0) return 1; // Unknown RSSI maps to 1.
-            if (rssi < -100) return 100; // Max RSSI
-            return 100 + rssi;
-        }
 
-        function getSortedBeaconList(beacons)
-        {
-            var beaconList = [];
-            for (var key in beacons)
-            {
-                beaconList.push(beacons[key]);
-            }
-            beaconList.sort(function(beacon1, beacon2)
-            {
-                return mapBeaconRSSI(beacon1.rssi) < mapBeaconRSSI(beacon2.rssi);
-            });
-            return beaconList;
-        }
+app.onDeviceReady = function() {
+	logger("onDeviceReady() called");
+	window.app = app;
+};
 
-        function updateBeaconList()
-        {
-            removeOldBeacons();
-            displayBeacons();
-        }
+// Start the scan. Call the callback function when a device is found.
+// Format:
+//   callbackFun(deviceInfo, errorCode)
+//   deviceInfo: address, rssi, name
+//   errorCode: String
+app.startScan = function(callbackFun) {
+	app.stopScan();
+	logger("Starting the scan");
 
-        function removeOldBeacons()
-        {
-            var timeNow = Date.now();
-            for (var key in beacons)
-            {
-                // Only show beacons updated during the last 60 seconds.
-                var beacon = beacons[key];
-                if (beacon.timeStamp + 60000 < timeNow)
-                {
-                    delete beacons[key];
-                }
-            }
-        }
+	evothings.ble.startScan(
+		function(device)
+		{
+			// Report success. Sometimes an RSSI of +127 is reported.
+			// We filter out these values here.
+			if (device.rssi <= 0)
+			{
+				callbackFun(device, null);
+			}
+		},
+		function(errorCode)
+		{
+			// Report error.
+			callbackFun(null, errorCode);
+		}
+	);
+};
 
-        function displayBeacons()
-        {
-            var html = '';
-            var sortedList = getSortedBeaconList(beacons);
-            for (var i = 0; i < sortedList.length; ++i)
-            {
-                var beacon = sortedList[i];
-                var htmlBeacon =
-                    '<p>'
-                    +   htmlBeaconName(beacon)
-                    +   htmlBeaconURL(beacon)
-                    +   htmlBeaconNID(beacon)
-                    +   htmlBeaconBID(beacon)
-                    +   htmlBeaconEID(beacon)
-                    +   htmlBeaconVoltage(beacon)
-                    +   htmlBeaconTemperature(beacon)
-                    +   htmlBeaconRSSI(beacon)
-                    + '</p>';
-                html += htmlBeacon
-            }
-            document.querySelector('#found-beacons').innerHTML = html;
-        }
+// Stop scanning for devices.
+app.stopScan = function() {
+	logger("Stopping the scan");
+	evothings.ble.stopScan();
+};
 
-        function htmlBeaconName(beacon)
-        {
-            var name = beacon.name || 'no name';
-            return '<strong>' + name + '</strong><br/>';
-        }
+// Called when Start Scan button is selected.
+app.ui.onStartScanButton = function() {
+	app.startScan(app.ui.deviceFound);
+	app.ui.displayStatus('Scanning...');
+	app.ui.updateTimer = setInterval(app.ui.displayDeviceList, 500);
+};
 
-        function htmlBeaconURL(beacon)
-        {
-            return beacon.url ?
-                'URL: ' + beacon.url + '<br/>' :  '';
-        }
+// Called when Stop Scan button is selected.
+app.ui.onStopScanButton = function() {
+	app.stopScan();
+	app.devices = {};
+	app.ui.displayStatus('Scan Paused');
+	app.ui.displayDeviceList();
+	clearInterval(app.ui.updateTimer);
+};
 
-        function htmlBeaconURL(beacon)
-        {
-            return beacon.url ?
-                'URL: ' + beacon.url + '<br/>' :  '';
-        }
+// Called when a device is found.
+app.ui.deviceFound = function(device, errorCode) {
+	logger("Device found");
+	logger("Device name:", device.name);
+	logger("Device address:", device.address);
+	logger("Device rssi:", device.rssi);
 
-        function htmlBeaconNID(beacon)
-        {
-            return beacon.nid ?
-                'NID: ' + uint8ArrayToString(beacon.nid) + '<br/>' :  '';
-        }
+	if (device) {
+		// Set timestamp for device (this is used to remove
+		// inactive devices).
+		device.timeStamp = Date.now();
 
-        function htmlBeaconBID(beacon)
-        {
-            return beacon.bid ?
-                'BID: ' + uint8ArrayToString(beacon.bid) + '<br/>' :  '';
-        }
+		// Insert the device into table of found devices.
+		app.devices[device.address] = device;
+	}
+	else if (errorCode) {
+		app.ui.displayStatus('Scan Error: ' + errorCode);
+	}
+};
 
-        function htmlBeaconEID(beacon)
-        {
-            return beacon.eid ?
-                'EID: ' + uint8ArrayToString(beacon.eid) + '<br/>' :  '';
-        }
+// Display the device list.
+app.ui.displayDeviceList = function() {
+	logger("Device List:", app.devices)
+	const foundDevices = document.getElementById('found-devices');
 
-        function htmlBeaconVoltage(beacon)
-        {
-            return beacon.voltage ?
-                'Voltage: ' + beacon.voltage + '<br/>' :  '';
-        }
+	// Clear device list.
+  while(foundDevices.firstChild) {
+    foundDevices.removeChild(foundDevices.firstChild);
+  }
+	const timeNow = Date.now();
 
-        function htmlBeaconTemperature(beacon)
-        {
-            return beacon.temperature && beacon.temperature != 0x8000 ?
-                'Temperature: ' + beacon.temperature + '<br/>' :  '';
-        }
+	for (let address in app.devices) {
+		const device = app.devices[address];
 
-        function htmlBeaconRSSI(beacon)
-        {
-            return beacon.rssi ?
-                'RSSI: ' + beacon.rssi + '<br/>' :  '';
-        }
+		// Only show devices that are updated during the last 10 seconds.
+		if (device.timeStamp + 10000 > timeNow) {
+			// Map the RSSI value to a width in percent for the indicator.
+			let rssiWidth = 100; // Used when RSSI is zero or greater.
+			if (device.rssi < -100) { rssiWidth = 0; }
+			else if (device.rssi < 0) { rssiWidth = 100 + device.rssi; }
 
-        function uint8ArrayToString(uint8Array)
-        {
-            function format(x)
-            {
-                var hex = x.toString(16);
-                return hex.length < 2 ? '0' + hex : hex;
-            }
+			// Create tag for device data.
+			const content =
+				'<strong>' + device.name + '</strong><br />'
+				// Do not show address on iOS since it can be confused
+				// with an iBeacon UUID.
+				+	(os.isIOS() ? '' : device.address + '<br />')
+				+	device.rssi + '<br />'
+				+ 	'<div style="background:rgb(225,0,0);height:20px;width:'
+				+ 		rssiWidth + '%;"></div>';
 
-            var result = '';
-            for (var i = 0; i < uint8Array.length; ++i)
-            {
-                result += format(uint8Array[i]) + ' ';
-            }
-            return result;
-        }
+			let newEntry = document.createElement('li');
+  		newEntry.innerHTML = content;
+  		foundDevices.appendChild(newEntry);
+		}
+	};
+};
 
-        function showMessage(text)
-        {
-            document.querySelector('#message').innerHTML = text;
-        }
+// Display a status message
+app.ui.displayStatus = function(message) {
+	const scanStatus = document.getElementById('scan-status');
+	scanStatus.innerHTML = message;
+};
 
-        // This calls onDeviceReady when Cordova has loaded everything.
-        document.addEventListener('deviceready', onDeviceReady, false);
-
-        // Add back button listener (for Android).
-        document.addEventListener('backbutton', onBackButtonDown, false);
-
-    })(); // End of closure.
+window.onload = function(){
+	logger("onload() called")
+	document.addEventListener('deviceready', app.onDeviceReady, false);
+	applyiOS7LayoutHack();
+};

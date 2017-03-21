@@ -7,20 +7,20 @@
         "is_top_level": true,
         "variables": {}
     },
-    "cordova-plugin-eddystone": {
-        "source": {
-            "type": "registry",
-            "id": "cordova-plugin-eddystone"
-        },
-        "is_top_level": true,
-        "variables": {}
-    },
     "cordova-plugin-ble": {
         "source": {
             "type": "registry",
             "id": "cordova-plugin-ble"
         },
-        "is_top_level": false,
+        "is_top_level": true,
+        "variables": {}
+    },
+    "cordova-plugin-console": {
+        "source": {
+            "type": "registry",
+            "id": "cordova-plugin-console"
+        },
+        "is_top_level": true,
         "variables": {}
     }
 }

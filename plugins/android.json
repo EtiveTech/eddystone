@@ -10,13 +10,12 @@
         "cordova-plugin-whitelist": {
             "PACKAGE_NAME": "org.etive.city4age.app"
         },
-        "cordova-plugin-eddystone": {
+        "cordova-plugin-ble": {
+            "PACKAGE_NAME": "org.etive.city4age.app"
+        },
+        "cordova-plugin-console": {
             "PACKAGE_NAME": "org.etive.city4age.app"
         }
     },
-    "dependent_plugins": {
-        "cordova-plugin-ble": {
-            "PACKAGE_NAME": "org.etive.city4age.app"
-        }
-    }
+    "dependent_plugins": {}
 }
