@@ -1,7 +1,7 @@
 {
-  "name": "munro_bagger",
+  "name": "City4Age BLE Scan",
   "version": "1.0.0",
-  "description": "A JS/ReactJS/Rails website that allows the user to see all the sunny Munros in Scotland at one glance.",
+  "description": "App that scans for Bluetooth Low Energy (BLE) Eddystone beacons and reports found devices to a server",
   "main": "app.js",
   "scripts": {
     "test": "mocha ./client/src/specs/",
@@ -10,8 +10,8 @@
     "bundle-p": "cd client && webpack -p"
   },
   "author": {
-    "name": "Munro Bagger Team",
-    "url": "https://www.munrobagger.scot"
+    "name": "Etive Technologies Limited",
+    "url": "http://www.etive.org"
   },
   "contributors": [
     {
@@ -21,9 +21,9 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git@github.com:philcrooks/MunroBagger-App.git"
+    "url": "git@github.com:philcrooks/eddystone.git"
   },
-  "homepage": "https://play.google.com/store/apps/details?id=scot.munrobagger.app",
+  "homepage": "http://www.city4ageproject.eu/index.php/testbed-birmingham/",
   "license": "ISC",
   "dependencies": {},
   "devDependencies": {
