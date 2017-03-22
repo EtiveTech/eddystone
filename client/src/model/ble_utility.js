@@ -1,4 +1,5 @@
 const base64 = cordova.require('cordova/base64');
+const logger = require('../utility').logger;
 
 const BLUETOOTH_BASE_UUID = '-0000-1000-8000-00805f9b34fb'
 
@@ -284,14 +285,16 @@ const addAdvertisementData = function(device)
 }
 
 // Return true on frame type recognition, false otherwise.
-const parseFrameUID = function(device, data, win, fail) {
+const parseFrameUID = function(device, data, onError) {
 	if(data[0] != 0x00);
+
+	logger("Parsing UID Frame");
 
 	// The UID frame has 18 bytes + 2 bytes reserved for future use
 	// https://github.com/google/eddystone/tree/master/eddystone-uid
 	// Check that we got at least 18 bytes.
 	if(data.byteLength < 18) {
-		fail("UID frame: invalid byteLength: " + data.byteLength);
+		onError("UID frame: invalid byteLength: " + data.byteLength);
 		return;
 	}
 
@@ -302,6 +305,8 @@ const parseFrameUID = function(device, data, win, fail) {
 
 const parseFrameEID = function(device, data, onError) {
   if(data[0] != 0x30) return;
+
+	logger("Parsing EID Frame");
 
   if(data.byteLength < 10) {
     onError("EID frame: invalid byteLength: "+data.byteLength);
@@ -314,6 +319,8 @@ const parseFrameEID = function(device, data, onError) {
 
 const parseFrameURL = function(device, data, onError) {
 	if(data[0] != 0x10) return;
+
+	logger("Parsing URL Frame");
 
 	if(data.byteLength < 4) {
 		onError("URL frame: invalid byteLength: " + data.byteLength);
@@ -371,6 +378,8 @@ const parseFrameURL = function(device, data, onError) {
 const parseFrameTLM = function(device, data, onError) {
 	if(data[0] != 0x20) return false;
 
+	logger("Parsing TLM Frame");
+
 	if(data[1] != 0x00) {
 		onError("TLM frame: unknown version: " + data[1]);
 		return;
@@ -382,12 +391,13 @@ const parseFrameTLM = function(device, data, onError) {
 	}
 
 	device.voltage = bigToUint16(data, 2);
-	device.temperature = (bigToUint16(data, 4) === 0x800) ? 0x8000 : bigEndianToInt16(data, 4) / 256.0;
-	device.adv_cnt = bigEndianToUint32(data, 6);
-	device.dsec_cnt = bigEndianToUint32(data, 10);
+	device.temperature = (bigToUint16(data, 4) === 0x800) ? 0x8000 : bigToInt16(data, 4) / 256.0;
+	device.adv_cnt = bigToUint32(data, 6);
+	device.dsec_cnt = bigToUint32(data, 10);
 }
 
 module.exports = {
+	BLUETOOTH_BASE_UUID: BLUETOOTH_BASE_UUID,
 	addAdvertisementData: addAdvertisementData,
 	base64DecToArr: base64DecToArr,
 	parseFrameUID: parseFrameUID,
