@@ -62,6 +62,8 @@ Scan.prototype._onDeviceFound = function(device, onError) {
 		//internal.addMethodsToDeviceObject(device);
 	}
 
+	device.timeStamp = Date.now();
+
 	// Call callback function with device info.
 	// onComplete(device);
 	// A device might be an Eddystone if it has advertisementData...
