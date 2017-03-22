@@ -29,7 +29,7 @@ const onStopScanButton = function() {
 
 // Display the device list.
 const displayDeviceList = function() {
-	const devices = scan.devices;
+	const devices = scan.beacons;
 	logger("Device List:", devices)
 	const foundDevices = document.getElementById('found-devices');
 
