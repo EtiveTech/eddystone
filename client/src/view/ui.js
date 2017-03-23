@@ -2,6 +2,7 @@
 
 const phone = require('./phone');
 const logger = require('../utility').logger;
+const arrayToHex = require('../model/ble_utility').arrayToHexString;
 const Scan = require('../model/scan')
 
 // Timer that updates the device list and removes inactive
@@ -51,7 +52,7 @@ const displayDeviceList = function() {
 
 			// Create tag for device data.
 			const content =
-				'<strong>' + device.name + '</strong><br />'
+				'<strong>' + arrayToHex(device.nid) + "<br />" + arrayToHex(device.bid) + '</strong><br />'
 				// Do not show address on iOS since it can be confused
 				// with an iBeacon UUID.
 				+	(phone.isIOS ? '' : device.address + '<br />')

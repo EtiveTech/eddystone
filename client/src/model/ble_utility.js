@@ -1,3 +1,5 @@
+"use strict"
+
 const base64 = cordova.require('cordova/base64');
 const logger = require('../utility').logger;
 
@@ -160,6 +162,16 @@ const toHexString = function(i, byteCount) {
 	return string;
 }
 
+const arrayToHexString = function(array) {
+	let hexString = '';
+	if (array) {
+		for (let i = 0; i < array.length; i++) {
+			hexString += toHexString(array[i], 1);
+		}
+	}
+	return hexString;
+}
+
 const arrayToUUID = function(array, offset)
 {
 	let k = 0;
@@ -176,11 +188,6 @@ const arrayToUUID = function(array, offset)
 
 const addAdvertisementData = function(device)
 {
-
-	// If device object already has advertisementData we
-	// do not need to parse the scanRecord.
-	if (device.advertisementData) return;
-
 	// Must have scanRecord to continue.
 	if (!device.scanRecord) return;
 
@@ -189,6 +196,7 @@ const addAdvertisementData = function(device)
 	// for details.
 
 	let byteArray = base64DecToArr(device.scanRecord);
+	logger("Scan record", byteArray);
 	let pos = 0;
 	let advertisementData = {};
 	let serviceUUIDs = [];
@@ -216,7 +224,9 @@ const addAdvertisementData = function(device)
 			case 0x03:
 				// 16-bit Service Class UUIDs.
 				for(let i = 0; i < length; i += 2) {
-					serviceUUIDs.push('0000' + toHexString(littleToUint16(byteArray, pos + i), 2) + BLUETOOTH_BASE_UUID);
+					uuid = '0000' + toHexString(littleToUint16(byteArray, pos + i), 2) + BLUETOOTH_BASE_UUID;
+					serviceUUIDs.push(uuid);
+					logger("Found UUID", uuid);
 				}
 				break;
 
@@ -224,7 +234,9 @@ const addAdvertisementData = function(device)
 			case 0x05:
 				// 32-bit Service Class UUIDs.
 				for (let i = 0; i < length; i += 4) {
-					serviceUUIDs.push(toHexString(littleToUint32(byteArray, pos + i), 4) + BLUETOOTH_BASE_UUID);
+					uuid = toHexString(littleToUint32(byteArray, pos + i), 4) + BLUETOOTH_BASE_UUID;
+					serviceUUIDs.push(uuid);
+					logger("Found UUID", uuid);
 				}
 				break;
 
@@ -232,7 +244,9 @@ const addAdvertisementData = function(device)
 			case 0x07:
 				// 128-bit Service Class UUIDs.
 				for (let i = 0; i < length; i += 16) {
-					serviceUUIDs.push(arrayToUUID(byteArray, pos + i));
+					uuid = arrayToUUID(byteArray, pos + i);
+					serviceUUIDs.push(uuid);
+					logger("Found UUID", uuid);
 				}
 				break;
 
@@ -253,6 +267,7 @@ const addAdvertisementData = function(device)
 				uuid = '0000' + toHexString(littleToUint16(byteArray, pos), 2) + BLUETOOTH_BASE_UUID;
 				data = new Uint8Array(byteArray.buffer, pos + 2, length - 2);
 				serviceData[uuid] = base64.fromArrayBuffer(data);
+				logger("Found Service Data: UUID", uuid, "Data", data);
 				break;
 
 			case 0x20:
@@ -260,6 +275,7 @@ const addAdvertisementData = function(device)
 				uuid = toHexString(littleToUint32(byteArray, pos), 4) + BLUETOOTH_BASE_UUID;
 				data = new Uint8Array(byteArray.buffer, pos + 4, length - 4);
 				serviceData[uuid] = base64.fromArrayBuffer(data);
+				logger("Found Service Data: UUID", uuid, "Data", data);
 				break;
 
 			case 0x21:
@@ -267,6 +283,7 @@ const addAdvertisementData = function(device)
 				uuid = arrayToUUID(byteArray, pos);
 				data = new Uint8Array(byteArray.buffer, pos+16, length-16);
 				serviceData[uuid] = base64.fromArrayBuffer(data);
+				logger("Found Service Data: UUID", uuid, "Data", data);
 				break;
 
 			case 0xff:
@@ -281,6 +298,7 @@ const addAdvertisementData = function(device)
 	}
 	advertisementData.kCBAdvDataServiceUUIDs = (serviceUUIDs.length > 0) ? serviceUUIDs : null;
 	advertisementData.kCBAdvDataServiceData = (Object.keys(serviceData).length > 0) ? serviceData : null;
+
 	device.advertisementData = advertisementData;
 }
 
@@ -298,7 +316,7 @@ const parseFrameUID = function(device, data, onError) {
 		return;
 	}
 
-	device.txPower = evothings.util.littleEndianToInt8(data, 1);
+	device.txPower = littleToInt8(data, 1);
 	device.nid = data.subarray(2, 12);  // Namespace ID.
 	device.bid = data.subarray(12, 18); // Beacon ID.
 }
@@ -309,11 +327,11 @@ const parseFrameEID = function(device, data, onError) {
 	logger("Parsing EID Frame");
 
   if(data.byteLength < 10) {
-    onError("EID frame: invalid byteLength: "+data.byteLength);
+    onError("EID frame: invalid byteLength: " + data.byteLength);
     return;
   }
 
-  device.txPower = evothings.util.littleToInt8(data, 1);
+  device.txPower = littleToInt8(data, 1);
   device.eid = data.subarray(2, 9);  // EID.
 }
 
@@ -400,6 +418,7 @@ module.exports = {
 	BLUETOOTH_BASE_UUID: BLUETOOTH_BASE_UUID,
 	addAdvertisementData: addAdvertisementData,
 	base64DecToArr: base64DecToArr,
+	arrayToHexString: arrayToHexString,
 	parseFrameUID: parseFrameUID,
 	parseFrameEID: parseFrameEID,
 	parseFrameURL: parseFrameURL,

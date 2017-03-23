@@ -3,6 +3,7 @@
 const logger = require('../utility').logger;
 const bleUtility = require('./ble_utility');
 
+const CITY4AGE_NAMESPACE = 'edd1ebeac04e5defa017';
 
 const Scan = function(){
 	this._beacons = {};
@@ -33,13 +34,9 @@ Scan.prototype._onDeviceFound = function(device, onError) {
 
 	logger("Device found", device.address);
 
-	// Ensure we have advertisementData.
-	bleUtility.addAdvertisementData(device);
-
 	// Check if we already have got the device.
 	let existingDevice = this._beacons[device.address]
 	if (existingDevice) {
-		logger("Existing device:", device.address);
 		// Do not report device again if flag is set.
 		// if (allowDuplicates === false || reportDeviceOnce === true) { return; }
 
@@ -51,7 +48,11 @@ Scan.prototype._onDeviceFound = function(device, onError) {
 		device = existingDevice;
 	}
 	else {
-		logger("New device:", device.address);
+		logger("New device", device.address);
+
+		// Ensure we have advertisementData.
+		bleUtility.addAdvertisementData(device);
+
 		// New device, add to known devices.
 		this._beacons[device.address] = device;
 
@@ -61,7 +62,7 @@ Scan.prototype._onDeviceFound = function(device, onError) {
 		// Add methods to the device info object.
 		//internal.addMethodsToDeviceObject(device);
 	}
-
+	
 	device.timeStamp = Date.now();
 
 	// Call callback function with device info.
@@ -103,6 +104,5 @@ Scan.prototype.stop = function() {
 	evothings.ble.stopScan();
 	this._beacons = {};
 };
-
 
 module.exports = Scan;
