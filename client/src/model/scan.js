@@ -5,8 +5,12 @@ const bleUtility = require('./ble_utility');
 
 const CITY4AGE_NAMESPACE = 'edd1ebeac04e5defa017';
 
-const Scan = function(){
-	this._beacons = {};
+const Scan = function(onFound, onLost, onError){
+	this._onFound = onFound;
+	this._onLost = onLost;
+	this._onError = onError;
+	this._tidyTimer = null;
+	this._beacons = null;
 	this._scanning = false;
 
 	evothings.ble.stopScan();
@@ -17,12 +21,22 @@ const Scan = function(){
 Scan.prototype.start = function(onError) {
 	// Start scanning.
 	logger("Starting the scan");
+	this._beacons = {};
+	this._tidyTimer = setInterval(this._tidyBeaconList.bind(this), 1000);
 	this._scanning = true;
 	evothings.ble.startScan(
 		['0000FEAA-0000-1000-8000-00805F9B34FB'],
 		function(device) { this._onDeviceFound(device, onError) }.bind(this),
-		onError
+		this._onError
 	);
+};
+
+// Stop scanning for beacons.
+Scan.prototype.stop = function() {
+	logger("Stopping the scan");
+	if (this._tidyTimer) clearInterval(this._tidyTimer);
+	this._scanning = false;
+	evothings.ble.stopScan();
 };
 
 Scan.prototype._onDeviceFound = function(device, onError) {
@@ -32,38 +46,15 @@ Scan.prototype._onDeviceFound = function(device, onError) {
 	// instantly when evothings.ble.stopScan is called).
 	if (!this._scanning) return;
 
+	// Different packets may be broadcast by the beacon.
+	// Each packet will come from the same device but will have different advertising data
 	logger("Device found", device.address);
 
-	// Check if we already have got the device.
-	let existingDevice = this._beacons[device.address]
-	if (existingDevice) {
-		// Do not report device again if flag is set.
-		// if (allowDuplicates === false || reportDeviceOnce === true) { return; }
-
-		// Duplicates allowed, report device again.
-		existingDevice.rssi = device.rssi;
-		existingDevice.name = device.name;
-		existingDevice.scanRecord = device.scanRecord;
-		existingDevice.advertisementData = device.advertisementData;
-		device = existingDevice;
-	}
-	else {
-		logger("New device", device.address);
-
-		// Ensure we have advertisementData.
-		bleUtility.addAdvertisementData(device);
-
-		// New device, add to known devices.
-		this._beacons[device.address] = device;
-
-		// Set connect status.
-		device.__isConnected = false;
-
-		// Add methods to the device info object.
-		//internal.addMethodsToDeviceObject(device);
-	}
-	
+	// Add a timestamp to the device so it can be timed out and removed
 	device.timeStamp = Date.now();
+
+	// Ensure we have advertisementData.
+	bleUtility.addAdvertisementData(device);
 
 	// Call callback function with device info.
 	// onComplete(device);
@@ -95,14 +86,27 @@ Scan.prototype._onDeviceFound = function(device, onError) {
 		case 0x20: bleUtility.parseFrameTLM(device, byteArray, onError); break;
 		case 0x30: bleUtility.parseFrameEID(device, byteArray, onError); break;
 	}
+
+	// We have a beacon
+
+	let newDevice = (this._beacons[device.address]) ? false : true;
+	this._beacons[device.address] = device;
+	if (newDevice && this._onFound) this._onFound(device)
 }
 
-// Stop scanning for beacons.
-Scan.prototype.stop = function() {
-	logger("Stopping the scan");
-	this._scanning = false;
-	evothings.ble.stopScan();
-	this._beacons = {};
-};
+Scan.prototype._tidyBeaconList = function() {
+	const TIMEOUT = 10000; // 10 seconds
+	const timeNow = Date.now();
+	const addresses = Object.keys(this._beacons);
+	for (let address of addresses) {
+		const beacon = this._beacons[address];
+		// Only show devices that are updated during the last 10 seconds.
+		if (beacon.timestamp + TIMEOUT > timeNow) {
+			logger("Beacon", beacon.address, "is no longer nearby")
+			if (this._onLost) this.onLost(this._beacons[address]);
+			delete this._beacons[address];
+		}
+	}
+}
 
 module.exports = Scan;

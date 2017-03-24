@@ -12,20 +12,20 @@ let scan = null;
 
 // Called when Start Scan button is selected.
 const onStartScanButton = function() {
-	scan = new Scan();
-	scan.start(function(errorCode) {
+	scan = scan || new Scan(null, null, function(errorCode) {
 		displayStatus('Scan Error: ' + errorCode);
 	});
-	displayStatus('Scanning...');
+	scan.start();
 	updateTimer = setInterval(displayDeviceList, 500);
+	displayStatus('Scanning...');
 };
 
 // Called when Stop Scan button is selected.
 const onStopScanButton = function() {
 	scan.stop();
+	clearTimer(updateTimer);
 	displayStatus('Scan Paused');
 	displayDeviceList();
-	clearInterval(updateTimer);
 };
 
 // Display the device list.
@@ -43,27 +43,24 @@ const displayDeviceList = function() {
 	for (let address in devices) {
 		const device = devices[address];
 
-		// Only show devices that are updated during the last 10 seconds.
-		if (device.timeStamp + 10000 > timeNow) {
-			// Map the RSSI value to a width in percent for the indicator.
-			let rssiWidth = 100; // Used when RSSI is zero or greater.
-			if (device.rssi < -100) { rssiWidth = 0; }
-			else if (device.rssi < 0) { rssiWidth = 100 + device.rssi; }
+		// Map the RSSI value to a width in percent for the indicator.
+		let rssiWidth = 100; // Used when RSSI is zero or greater.
+		if (device.rssi < -100) { rssiWidth = 0; }
+		else if (device.rssi < 0) { rssiWidth = 100 + device.rssi; }
 
-			// Create tag for device data.
-			const content =
-				'<strong>' + arrayToHex(device.nid) + "<br />" + arrayToHex(device.bid) + '</strong><br />'
-				// Do not show address on iOS since it can be confused
-				// with an iBeacon UUID.
-				+	(phone.isIOS ? '' : device.address + '<br />')
-				+	device.rssi + '<br />'
-				+ 	'<div style="background:rgb(225,0,0);height:20px;width:'
-				+ 		rssiWidth + '%;"></div>';
+		// Create tag for device data.
+		const content =
+			'<strong>' + arrayToHex(device.nid) + "<br />" + arrayToHex(device.bid) + '</strong><br />'
+			// Do not show address on iOS since it can be confused
+			// with an iBeacon UUID.
+			+	(phone.isIOS ? '' : device.address + '<br />')
+			+	device.rssi + '<br />'
+			+ 	'<div style="background:rgb(225,0,0);height:20px;width:'
+			+ 		rssiWidth + '%;"></div>';
 
-			let newEntry = document.createElement('li');
-  		newEntry.innerHTML = content;
-  		foundDevices.appendChild(newEntry);
-		}
+		let newEntry = document.createElement('li');
+		newEntry.innerHTML = content;
+		foundDevices.appendChild(newEntry);
 	};
 };
 
