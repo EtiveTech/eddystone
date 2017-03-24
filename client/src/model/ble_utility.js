@@ -304,7 +304,7 @@ const addAdvertisementData = function(device)
 
 // Return true on frame type recognition, false otherwise.
 const parseFrameUID = function(device, data, onError) {
-	if(data[0] != 0x00);
+	if(data[0] != 0x00) return false;
 
 	logger("Parsing UID Frame");
 
@@ -313,36 +313,38 @@ const parseFrameUID = function(device, data, onError) {
 	// Check that we got at least 18 bytes.
 	if(data.byteLength < 18) {
 		onError("UID frame: invalid byteLength: " + data.byteLength);
-		return;
+		return false;
 	}
 
 	device.txPower = littleToInt8(data, 1);
 	device.nid = data.subarray(2, 12);  // Namespace ID.
 	device.bid = data.subarray(12, 18); // Beacon ID.
+	return true;
 }
 
 const parseFrameEID = function(device, data, onError) {
-  if(data[0] != 0x30) return;
+  if(data[0] != 0x30) return false;
 
 	logger("Parsing EID Frame");
 
   if(data.byteLength < 10) {
     onError("EID frame: invalid byteLength: " + data.byteLength);
-    return;
+    return false;
   }
 
   device.txPower = littleToInt8(data, 1);
   device.eid = data.subarray(2, 9);  // EID.
+  return true;
 }
 
 const parseFrameURL = function(device, data, onError) {
-	if(data[0] != 0x10) return;
+	if(data[0] != 0x10) return false;
 
 	logger("Parsing URL Frame");
 
 	if(data.byteLength < 4) {
 		onError("URL frame: invalid byteLength: " + data.byteLength);
-		return;
+		return false;
 	}
 
 	device.txPower = littleToInt8(data, 1);
@@ -354,7 +356,7 @@ const parseFrameURL = function(device, data, onError) {
 		case 1: url = 'https://www.'; break;
 		case 2: url = 'http://'; break;
 		case 3: url = 'https://'; break;
-		default: onError("URL frame: invalid prefix: " + data[2]); return;
+		default: onError("URL frame: invalid prefix: " + data[2]); return false;
 	}
 
 	// Process each byte in sequence.
@@ -382,7 +384,7 @@ const parseFrameURL = function(device, data, onError) {
 		else if(c < 32 || c >= 127) {
 			// Unprintables are not allowed.
 			onError("URL frame: invalid character: " + data[2]);
-			return;
+			return false;
 		}
 		else {
 			url += String.fromCharCode(c);
@@ -391,6 +393,7 @@ const parseFrameURL = function(device, data, onError) {
 
 	// Set URL field of the device.
 	device.url = url;
+	return true;
 }
 
 const parseFrameTLM = function(device, data, onError) {
@@ -400,18 +403,19 @@ const parseFrameTLM = function(device, data, onError) {
 
 	if(data[1] != 0x00) {
 		onError("TLM frame: unknown version: " + data[1]);
-		return;
+		return false;
 	}
 
 	if(data.byteLength != 14) {
 		onError("TLM frame: invalid byteLength: " + data.byteLength);
-		return;
+		return false;
 	}
 
 	device.voltage = bigToUint16(data, 2);
 	device.temperature = (bigToUint16(data, 4) === 0x800) ? 0x8000 : bigToInt16(data, 4) / 256.0;
 	device.adv_cnt = bigToUint32(data, 6);
 	device.dsec_cnt = bigToUint32(data, 10);
+	return true;
 }
 
 module.exports = {

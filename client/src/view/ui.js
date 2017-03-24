@@ -12,7 +12,7 @@ let scan = null;
 
 // Called when Start Scan button is selected.
 const onStartScanButton = function() {
-	scan = scan || new Scan(null, null, function(errorCode) {
+	scan = new Scan(null, null, function(errorCode) {
 		displayStatus('Scan Error: ' + errorCode);
 	});
 	scan.start();
@@ -23,7 +23,7 @@ const onStartScanButton = function() {
 // Called when Stop Scan button is selected.
 const onStopScanButton = function() {
 	scan.stop();
-	clearTimer(updateTimer);
+	clearInterval(updateTimer);
 	displayStatus('Scan Paused');
 	displayDeviceList();
 };
