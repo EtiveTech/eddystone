@@ -52,7 +52,7 @@ Scan.prototype._onDeviceFound = function(device, onError) {
 	let newDevice = !this._beacons[device.address];
 
 	// Add a timestamp to the device so it can be timed out and removed
-	device.timeStamp = Date.now();
+	device.timestamp = Date.now();
 
 	if (newDevice) {
 		// Ensure we have advertisementData.
@@ -104,6 +104,7 @@ Scan.prototype._onDeviceFound = function(device, onError) {
 		// Avoid havin to rescan everything - already know it's a beacon
 		let storedBeacon = this._beacons[device.address];
 		storedBeacon.rssi = device.rssi;
+		storedBeacon.timestamp = device.timestamp;
 		// storedBeacon.name = device.name;
 		// storedBeacon.scanRecord = device.scanRecord;
 		// storedBeacon.advertisementData = device.advertisementData;
