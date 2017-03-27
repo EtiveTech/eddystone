@@ -13,6 +13,7 @@ Repository.prototype.foundBeacon = function(beacon) {
 	const request = new Request();
 	const content = {
 		messageType: 'found',
+		datetime: new Date().toISOString(),
 		beaconId: arrayToHex(beacon.bid),
 		address: beacon.address,
 		RSSI: beacon.rssi,
@@ -29,6 +30,7 @@ Repository.prototype.lostBeacon = function (beacon) {
 	const request = new Request();
 	const content = {
 		messageType: 'lost',
+		datetime: new Date().toISOString(),
 		beaconId: arrayToHex(beacon.bid),
 		address: beacon.address,
 		RSSI: beacon.rssi,
