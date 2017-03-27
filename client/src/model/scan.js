@@ -50,6 +50,7 @@ Scan.prototype._onDeviceFound = function(device, onError) {
 	// Each packet will come from the same device but will have different advertising data
 	logger("Device found", device.address);
 	let newDevice = !this._beacons[device.address];
+	logger("Device", device.address, (newDevice) ? "is NOT" : "is", "recorded as an in-range beacon");
 
 	// Add a timestamp to the device so it can be timed out and removed
 	device.timestamp = Date.now();
@@ -91,6 +92,7 @@ Scan.prototype._onDeviceFound = function(device, onError) {
 
 		if ((byteArray[0] === 0) && bleUtility.parseFrameUID(device, byteArray, onError)) {
 			// We have a UID frame
+			logger("Device", device.address, "sent out a UID frame.")
 			if (bleUtility.arrayToHexString(device.nid) === CITY4AGE_NAMESPACE) {
 				// We have a City4Age beacon
 				if (this._onFound) this._onFound(device);
@@ -118,8 +120,8 @@ Scan.prototype._tidyBeaconList = function() {
 	for (let address of addresses) {
 		const beacon = this._beacons[address];
 		// Only show devices that are updated during the last 10 seconds.
-		if (beacon.timestamp + TIMEOUT > timeNow) {
-			logger("Beacon", beacon.bid, "is no longer nearby")
+		if (beacon.timestamp + TIMEOUT < timeNow) {
+			logger("Beacon", bleUtility.arrayToHexString(beacon.bid), "is no longer nearby")
 			if (this._onLost) this._onLost(this._beacons[address]);
 			delete this._beacons[address];
 		}
