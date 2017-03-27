@@ -4,7 +4,7 @@ const logger = require('../utility').logger;
 const dispatcher = require('./api_request_dispatcher');
 const XMLHttpRequest = (process.env.NODE_ENV === 'test') ? require('../stubs').XMLHttpRequest : window.XMLHttpRequest;
 
-let ApiRequest = function() {
+const ApiRequest = function() {
   this._request = new XMLHttpRequest();
   this._options = null;
   this._json = null;
@@ -50,7 +50,7 @@ ApiRequest.prototype._makeRequest = function(options) {
 
 ApiRequest.prototype._send = function() {
   this._tries += 1;
-  this._request.send(this._json);
+//  this._request.send(this._json);
 };
 
 ApiRequest.prototype._startTimeout = function(duration, callback) {
@@ -69,53 +69,53 @@ ApiRequest.prototype._setTxTimeout = function(duration, callback) {
   }.bind(this);
 };
 
-ApiRequest.prototype.makeGetRequest = function(url, jwtoken, timeout, callback) {
+ApiRequest.prototype.makeGetRequest = function(url, callback) {
   const options = {
     verb: "GET",
     url: url,
     content: null,
     expected: [200],
-    jwt: jwtoken,
-    timeout: timeout,
+    jwt: null,        // Not used
+    timeout: false,   // Not used
     callback: callback
   };
   return this._makeRequest(options);
 };
 
-ApiRequest.prototype.makePostRequest = function(url, content, jwtoken, timeout, callback) {
+ApiRequest.prototype.makePostRequest = function(url, content, callback) {
   const options = {
     verb: "POST",
     url: url,
     content: content,
     expected: [200, 201],
-    jwt: jwtoken,
-    timeout: timeout,
+    jwt: null,        // Not used
+    timeout: false,   // Not used
     callback: callback
   };
   return this._makeRequest(options);
 };
 
-ApiRequest.prototype.makePutRequest = function(url, content, jwtoken, timeout, callback) {
+ApiRequest.prototype.makePutRequest = function(url, content, callback) {
   const options = {
     verb: "PUT",
     url: url,
     content: content,
     expected: [200, 201],
-    jwt: jwtoken,
-    timeout: timeout,
+    jwt: null,        // Not used
+    timeout: false,   // Not used
     callback: callback
   };
   return this._makeRequest(options);
 };
 
-ApiRequest.prototype.makeDeleteRequest = function(url, content, jwtoken, timeout, callback) {
+ApiRequest.prototype.makeDeleteRequest = function(url, content, callback) {
   const options = {
     verb: "DELETE",
     url: url,
     content: content,
     expected: [200, 204],
-    jwt: jwtoken,
-    timeout: timeout,
+    jwt: null,        // Not used
+    timeout: false,   // Not used
     callback: callback
   };
   return this._makeRequest(options);

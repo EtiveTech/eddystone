@@ -48,14 +48,14 @@ Scan.prototype._onDeviceFound = function(device, onError) {
 
 	// Different packets may be broadcast by the beacon.
 	// Each packet will come from the same device but will have different advertising data
-	logger("Device found", device.address);
 	let newDevice = !this._beacons[device.address];
-	logger("Device", device.address, (newDevice) ? "is NOT" : "is", "recorded as an in-range beacon");
 
 	// Add a timestamp to the device so it can be timed out and removed
 	device.timestamp = Date.now();
 
 	if (newDevice) {
+		logger("Device", device.address, "found and is recorded as an in-range beacon");
+
 		// Ensure we have advertisementData.
 		bleUtility.addAdvertisementData(device);
 
@@ -95,6 +95,7 @@ Scan.prototype._onDeviceFound = function(device, onError) {
 			logger("Device", device.address, "sent out a UID frame.")
 			if (bleUtility.arrayToHexString(device.nid) === CITY4AGE_NAMESPACE) {
 				// We have a City4Age beacon
+				device.rssiMax = device.rssi;
 				if (this._onFound) this._onFound(device);
 				this._beacons[device.address] = device;
 				logger("Device", device.address, "is beacon", bleUtility.arrayToHexString(device.bid));
@@ -106,6 +107,7 @@ Scan.prototype._onDeviceFound = function(device, onError) {
 		// Avoid havin to rescan everything - already know it's a beacon
 		let storedBeacon = this._beacons[device.address];
 		storedBeacon.rssi = device.rssi;
+		if (storedBeacon.rssiMax < device.rssi) storedBeacon.rssiMax = device.rssi;
 		storedBeacon.timestamp = device.timestamp;
 		// storedBeacon.name = device.name;
 		// storedBeacon.scanRecord = device.scanRecord;

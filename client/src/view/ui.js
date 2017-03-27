@@ -3,7 +3,9 @@
 const phone = require('./phone');
 const logger = require('../utility').logger;
 const arrayToHex = require('../model/ble_utility').arrayToHexString;
-const Scan = require('../model/scan')
+const Scan = require('../model/scan');
+const Repository = require('../network/repository');
+const repository = new Repository("http://cj101d.ifdnrg.com", "test@digitallogbook.co");
 
 // Timer that updates the device list and removes inactive
 // devices in case no devices are found by scan.
@@ -12,7 +14,7 @@ let scan = null;
 
 // Called when Start Scan button is selected.
 const onStartScanButton = function() {
-	scan = new Scan(null, null, function(errorCode) {
+	scan = new Scan(repository.foundBeacon.bind(repository), repository.lostBeacon.bind(repository), function(errorCode) {
 		displayStatus('Scan Error: ' + errorCode);
 	});
 	scan.start();

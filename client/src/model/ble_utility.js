@@ -196,7 +196,6 @@ const addAdvertisementData = function(device)
 	// for details.
 
 	let byteArray = base64DecToArr(device.scanRecord);
-	logger("Scan record", byteArray);
 	let pos = 0;
 	let advertisementData = {};
 	let serviceUUIDs = [];
@@ -306,8 +305,6 @@ const addAdvertisementData = function(device)
 const parseFrameUID = function(device, data, onError) {
 	if(data[0] != 0x00) return false;
 
-	logger("Parsing UID Frame");
-
 	// The UID frame has 18 bytes + 2 bytes reserved for future use
 	// https://github.com/google/eddystone/tree/master/eddystone-uid
 	// Check that we got at least 18 bytes.
@@ -325,8 +322,6 @@ const parseFrameUID = function(device, data, onError) {
 const parseFrameEID = function(device, data, onError) {
   if(data[0] != 0x30) return false;
 
-	logger("Parsing EID Frame");
-
   if(data.byteLength < 10) {
     onError("EID frame: invalid byteLength: " + data.byteLength);
     return false;
@@ -339,8 +334,6 @@ const parseFrameEID = function(device, data, onError) {
 
 const parseFrameURL = function(device, data, onError) {
 	if(data[0] != 0x10) return false;
-
-	logger("Parsing URL Frame");
 
 	if(data.byteLength < 4) {
 		onError("URL frame: invalid byteLength: " + data.byteLength);
@@ -398,8 +391,6 @@ const parseFrameURL = function(device, data, onError) {
 
 const parseFrameTLM = function(device, data, onError) {
 	if(data[0] != 0x20) return false;
-
-	logger("Parsing TLM Frame");
 
 	if(data[1] != 0x00) {
 		onError("TLM frame: unknown version: " + data[1]);
