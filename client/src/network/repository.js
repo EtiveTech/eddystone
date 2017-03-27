@@ -12,7 +12,7 @@ const Repository = function(baseURL, emailAddress) {
 Repository.prototype.foundBeacon = function(beacon) {
 	const request = new Request();
 	const content = {
-		messageType: 'found',
+		type: 'found',
 		datetime: new Date().toISOString(),
 		beaconId: arrayToHex(beacon.bid),
 		address: beacon.address,
@@ -29,7 +29,7 @@ Repository.prototype.foundBeacon = function(beacon) {
 Repository.prototype.lostBeacon = function (beacon) {
 	const request = new Request();
 	const content = {
-		messageType: 'lost',
+		type: 'lost',
 		datetime: new Date().toISOString(),
 		beaconId: arrayToHex(beacon.bid),
 		address: beacon.address,
