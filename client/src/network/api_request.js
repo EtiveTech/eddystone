@@ -50,7 +50,7 @@ ApiRequest.prototype._makeRequest = function(options) {
 
 ApiRequest.prototype._send = function() {
   this._tries += 1;
-//  this._request.send(this._json);
+  this._request.send(this._json);
 };
 
 ApiRequest.prototype._startTimeout = function(duration, callback) {
@@ -69,53 +69,53 @@ ApiRequest.prototype._setTxTimeout = function(duration, callback) {
   }.bind(this);
 };
 
-ApiRequest.prototype.makeGetRequest = function(url, callback) {
+ApiRequest.prototype.makeGetRequest = function(url, timeout, callback) {
   const options = {
     verb: "GET",
     url: url,
     content: null,
     expected: [200],
     jwt: null,        // Not used
-    timeout: false,   // Not used
+    timeout: timeout,
     callback: callback
   };
   return this._makeRequest(options);
 };
 
-ApiRequest.prototype.makePostRequest = function(url, content, callback) {
+ApiRequest.prototype.makePostRequest = function(url, content, timeout, callback) {
   const options = {
     verb: "POST",
     url: url,
     content: content,
     expected: [200, 201],
     jwt: null,        // Not used
-    timeout: false,   // Not used
+    timeout: timeout,
     callback: callback
   };
   return this._makeRequest(options);
 };
 
-ApiRequest.prototype.makePutRequest = function(url, content, callback) {
+ApiRequest.prototype.makePutRequest = function(url, content, timeout, callback) {
   const options = {
     verb: "PUT",
     url: url,
     content: content,
     expected: [200, 201],
     jwt: null,        // Not used
-    timeout: false,   // Not used
+    timeout: timeout,
     callback: callback
   };
   return this._makeRequest(options);
 };
 
-ApiRequest.prototype.makeDeleteRequest = function(url, content, callback) {
+ApiRequest.prototype.makeDeleteRequest = function(url, timeout, callback) {
   const options = {
     verb: "DELETE",
     url: url,
-    content: content,
+    content: null,
     expected: [200, 204],
     jwt: null,        // Not used
-    timeout: false,   // Not used
+    timeout: timeout,
     callback: callback
   };
   return this._makeRequest(options);

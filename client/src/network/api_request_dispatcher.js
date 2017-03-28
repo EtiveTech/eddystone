@@ -10,8 +10,9 @@ const ApiRequestDispatcher = function() {
 	if (typeof document !== "undefined") {
 		// document won't exist when running tests outside a browser
 		document.addEventListener("online", this._online.bind(this), false);
-		document.addEventListener("pause", this._onPause.bind(this), false);
-		document.addEventListener("resume", this._onResume.bind(this), false);	
+		// Pauuse and resume are currenly ignored
+		// document.addEventListener("pause", this._onPause.bind(this), false);
+		// document.addEventListener("resume", this._onResume.bind(this), false);	
 	}
 };
 
@@ -98,26 +99,26 @@ ApiRequestDispatcher.prototype._onTimeout = function(request) {
 	request.callback(600, null);
 };
 
-ApiRequestDispatcher.prototype._onPause = function() {
-	logger("Pause event, cancelling timeouts.");
-	// Cancel all the timeouts
-	for (let i = 0; i < this._queue.length; i++) {
-		if (this._queue[i].timeout) {
-			this._queue[i]._stopTimeout();
-		}
-	}
-};
+// ApiRequestDispatcher.prototype._onPause = function() {
+// 	logger("Pause event, cancelling timeouts.");
+// 	// Cancel all the timeouts
+// 	for (let i = 0; i < this._queue.length; i++) {
+// 		if (this._queue[i].timeout) {
+// 			this._queue[i]._stopTimeout();
+// 		}
+// 	}
+// };
 
-ApiRequestDispatcher.prototype._onResume = function() {
-	logger("Resume event, restarting timeouts.");
-	// Restart all the timeouts
-	for (let i = 0; i < this._queue.length; i++) {
-		if (this._queue[i].timeout) this._queue[i]._startTimeout(timeoutDuration, this._onTimeout.bind(this));
-	}
+// ApiRequestDispatcher.prototype._onResume = function() {
+// 	logger("Resume event, restarting timeouts.");
+// 	// Restart all the timeouts
+// 	for (let i = 0; i < this._queue.length; i++) {
+// 		if (this._queue[i].timeout) this._queue[i]._startTimeout(timeoutDuration, this._onTimeout.bind(this));
+// 	}
 
-	// Won't get an online event when paused so check network status
-	// if (navigator.connection.type !== Connection.NONE) this._online();
-};
+// 	// Won't get an online event when paused so check network status
+// 	// if (navigator.connection.type !== Connection.NONE) this._online();
+// };
 
 ApiRequestDispatcher.prototype._nextId = function() {
 	if (this._id === Number.MAX_SAFE_INTEGER) this._id = 0;
@@ -125,13 +126,13 @@ ApiRequestDispatcher.prototype._nextId = function() {
 	return this._id;
 };
 
-ApiRequestDispatcher.prototype._queueToString = function() {
-	let string = "";
-	for (let i = 0; i < this._queue.length; i++) {
-		string += this._queue[i].id.toString() + ", ";
-	}
-	return "[" + string.substring(0, string.length - 2) + "]";
-};
+// ApiRequestDispatcher.prototype._queueToString = function() {
+// 	let string = "";
+// 	for (let i = 0; i < this._queue.length; i++) {
+// 		string += this._queue[i].id.toString() + ", ";
+// 	}
+// 	return "[" + string.substring(0, string.length - 2) + "]";
+// };
 
 let dispatcher = new ApiRequestDispatcher();	// A singleton
 

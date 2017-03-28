@@ -2,14 +2,33 @@ const Request = require('./api_request');
 const apiKey = require('../keys').localRepository;
 const logger = require('../utility').logger;
 const arrayToHex = require('../model/ble_utility').arrayToHexString;
+const helloInterval = 60 * 60 * 1000;
+const tokenKey = "token";
 const beaconLog = "beacon-log";
+const authorise = "authorize";
 
-const Repository = function(baseURL, emailAddress) {
+const Repository = function(baseURL) {
 	this._baseURL = baseURL + "/";
-	this._emailAddress = emailAddress;
+	this._token = localStorage.getItem(tokenKey);
+	this._timer = setInterval(this.hello, helloInterval);
 }
 
-Repository.prototype.foundBeacon = function(beacon) {
+Repository.prototype.authorize = function(emailAddress, onCompleted) {
+	const request = new Request();
+	const content = {
+		email: emailAddress,
+		key: apiKey
+	};
+	request.makePostRequest(this._baseURL + authorise, content, true, function(status, token) {
+		if (status === 201) {
+			this._token = token;
+    	localStorage.setItem(tokenKey, token);			
+		}
+	  if (onCompleted) onCompleted(status);
+	});
+}
+
+Repository.prototype.foundBeacon = function(beacon, onCompleted) {
 	const request = new Request();
 	const content = {
 		type: 'found',
@@ -18,15 +37,15 @@ Repository.prototype.foundBeacon = function(beacon) {
 		address: beacon.address,
 		RSSI: beacon.rssi,
 		txPower: beacon.txPower,
-		email: this._emailAddress,
-		key: apiKey
+		token: this._token;
 	}
-	request.makePostRequest(this._baseURL + beaconLog, content, function(status) {
+	request.makePostRequest(this._baseURL + beaconLog, content, false, function(status) {
 		// Might not be authorised to send to the server or the api key may be wrong
+		if (onCompleted) onCompleted(status);
 	});
 }
 
-Repository.prototype.lostBeacon = function (beacon) {
+Repository.prototype.lostBeacon = function (beacon, onCompleted) {
 	const request = new Request();
 	const content = {
 		type: 'lost',
@@ -35,11 +54,24 @@ Repository.prototype.lostBeacon = function (beacon) {
 		address: beacon.address,
 		RSSI: beacon.rssi,
 		maxRSSI: beacon.rssiMax,
-		email: this._emailAddress,
-		key: apiKey
+		token: this._token;
 	}
-	request.makePostRequest(this._baseURL + beaconLog, content, function(status) {
+	request.makePostRequest(this._baseURL + beaconLog, content, false, function(status) {
 		// Might not be authorised to send to the server or the api key may be wrong
+		if (onCompleted) onCompleted(status);
+	});
+}
+
+Repository.prototype.hello = function () {
+	const request = new Request();
+	const content = {
+		type: 'hello',
+		datetime: new Date().toISOString(),
+		token: this._token;
+	}
+	request.makePostRequest(this._baseURL + beaconLog, content, false, function(status) {
+		// Might not be authorised to send to the server or the api key may be wrong
+		if (onCompleted) onCompleted(status);
 	});
 }
 
