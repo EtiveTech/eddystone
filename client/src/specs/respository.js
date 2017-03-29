@@ -133,12 +133,17 @@ describe("Repository Requests", function() {
   	// In the test environment the messages are sent every 0.5 seconds
 
 	  before(function(done) {
+	  	localStorage.clear();
 	    server.initialize();
 	    network.online = true;
-  	  repository = new Repository(baseURL);
+  	  repository = new Repository(baseURL, 1000);
 	    setTimeout(function() {
 	    	done();
-	    }, 1800)
+	    }, 1500)
+	  });
+
+	  after(function() {
+	  	repository._stopTimer();
 	  });
 
 	  it('Doesn\'t send any hello messages', function() {
@@ -154,9 +159,14 @@ describe("Repository Requests", function() {
   	// In the test environment the messages are sent every 0.5 seconds
 
 	  before(function() {
+  		localStorage.clear();
 	    server.initialize();
 	    network.online = true;
-  	  repository = new Repository(baseURL);
+  	  repository = new Repository(baseURL, 1000);
+	  });
+
+	  after(function() {
+	  	repository._stopTimer();
 	  });
 
 	  it('Sends hello messages after authorization', function(done) {
@@ -177,7 +187,7 @@ describe("Repository Requests", function() {
 		  	let content = JSON.parse(server.requests[0].content);
 		  	assert.strictEqual(content.type, "hello");
 	    	done();
-	    }, 1800);
+	    }, 1500);
 	  });
 	});
 
@@ -191,10 +201,14 @@ describe("Repository Requests", function() {
 	    server.initialize();
 	    network.online = true;
 	    localStorage.setItem(tokenKey, token);
-  	  repository = new Repository(baseURL);
+  	  repository = new Repository(baseURL, 1000);
 	    setTimeout(function() {
 	    	done();
-	    }, 1800)
+	    }, 1500)
+	  });
+
+	  after(function() {
+	  	repository._stopTimer();
 	  });
 
 	  it('Sends hello messages on instantiation', function() {
@@ -202,7 +216,6 @@ describe("Repository Requests", function() {
 	  	assert.notStrictEqual(repository._timer, null);
 	  	assert.strictEqual(server.requests.length, 1);
 	  	let content = JSON.parse(server.requests[0].content);
-	  	logger(JSON.stringify(content))
 	  	assert.strictEqual(content.type, "hello");
 	  });
 	});

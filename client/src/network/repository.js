@@ -3,17 +3,28 @@ const apiKey = require('../keys').localRepository;
 const logger = require('../utility').logger;
 const arrayToHex = require('../utility').arrayToHex;
 const localStorage = (process.env.NODE_ENV === 'test') ? require("../stubs").localStorage : window.localStorage;
-const helloInterval = (process.env.NODE_ENV === 'test') ? 1500 : 60 * 60 * 1000;
+const defaultHelloInterval = 60 * 60 * 1000;
 const tokenKey = "token";
 const beaconLog = "beacon-log";
 const authorise = "authorize";
 
-const Repository = function(baseURL) {
+const Repository = function(baseURL, interval) {
 	this._baseURL = baseURL;
 	if (this._baseURL[this._baseURL.length-1] !== "/") this._baseURL += "/";
 	this._token = localStorage.getItem(tokenKey);
-	this._timer = (this._token) ? setInterval(this.hello, helloInterval) : null;
-}
+	this._interval = (interval) ? interval : defaultHelloInterval;
+	this._timer = this._startTimer();
+};
+
+Repository.prototype._startTimer = function() {
+	if (this._token && this._interval > 0) return setInterval(this.hello.bind(this), this._interval);
+	return null;  	
+};
+
+Repository.prototype._stopTimer = function() {
+	// This method intended to clear down tests
+	if (this._timer) clearInterval(this._timer);
+};
 
 Repository.prototype.authorize = function(emailAddress, onCompleted) {
 	const request = new Request();
@@ -25,7 +36,7 @@ Repository.prototype.authorize = function(emailAddress, onCompleted) {
 		if (status === 201 && response.token) {
 			this._token = response.token;
     	localStorage.setItem(tokenKey, this._token);
-			this._timer = setInterval(this.hello, helloInterval);   	
+		  this._timer = this._startTimer();	
 		}
 	  if (onCompleted) onCompleted(status);
 	}.bind(this));
@@ -69,6 +80,7 @@ Repository.prototype.lostBeacon = function (beacon, onCompleted) {
 
 Repository.prototype.hello = function (onCompleted) {
 	if (!this._token) return;
+	logger("Sending hello message")
 	const request = new Request();
 	const content = {
 		type: 'hello',
