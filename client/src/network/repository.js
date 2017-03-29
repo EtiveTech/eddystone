@@ -12,7 +12,7 @@ const Repository = function(baseURL) {
 	this._baseURL = baseURL;
 	if (this._baseURL[this._baseURL.length-1] !== "/") this._baseURL += "/";
 	this._token = localStorage.getItem(tokenKey);
-	this._timer = setInterval(this.hello, helloInterval);
+	this._timer = (this._token) ? setInterval(this.hello, helloInterval) : null;
 }
 
 Repository.prototype.authorize = function(emailAddress, onCompleted) {
@@ -22,9 +22,10 @@ Repository.prototype.authorize = function(emailAddress, onCompleted) {
 		key: apiKey
 	};
 	request.makePostRequest(this._baseURL + authorise, content, true, function(status, response) {
-		if (status === 201) {
+		if (status === 201 && response.token) {
 			this._token = response.token;
-    	localStorage.setItem(tokenKey, this._token);			
+    	localStorage.setItem(tokenKey, this._token);
+			this._timer = setInterval(this.hello, helloInterval);   	
 		}
 	  if (onCompleted) onCompleted(status);
 	}.bind(this));
@@ -65,6 +66,7 @@ Repository.prototype.lostBeacon = function (beacon, onCompleted) {
 }
 
 Repository.prototype.hello = function (onCompleted) {
+	if (!this._token) return;
 	const request = new Request();
 	const content = {
 		type: 'hello',

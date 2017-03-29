@@ -94,6 +94,7 @@ const HttpServer = {
       const respondWith = this._findResponse(request);
       if (respondWith) this._makeResponse(request, respondWith);
     }
+    this.requests = [];
   },
   _findResponse: function(request) {
     return this.responses.find(function(item) {
