@@ -3,13 +3,14 @@ const apiKey = require('../keys').localRepository;
 const logger = require('../utility').logger;
 const arrayToHex = require('../utility').arrayToHex;
 const localStorage = (process.env.NODE_ENV === 'test') ? require("../stubs").localStorage : window.localStorage;
-const helloInterval = 60 * 60 * 1000;
+const helloInterval = (process.env.NODE_ENV === 'test') ? 1500 : 60 * 60 * 1000;
 const tokenKey = "token";
 const beaconLog = "beacon-log";
 const authorise = "authorize";
 
 const Repository = function(baseURL) {
-	this._baseURL = baseURL + "/";
+	this._baseURL = baseURL;
+	if (this._baseURL[this._baseURL.length-1] !== "/") this._baseURL += "/";
 	this._token = localStorage.getItem(tokenKey);
 	this._timer = setInterval(this.hello, helloInterval);
 }
@@ -20,13 +21,13 @@ Repository.prototype.authorize = function(emailAddress, onCompleted) {
 		email: emailAddress,
 		key: apiKey
 	};
-	request.makePostRequest(this._baseURL + authorise, content, true, function(status, token) {
+	request.makePostRequest(this._baseURL + authorise, content, true, function(status, response) {
 		if (status === 201) {
-			this._token = token;
-    	localStorage.setItem(tokenKey, token);			
+			this._token = response.token;
+    	localStorage.setItem(tokenKey, this._token);			
 		}
 	  if (onCompleted) onCompleted(status);
-	});
+	}.bind(this));
 }
 
 Repository.prototype.foundBeacon = function(beacon, onCompleted) {
@@ -63,7 +64,7 @@ Repository.prototype.lostBeacon = function (beacon, onCompleted) {
 	});
 }
 
-Repository.prototype.hello = function () {
+Repository.prototype.hello = function (onCompleted) {
 	const request = new Request();
 	const content = {
 		type: 'hello',
