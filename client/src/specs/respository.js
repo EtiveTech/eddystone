@@ -30,6 +30,8 @@ describe("Repository Requests", function() {
 	  	const url = baseURL + beaconLog;
 
 	  	repository.hello();
+	  	repository.foundBeacon();
+	  	repository.lostBeacon();
 
 	  	assert.strictEqual(server.requests.length, 0);
 	  });

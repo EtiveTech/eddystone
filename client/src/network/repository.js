@@ -32,6 +32,7 @@ Repository.prototype.authorize = function(emailAddress, onCompleted) {
 }
 
 Repository.prototype.foundBeacon = function(beacon, onCompleted) {
+	if (!this._token) return;
 	const request = new Request();
 	const content = {
 		type: 'found',
@@ -49,6 +50,7 @@ Repository.prototype.foundBeacon = function(beacon, onCompleted) {
 }
 
 Repository.prototype.lostBeacon = function (beacon, onCompleted) {
+	if (!this._token) return;
 	const request = new Request();
 	const content = {
 		type: 'lost',
