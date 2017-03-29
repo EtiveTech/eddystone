@@ -2,7 +2,7 @@
 
 const phone = require('./phone');
 const logger = require('../utility').logger;
-const arrayToHex = require('../model/ble_utility').arrayToHexString;
+const arrayToHex = require('../utility').arrayToHex;
 const Scan = require('../model/scan');
 const Repository = require('../network/repository');
 const repository = new Repository("http://cj101d.ifdnrg.com", "test@digitallogbook.co");

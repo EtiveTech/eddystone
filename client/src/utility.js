@@ -55,11 +55,23 @@ const network = {
   get online() { return(navigator.connection.type !== Connection.NONE) }
 };
 
+const arrayToHex = function(array) {
+  let hexString = '';
+  if (array) {
+    for (let i = 0; i < array.length; i++) {
+      let string = (new Number(array[i])).toString(16);
+      if (string.length < 2) string = '0' + string;
+      hexString += string;
+    }
+  }
+  return hexString;
+}
 
 module.exports = {
   getBrowserWidth: getBrowserWidth,
   getBrowserHeight: getBrowserHeight,
   getScript: getScript,
   logger: logger,
-  network: network
+  network: network,
+  arrayToHex: arrayToHex
 };

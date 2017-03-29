@@ -1,7 +1,8 @@
 const Request = require('./api_request');
 const apiKey = require('../keys').localRepository;
 const logger = require('../utility').logger;
-const arrayToHex = require('../model/ble_utility').arrayToHexString;
+const arrayToHex = require('../utility').arrayToHex;
+const localStorage = (process.env.NODE_ENV === 'test') ? require("../stubs").localStorage : window.localStorage;
 const helloInterval = 60 * 60 * 1000;
 const tokenKey = "token";
 const beaconLog = "beacon-log";
@@ -37,7 +38,7 @@ Repository.prototype.foundBeacon = function(beacon, onCompleted) {
 		address: beacon.address,
 		RSSI: beacon.rssi,
 		txPower: beacon.txPower,
-		token: this._token;
+		token: this._token
 	}
 	request.makePostRequest(this._baseURL + beaconLog, content, false, function(status) {
 		// Might not be authorised to send to the server or the api key may be wrong
@@ -54,7 +55,7 @@ Repository.prototype.lostBeacon = function (beacon, onCompleted) {
 		address: beacon.address,
 		RSSI: beacon.rssi,
 		maxRSSI: beacon.rssiMax,
-		token: this._token;
+		token: this._token
 	}
 	request.makePostRequest(this._baseURL + beaconLog, content, false, function(status) {
 		// Might not be authorised to send to the server or the api key may be wrong
@@ -67,7 +68,7 @@ Repository.prototype.hello = function () {
 	const content = {
 		type: 'hello',
 		datetime: new Date().toISOString(),
-		token: this._token;
+		token: this._token
 	}
 	request.makePostRequest(this._baseURL + beaconLog, content, false, function(status) {
 		// Might not be authorised to send to the server or the api key may be wrong
