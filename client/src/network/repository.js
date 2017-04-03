@@ -46,11 +46,11 @@ Repository.prototype.foundBeacon = function(beacon, onCompleted) {
 	if (!this._token) return;
 	const request = new Request();
 	const content = {
-		type: 'found',
+		eventType: 'found',
 		datetime: new Date().toISOString(),
 		beaconId: arrayToHex(beacon.bid),
 		address: beacon.address,
-		RSSI: beacon.rssi,
+		rssi: beacon.rssi,
 		txPower: beacon.txPower,
 		token: this._token
 	}
@@ -64,12 +64,12 @@ Repository.prototype.lostBeacon = function (beacon, onCompleted) {
 	if (!this._token) return;
 	const request = new Request();
 	const content = {
-		type: 'lost',
+		eventType: 'lost',
 		datetime: new Date().toISOString(),
 		beaconId: arrayToHex(beacon.bid),
 		address: beacon.address,
-		RSSI: beacon.rssi,
-		maxRSSI: beacon.rssiMax,
+		rssi: beacon.rssi,
+		rssiMax: beacon.rssiMax,
 		token: this._token
 	}
 	request.makePostRequest(this._baseURL + beaconLog, content, false, function(status) {

@@ -54,7 +54,7 @@ Scan.prototype._onDeviceFound = function(device, onError) {
 	device.timestamp = Date.now();
 
 	if (newDevice) {
-		logger("Device", device.address, "found and is recorded as an in-range beacon");
+		logger("Device", device.address, "found and is not recorded as an in-range beacon");
 
 		// Ensure we have advertisementData.
 		bleUtility.addAdvertisementData(device);
