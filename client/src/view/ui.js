@@ -5,12 +5,16 @@ const logger = require('../utility').logger;
 const arrayToHex = require('../utility').arrayToHex;
 const Scan = require('../model/scan');
 const Repository = require('../network/repository');
-const repository = new Repository("http://cj101d.ifdnrg.com", "test@digitallogbook.co");
+const repository = new Repository("http://cj101d.ifdnrg.com");
 
 // Timer that updates the device list and removes inactive
 // devices in case no devices are found by scan.
 let updateTimer = null;
 let scan = null;
+
+const initialize = function() {
+	repository.authorize("test@etive.org");
+};
 
 // Called when Start Scan button is selected.
 const onStartScanButton = function() {
@@ -73,5 +77,6 @@ const displayStatus = function(message) {
 
 module.exports = {
 	onStartScanButton: onStartScanButton,
-	onStopScanButton: onStopScanButton
+	onStopScanButton: onStopScanButton,
+	initialize: initialize
 }
