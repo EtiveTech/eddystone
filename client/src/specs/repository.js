@@ -37,20 +37,16 @@ describe("Repository Requests", function() {
 	  });
 
 	  it('Authorizes a user', function() {
-	  	const url = baseURL + "authorize";
 	  	const email = "test@etive.org";
+	  	const url = baseURL + "careReceiver/" + encodeURIComponent(email) + "?key=" + encodeURIComponent(apiKey);
 	  	const json = JSON.stringify({token: token});
 
-	  	server.respondWith("POST", url, [201, json]);
+	  	server.respondWith("GET", url, [200, json]);
 
 	  	repository.authorize(email);
-	    assert.strictEqual(server.requests[0].verb, "POST");
+	    assert.strictEqual(server.requests[0].verb, "GET");
 	    assert.strictEqual(server.requests[0].url, url);
-			assert.notStrictEqual(server.requests[0].content, null);
-
-	  	const content = JSON.parse(server.requests[0].content);
-	    assert.strictEqual(content.email, email);
-	    assert.strictEqual(content.key, apiKey);
+			assert.strictEqual(server.requests[0].content, null);
 
 	    server.respond();
 
@@ -170,11 +166,12 @@ describe("Repository Requests", function() {
 	  });
 
 	  it('Sends hello messages after authorization', function(done) {
-	  	const url = baseURL + "authorize";
 	  	const email = "test@etive.org";
+	  	const url = baseURL + "careReceiver/" + encodeURIComponent(email) + "?key=" + encodeURIComponent(apiKey);
+
 	  	const json = JSON.stringify({token: token});
 
-	  	server.respondWith("POST", url, [201, json]);
+	  	server.respondWith("GET", url, [200, json]);
 
 	  	repository.authorize(email);
 

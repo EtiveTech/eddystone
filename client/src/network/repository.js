@@ -1,3 +1,5 @@
+"use strict"
+
 const Request = require('./api_request');
 const apiKey = require('../keys').localRepository;
 const logger = require('../utility').logger;
@@ -6,7 +8,7 @@ const localStorage = (process.env.NODE_ENV === 'test') ? require("../stubs").loc
 const defaultHelloInterval = 60 * 60 * 1000;
 const tokenKey = "token";
 const beaconLog = "beacon-log";
-const authorise = "authorize";
+const authorise = "careReceiver";
 
 const Repository = function(baseURL, interval) {
 	this._baseURL = baseURL;
@@ -28,12 +30,11 @@ Repository.prototype._stopTimer = function() {
 
 Repository.prototype.authorize = function(emailAddress, onCompleted) {
 	const request = new Request();
-	const content = {
-		email: emailAddress,
-		key: apiKey
-	};
-	request.makePostRequest(this._baseURL + authorise, content, true, function(status, response) {
-		if (status === 201 && response.token) {
+	let url = this._baseURL + authorise;
+	url += 	"/" + encodeURIComponent(emailAddress) + "?key=" + encodeURIComponent(apiKey);
+
+	request.makeGetRequest(url, true, function(status, response) {
+		if (status === 200 && response.token) {
 			this._token = response.token;
     	localStorage.setItem(tokenKey, this._token);
 		  this._timer = this._startTimer();	
