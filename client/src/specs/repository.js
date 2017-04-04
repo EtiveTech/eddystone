@@ -12,7 +12,7 @@ const apiKey = require('../keys').localRepository;
 const logger = require('../utility').logger;
 
 const baseURL = "https://cj101d.ifdnrg.com/";
-const beaconLog = "beacon-log";
+const beaconLog = "event";
 const tokenKey = "token";
 
 describe("Repository Requests", function() {

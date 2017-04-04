@@ -7,7 +7,7 @@ const arrayToHex = require('../utility').arrayToHex;
 const localStorage = (process.env.NODE_ENV === 'test') ? require("../stubs").localStorage : window.localStorage;
 const defaultHelloInterval = 60 * 60 * 1000;
 const tokenKey = "token";
-const beaconLog = "beacon-log";
+const beaconLog = "event";
 const authorise = "careReceiver";
 
 const Repository = function(baseURL, interval) {
