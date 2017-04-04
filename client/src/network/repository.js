@@ -47,7 +47,7 @@ Repository.prototype.foundBeacon = function(beacon, onCompleted) {
 	const request = new Request();
 	const content = {
 		eventType: 'found',
-		datetime: new Date().toISOString(),
+		datetime: Date.now(),
 		beaconId: arrayToHex(beacon.bid),
 		address: beacon.address,
 		rssi: beacon.rssi,
@@ -65,7 +65,7 @@ Repository.prototype.lostBeacon = function (beacon, onCompleted) {
 	const request = new Request();
 	const content = {
 		eventType: 'lost',
-		datetime: new Date().toISOString(),
+		datetime: Date.now(),
 		beaconId: arrayToHex(beacon.bid),
 		address: beacon.address,
 		rssi: beacon.rssi,
@@ -83,8 +83,8 @@ Repository.prototype.hello = function (onCompleted) {
 	logger("Sending hello message")
 	const request = new Request();
 	const content = {
-		type: 'hello',
-		datetime: new Date().toISOString(),
+		eventType: 'hello',
+		datetime: Date.now(),
 		token: this._token
 	}
 	request.makePostRequest(this._baseURL + beaconLog, content, false, function(status) {

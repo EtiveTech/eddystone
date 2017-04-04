@@ -64,9 +64,9 @@ describe("Repository Requests", function() {
 	  	repository.hello();
 
 			const content = JSON.parse(server.requests[0].content);
-	    assert.strictEqual(content.type, "hello");
+	    assert.strictEqual(content.eventType, "hello");
 	    assert.strictEqual(content.token, token);
-	    assert.strictEqual(isNaN(Date.parse(content.datetime)), false);
+	    assert.strictEqual(content.datetime > 0, true);
 	  });
 
 	  it('Creates a Found Beacon request', function() {
@@ -88,11 +88,11 @@ describe("Repository Requests", function() {
 			assert.notStrictEqual(server.requests[0].content, null);
 
 			const content = JSON.parse(server.requests[0].content);
-	    assert.strictEqual(content.type, "found");
-	    assert.strictEqual(isNaN(Date.parse(content.datetime)), false);
+	    assert.strictEqual(content.eventType, "found");
+	    assert.strictEqual(content.datetime > 0, true);
 	    assert.strictEqual(content.beaconId, beaconId);
 	    assert.strictEqual(content.address, beaconAddress);
-	    assert.strictEqual(content.RSSI, beaconRSSI);
+	    assert.strictEqual(content.rssi, beaconRSSI);
 	    assert.strictEqual(content.txPower, beaconTxPower);
 	    assert.strictEqual(content.token, token);
 	  });
@@ -116,12 +116,12 @@ describe("Repository Requests", function() {
 			assert.notStrictEqual(server.requests[0].content, null);
 
 			const content = JSON.parse(server.requests[0].content);
-	    assert.strictEqual(content.type, "lost");
-	    assert.strictEqual(isNaN(Date.parse(content.datetime)), false);
+	    assert.strictEqual(content.eventType, "lost");
+	    assert.strictEqual(content.datetime > 0, true);
 	    assert.strictEqual(content.beaconId, beaconId);
 	    assert.strictEqual(content.address, beaconAddress);
-	    assert.strictEqual(content.RSSI, beaconRSSI);
-	    assert.strictEqual(content.maxRSSI, beaconMaxRSSI);
+	    assert.strictEqual(content.rssi, beaconRSSI);
+	    assert.strictEqual(content.rssiMax, beaconMaxRSSI);
 	    assert.strictEqual(content.token, token);
 	  });
 	});
@@ -185,7 +185,7 @@ describe("Repository Requests", function() {
 	  	  assert.notStrictEqual(repository._timer, null);
 		  	assert.strictEqual(server.requests.length, 1);
 		  	let content = JSON.parse(server.requests[0].content);
-		  	assert.strictEqual(content.type, "hello");
+		  	assert.strictEqual(content.eventType, "hello");
 	    	done();
 	    }, 1500);
 	  });
@@ -216,7 +216,7 @@ describe("Repository Requests", function() {
 	  	assert.notStrictEqual(repository._timer, null);
 	  	assert.strictEqual(server.requests.length, 1);
 	  	let content = JSON.parse(server.requests[0].content);
-	  	assert.strictEqual(content.type, "hello");
+	  	assert.strictEqual(content.eventType, "hello");
 	  });
 	});
 });
