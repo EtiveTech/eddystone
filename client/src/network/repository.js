@@ -29,6 +29,7 @@ Repository.prototype._stopTimer = function() {
 };
 
 Repository.prototype.authorize = function(emailAddress, onCompleted) {
+	logger("Sending authorisation request")
 	const request = new Request();
 	let url = this._baseURL + authorise;
 	url += 	"/" + encodeURIComponent(emailAddress) + "?key=" + encodeURIComponent(apiKey);
@@ -45,10 +46,11 @@ Repository.prototype.authorize = function(emailAddress, onCompleted) {
 
 Repository.prototype.foundBeacon = function(beacon, onCompleted) {
 	if (!this._token) return;
+	logger("Sending found beacon message");
 	const request = new Request();
 	const content = {
 		eventType: 'found',
-		datetime: Date.now(),
+		timestamp: Date.now(),
 		beaconId: arrayToHex(beacon.bid),
 		address: beacon.address,
 		rssi: beacon.rssi,
@@ -63,10 +65,11 @@ Repository.prototype.foundBeacon = function(beacon, onCompleted) {
 
 Repository.prototype.lostBeacon = function (beacon, onCompleted) {
 	if (!this._token) return;
+	logger("Sending lost beacon message");
 	const request = new Request();
 	const content = {
 		eventType: 'lost',
-		datetime: Date.now(),
+		timestamp: Date.now(),
 		beaconId: arrayToHex(beacon.bid),
 		address: beacon.address,
 		rssi: beacon.rssi,
@@ -85,7 +88,7 @@ Repository.prototype.hello = function (onCompleted) {
 	const request = new Request();
 	const content = {
 		eventType: 'hello',
-		datetime: Date.now(),
+		timestamp: Date.now(),
 		token: this._token
 	}
 	request.makePostRequest(this._baseURL + beaconLog, content, false, function(status) {

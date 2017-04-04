@@ -1,5 +1,6 @@
 const onStartScanButton = require('./view/ui').onStartScanButton;
 const onStopScanButton = require('./view/ui').onStopScanButton;
+const initialize = require('./view/ui').initialize;
 const phone = require('./view/phone');
 const logger = require('./utility').logger;
 
@@ -8,6 +9,7 @@ const onDeviceReady = function() {
 	// Safe to use the buttons now
 	window.onStartScanButton = onStartScanButton;
 	window.onStopScanButton = onStopScanButton;
+	initialize();
 };
 
 window.onload = function(){

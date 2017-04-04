@@ -62,7 +62,7 @@ describe("Repository Requests", function() {
 			const content = JSON.parse(server.requests[0].content);
 	    assert.strictEqual(content.eventType, "hello");
 	    assert.strictEqual(content.token, token);
-	    assert.strictEqual(content.datetime > 0, true);
+	    assert.strictEqual(content.timestamp > 0, true);
 	  });
 
 	  it('Creates a Found Beacon request', function() {
@@ -85,7 +85,7 @@ describe("Repository Requests", function() {
 
 			const content = JSON.parse(server.requests[0].content);
 	    assert.strictEqual(content.eventType, "found");
-	    assert.strictEqual(content.datetime > 0, true);
+	    assert.strictEqual(content.timestamp > 0, true);
 	    assert.strictEqual(content.beaconId, beaconId);
 	    assert.strictEqual(content.address, beaconAddress);
 	    assert.strictEqual(content.rssi, beaconRSSI);
@@ -113,7 +113,7 @@ describe("Repository Requests", function() {
 
 			const content = JSON.parse(server.requests[0].content);
 	    assert.strictEqual(content.eventType, "lost");
-	    assert.strictEqual(content.datetime > 0, true);
+	    assert.strictEqual(content.timestamp > 0, true);
 	    assert.strictEqual(content.beaconId, beaconId);
 	    assert.strictEqual(content.address, beaconAddress);
 	    assert.strictEqual(content.rssi, beaconRSSI);

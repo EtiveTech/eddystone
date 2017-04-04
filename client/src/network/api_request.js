@@ -23,7 +23,10 @@ const ApiRequest = function() {
 ApiRequest.prototype._setRequest = function(options) {
   this._request.open(options.verb, options.url);
   if (options.jwt) this._request.setRequestHeader('Authorization', 'Bearer ' + options.jwt);
-  if (options.content) this._request.setRequestHeader('Content-Type', 'application/json');
+  if (options.content) {
+    this._request.setRequestHeader('Content-Type', 'application/json');
+    this._json = JSON.stringify(options.content);
+  }
 
   this._request.onload = function() {
     // In the callback, 'this' is the request
@@ -32,8 +35,6 @@ ApiRequest.prototype._setRequest = function(options) {
     logger( options.verb + " request to " + options.url + " returned status " + this.status);
     options.callback(this.status, content);
   };
-
-  if (options.content) this._json = JSON.stringify(options.content);
 };
 
 ApiRequest.prototype._resetRequest = function() {
