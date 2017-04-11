@@ -15,6 +15,9 @@
         },
         "cordova-plugin-network-information": {
             "PACKAGE_NAME": "org.etive.city4age.app"
+        },
+        "cordova-plugin-whitelist": {
+            "PACKAGE_NAME": "org.etive.city4age.app"
         }
     },
     "dependent_plugins": {}

@@ -4,6 +4,8 @@ const logger = require('../utility').logger;
 const bleUtility = require('./ble_utility');
 
 const CITY4AGE_NAMESPACE = 'edd1ebeac04e5defa017';
+const WAIT_TIME = 2800; // Wait 2.8 seconds before declaring a beacon found
+const TIDY_INTERVAL = 1000; // Wait 1 second between tidy events
 
 const Scan = function(onFound, onLost, onError){
 	this._onFound = onFound;
@@ -22,11 +24,16 @@ Scan.prototype.start = function(onError) {
 	// Start scanning.
 	logger("Starting the scan");
 	this._beacons = {};
-	this._tidyTimer = setInterval(this._tidyBeaconList.bind(this), 1000);
+	this._tidyTimer = setInterval(this._tidyBeaconList.bind(this), TIDY_INTERVAL);
 	this._scanning = true;
 	evothings.ble.startScan(
 		['0000FEAA-0000-1000-8000-00805F9B34FB'],
-		function(device) { this._onDeviceFound(device, onError) }.bind(this),
+		function(device) {
+			if (device.rssi <= 0) {
+				// It seems some iPhones can return 127 as an RSSI value - ignore it
+				this._onDeviceFound(device, onError)
+			}
+		}.bind(this),
 		this._onError
 	);
 };
@@ -44,6 +51,7 @@ Scan.prototype._onDeviceFound = function(device, onError) {
 	// This is to prevent devices being reported after stopScanning
 	// has been called (this can happen since scanning does not stop
 	// instantly when evothings.ble.stopScan is called).
+
 	if (!this._scanning) return;
 
 	// Different packets may be broadcast by the beacon.
@@ -96,7 +104,7 @@ Scan.prototype._onDeviceFound = function(device, onError) {
 			if (bleUtility.arrayToHexString(device.nid) === CITY4AGE_NAMESPACE) {
 				// We have a City4Age beacon
 				device.rssiMax = device.rssi;
-				if (this._onFound) this._onFound(device);
+				device.foundAfter = device.timestamp + WAIT_TIME;
 				this._beacons[device.address] = device;
 				logger("Device", device.address, "is beacon", bleUtility.arrayToHexString(device.bid));
 			}
@@ -108,23 +116,36 @@ Scan.prototype._onDeviceFound = function(device, onError) {
 		let storedBeacon = this._beacons[device.address];
 		storedBeacon.rssi = device.rssi;
 		if (storedBeacon.rssiMax < device.rssi) storedBeacon.rssiMax = device.rssi;
-		storedBeacon.timestamp = device.timestamp;
+		if (device.rssi > -100) {
+			// Only update the timestamp if the signal is reasonably strong
+			storedBeacon.timestamp = device.timestamp;
+		}
 		// storedBeacon.name = device.name;
 		// storedBeacon.scanRecord = device.scanRecord;
 		// storedBeacon.advertisementData = device.advertisementData;
+
+		const timeNow = Date.now();
+		if (storedBeacon.foundAfter && storedBeacon.foundAfter < timeNow) {
+			// Wait two seconds before reporting the existance of a beacon
+			logger("Beacon", bleUtility.arrayToHexString(storedBeacon.bid), "is now found")
+			storedBeacon.foundAfter = null;
+			this._onFound(storedBeacon);
+		}
 	}
 }
 
 Scan.prototype._tidyBeaconList = function() {
-	const TIMEOUT = 10000; // 10 seconds
 	const timeNow = Date.now();
 	const addresses = Object.keys(this._beacons);
 	for (let address of addresses) {
 		const beacon = this._beacons[address];
-		// Only show devices that are updated during the last 10 seconds.
-		if (beacon.timestamp + TIMEOUT < timeNow) {
-			logger("Beacon", bleUtility.arrayToHexString(beacon.bid), "is no longer nearby")
-			if (this._onLost) this._onLost(this._beacons[address]);
+		// Only show devices that are updated during the last 2 seconds.
+		if (beacon.timestamp + WAIT_TIME < timeNow) {
+			logger("Beacon", bleUtility.arrayToHexString(beacon.bid), "is now lost")
+			if (!this.beacons[address].foundAfter && this._onLost) {
+				// Don't report a beacon as lost unless it was reported found
+				this._onLost(this._beacons[address]);
+			}
 			delete this._beacons[address];
 		}
 	}

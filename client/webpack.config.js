@@ -2,22 +2,32 @@ config = {
   entry: "./src/app.js",
   output: {
     filename: "bundle.js",
-    path: "../www/js"
+    path: "/Users/user/Development/City4Age/app/www/js"
   },
   resolve: {
-    extensions: ['', '.js', '.jsx']
+    extensions: ['.js', '.jsx']
   },
   module:{
-    loaders: [
+    rules: [
       {
         test: /(\.js|\.jsx)$/,
         exclude: /(node_modules|bower_components)/,
-        loader: 'babel', // 'babel-loader' is also a legal name to reference
-        query: {
-          presets: ['es2015']
-        }
+        use: [
+          {
+            loader: 'babel-loader', // 'babel-loader' is also a legal name to reference
+            query: {
+              presets: ['es2015']
+            }
+          },
+        ]
       },
-      { test: /\.css$/, loader: "style-loader!css-loader" }
+      {
+        test: /\.css$/,
+        use: [
+          "style-loader",
+          "css-loader" 
+        ]
+      }
     ]
   },
   devtool: 'source-map'
