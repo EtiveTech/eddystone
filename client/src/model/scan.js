@@ -140,7 +140,7 @@ Scan.prototype._tidyBeaconList = function() {
 	for (let address of addresses) {
 		const beacon = this._beacons[address];
 		// Only show devices that are updated during the last 2 seconds.
-		if (beacon.timestamp + WAIT_TIME < timeNow) {
+		if (beacon.timestamp + (WAIT_TIME * 2) < timeNow) {
 			logger("Beacon", bleUtility.arrayToHexString(beacon.bid), "is now lost")
 			if (!this.beacons[address].foundAfter && this._onLost) {
 				// Don't report a beacon as lost unless it was reported found
