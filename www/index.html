@@ -23,29 +23,12 @@
 <body ontouchstart=""><!-- ontouchstart="" enables low-delay CSS transitions. -->
 
 	<header>
-		<button class="back" onclick="history.back()">
-			<img src="./img/arrow-left.svg" />
-		</button>
-
-		<img class="logotype" src="./img/logo.svg" alt="Evothings" />
-
-		<button id="menu-button" tabindex="0" onclick="this.focus()">
-			<img src="./img/menu.svg" />
-		</button>
-
-		<menu>
-			<menuitem>
-				<a href="#">Home</a>
-			</menuitem>
-
-			<menuitem>
-				<a href="#troubleshooting">Troubleshooting</a>
-			</menuitem>
-		</menu>
+		<img class="logotype" src="./img/logo.png" alt="City4Age" />
 	</header>
 
-	<h1>BLE Scan</h1>
 
+	<div id="email" />
+	
 	<button onclick="onStartScanButton()" class="green">
 		START SCAN
 	</button>
@@ -54,17 +37,9 @@
 		STOP SCAN
 	</button>
 
-	<p id="scan-status">Scanning Paused</p>
+	<div id="scan-status">Scanning Paused</div>
 
-	<ul id="found-devices" class="dynamic"></ul>
-
-	<section id='troubleshooting'>
-
-		<h2>Troubleshooting</h2>
-
-		<p>Sometimes BLE stops working when switching between apps or doing multiple reloads. In this case restart the Evothings Client app. Additionally, you can use the Evothings Workbench Tools to see any error messages that may help in your investigation.</p>
-
-	</section>
+	<div id="found-devices" class="dynamic"><div>
 
 </body>
 

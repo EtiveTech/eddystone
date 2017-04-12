@@ -1,8 +1,10 @@
+const path = require('path');
+
 config = {
   entry: "./src/app.js",
   output: {
     filename: "bundle.js",
-    path: "/Users/user/Development/City4Age/app/www/js"
+    path: path.resolve("../www/js")
   },
   resolve: {
     extensions: ['.js', '.jsx']
@@ -11,15 +13,8 @@ config = {
     rules: [
       {
         test: /(\.js|\.jsx)$/,
-        exclude: /(node_modules|bower_components)/,
-        use: [
-          {
-            loader: 'babel-loader', // 'babel-loader' is also a legal name to reference
-            query: {
-              presets: ['es2015']
-            }
-          },
-        ]
+        exclude: /node_modules/,
+        loader: "babel-loader"
       },
       {
         test: /\.css$/,

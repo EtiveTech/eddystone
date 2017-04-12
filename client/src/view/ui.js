@@ -55,15 +55,10 @@ const displayDeviceList = function() {
 
 		// Create tag for device data.
 		const content =
-			'<strong>' + arrayToHex(device.nid) + "<br />" + arrayToHex(device.bid) + '</strong><br />'
-			// Do not show address on iOS since it can be confused
-			// with an iBeacon UUID.
-			+	(phone.isIOS ? '' : device.address + '<br />')
-			+	device.rssi + '<br />'
-			+ 	'<div style="background:rgb(225,0,0);height:20px;width:'
-			+ 		rssiWidth + '%;"></div>';
+			'<tr><td width="33%">Beacon Id</td><td><strong>' + arrayToHex(device.bid) + '</strong></td></tr>' +
+			'<tr><td>RSSI</td><td><strong>' + device.rssi + '</strong></td></tr>';
 
-		let newEntry = document.createElement('li');
+		let newEntry = document.createElement('table');
 		newEntry.innerHTML = content;
 		foundDevices.appendChild(newEntry);
 	};
