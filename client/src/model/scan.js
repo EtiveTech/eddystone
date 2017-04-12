@@ -24,7 +24,8 @@ Scan.prototype.start = function(onError) {
 	// Start scanning.
 	logger("Starting the scan");
 	this._beacons = {};
-	this._tidyTimer = setInterval(this._tidyBeaconList.bind(this), TIDY_INTERVAL);
+	this._preBeacons = {}; // Beacons that have not (yet) been reported as found
+	this._tidyTimer = setInterval(this._tidyBeaconLists.bind(this), TIDY_INTERVAL);
 	this._scanning = true;
 	evothings.ble.startScan(
 		['0000FEAA-0000-1000-8000-00805F9B34FB'],
@@ -56,7 +57,7 @@ Scan.prototype._onDeviceFound = function(device, onError) {
 
 	// Different packets may be broadcast by the beacon.
 	// Each packet will come from the same device but will have different advertising data
-	let newDevice = !this._beacons[device.address];
+	let newDevice = !(this._beacons[device.address] || this._preBeacons[device.address]);
 
 	// Add a timestamp to the device so it can be timed out and removed
 	device.timestamp = Date.now();
@@ -105,48 +106,53 @@ Scan.prototype._onDeviceFound = function(device, onError) {
 				// We have a City4Age beacon
 				device.rssiMax = device.rssi;
 				device.foundAfter = device.timestamp + WAIT_TIME;
-				this._beacons[device.address] = device;
+				this._preBeacons[device.address] = device;
 				logger("Device", device.address, "is beacon", bleUtility.arrayToHexString(device.bid));
 			}
 		}
 
 	}
 	else {
-		// Avoid havin to rescan everything - already know it's a beacon
-		let storedBeacon = this._beacons[device.address];
+		// Avoid having to rescan everything - already know it's a beacon
+		let storedBeacon = this._preBeacons[device.address] || this._beacons[device.address];
 		storedBeacon.rssi = device.rssi;
 		if (storedBeacon.rssiMax < device.rssi) storedBeacon.rssiMax = device.rssi;
-		if (device.rssi > -100) {
-			// Only update the timestamp if the signal is reasonably strong
-			storedBeacon.timestamp = device.timestamp;
-		}
+
+		// Only update the timestamp if the signal is reasonably strong
+		if (device.rssi > -95) storedBeacon.timestamp = device.timestamp;
+
 		// storedBeacon.name = device.name;
 		// storedBeacon.scanRecord = device.scanRecord;
 		// storedBeacon.advertisementData = device.advertisementData;
-
-		const timeNow = Date.now();
-		if (storedBeacon.foundAfter && storedBeacon.foundAfter < timeNow) {
-			// Wait two seconds before reporting the existance of a beacon
-			logger("Beacon", bleUtility.arrayToHexString(storedBeacon.bid), "is now found")
-			storedBeacon.foundAfter = null;
-			this._onFound(storedBeacon);
-		}
 	}
 }
 
-Scan.prototype._tidyBeaconList = function() {
+Scan.prototype._tidyBeaconLists = function() {
 	const timeNow = Date.now();
-	const addresses = Object.keys(this._beacons);
+
+	let addresses = Object.keys(this._beacons);
 	for (let address of addresses) {
 		const beacon = this._beacons[address];
 		// Only show devices that are updated during the last 2 seconds.
 		if (beacon.timestamp + (WAIT_TIME * 2) < timeNow) {
 			logger("Beacon", bleUtility.arrayToHexString(beacon.bid), "is now lost")
-			if (!this.beacons[address].foundAfter && this._onLost) {
-				// Don't report a beacon as lost unless it was reported found
-				this._onLost(this._beacons[address]);
-			}
+			if (this._onLost) this._onLost(beacon);
 			delete this._beacons[address];
+		}
+	}
+
+	addresses = Object.keys(this._preBeacons);
+	for (let address of addresses) {
+		const beacon = this._preBeacons[address];
+		if (beacon.timestamp > beacon.foundAfter) {
+			logger("Beacon", bleUtility.arrayToHexString(beacon.bid), "is now found");
+			this._beacons[beacon.address] = beacon;
+			delete this._preBeacons[address];
+			if (this._onFound) this._onFound(beacon);
+		}
+		else if (beacon.timestamp + TIDY_INTERVAL < timeNow) {
+			delete this._preBeacons[address];
+			logger("Beacon", bleUtility.arrayToHexString(beacon.bid), "has been forgotten");
 		}
 	}
 }
