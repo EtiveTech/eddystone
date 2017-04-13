@@ -5,6 +5,7 @@ const bleUtility = require('./ble_utility');
 
 const CITY4AGE_NAMESPACE = 'edd1ebeac04e5defa017';
 const WAIT_TIME = 1400; // Wait 1.4 second before declaring a beacon found
+const LOST_FACTOR = 4; // Wait LOST_FACTOR * WAIT_TIME before declaring a beacon lost
 const TIDY_INTERVAL = 700; // Wait 0.5 second between tidy events
 const RSSI_THRESHOLD = -90; // Beacon is ignored unless the signal is stronger than this
 
@@ -133,7 +134,7 @@ Scan.prototype._tidyBeaconLists = function() {
 	for (let address of addresses) {
 		const beacon = this._beacons[address];
 		// Only show devices that are updated during the last 2 seconds.
-		if (beacon.timestamp + (WAIT_TIME * 4) < timeNow) {
+		if (beacon.timestamp + (WAIT_TIME * LOST_FACTOR) < timeNow) {
 			logger("Beacon", bleUtility.arrayToHexString(beacon.bid), "is now lost")
 			if (this._onLost) this._onLost(beacon);
 			delete this._beacons[address];
