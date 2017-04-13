@@ -4,8 +4,9 @@ const logger = require('../utility').logger;
 const bleUtility = require('./ble_utility');
 
 const CITY4AGE_NAMESPACE = 'edd1ebeac04e5defa017';
-const WAIT_TIME = 2800; // Wait 2.8 seconds before declaring a beacon found
-const TIDY_INTERVAL = 1000; // Wait 1 second between tidy events
+const WAIT_TIME = 1400; // Wait 1.4 second before declaring a beacon found
+const TIDY_INTERVAL = 700; // Wait 0.5 second between tidy events
+const RSSI_THRESHOLD = -90; // Beacon is ignored unless the signal is stronger than this
 
 const Scan = function(onFound, onLost, onError){
 	this._onFound = onFound;
@@ -117,9 +118,7 @@ Scan.prototype._onDeviceFound = function(device, onError) {
 		let storedBeacon = this._preBeacons[device.address] || this._beacons[device.address];
 		storedBeacon.rssi = device.rssi;
 		if (storedBeacon.rssiMax < device.rssi) storedBeacon.rssiMax = device.rssi;
-
-		// Only update the timestamp if the signal is reasonably strong
-		if (device.rssi > -95) storedBeacon.timestamp = device.timestamp;
+		if (device.rssi > RSSI_THRESHOLD) storedBeacon.timestamp = device.timestamp;
 
 		// storedBeacon.name = device.name;
 		// storedBeacon.scanRecord = device.scanRecord;
@@ -134,7 +133,7 @@ Scan.prototype._tidyBeaconLists = function() {
 	for (let address of addresses) {
 		const beacon = this._beacons[address];
 		// Only show devices that are updated during the last 2 seconds.
-		if (beacon.timestamp + (WAIT_TIME * 2) < timeNow) {
+		if (beacon.timestamp + (WAIT_TIME * 4) < timeNow) {
 			logger("Beacon", bleUtility.arrayToHexString(beacon.bid), "is now lost")
 			if (this._onLost) this._onLost(beacon);
 			delete this._beacons[address];
@@ -150,7 +149,7 @@ Scan.prototype._tidyBeaconLists = function() {
 			delete this._preBeacons[address];
 			if (this._onFound) this._onFound(beacon);
 		}
-		else if (beacon.timestamp + TIDY_INTERVAL < timeNow) {
+		else if (beacon.foundAfter < timeNow && beacon.timestamp + TIDY_INTERVAL < timeNow) {
 			delete this._preBeacons[address];
 			logger("Beacon", bleUtility.arrayToHexString(beacon.bid), "has been forgotten");
 		}
