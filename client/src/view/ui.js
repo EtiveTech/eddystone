@@ -109,7 +109,7 @@ const displayDeviceList = function() {
 // Display a status message
 const displayStatus = function(message) {
 	const scanStatus = document.getElementById('scan-status-div');
-	scanStatus.innerText = message;
+	scanStatus.innerHTML = '<i>' + message + '</i>';
 };
 
 module.exports = {
