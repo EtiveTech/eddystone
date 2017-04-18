@@ -88,44 +88,7 @@ header {
 
 	z-index: 1000;
 }
-header button {
-	display: block;
-	position: absolute;
-	top: 50%;
-	max-height: 70%;
 
-	margin: 0;
-
-	font-size: 30%;
-
-	-webkit-transform: translateY(-50%);
-	-ms-transform: translateY(-50%);
-	transform: translateY(-50%);
-}
-header button.back {
-	position: absolute;
-	left: 0;
-
-	height: 100%;
-	margin: 0;
-	padding: 0 0.9em;
-
-	/* Font size is percentage of the header's font size. */
-	font-size: 50%;
-	color: #000;
-
-	text-align: left;
-
-	background: none;
-
-	border-radius: 0;
-	border: none;
-
-	box-shadow: none;
-}
-header button.back img {
-	height: 0.5em;
-}
 header img.logotype {
 	position: absolute;
 	top: 50%;
@@ -139,80 +102,6 @@ header img.logotype {
 	-webkit-transform: translateY(-50%);
 	-ms-transform: translateY(-50%);
 	transform: translateY(-50%);
-}
-
-
-
-
-/*  ----------------------------------------------------------
-								MENU
-	---------------------------------------------------------- */
-
-header button#menu-button {
-	position: absolute;
-	right: 0;
-
-	width: 3em;
-	height: 100%;
-	max-height: 100%;
-	margin: 0;
-	padding: 0 0.9em;
-
-	/* Font size is percentage of the header's font size. */
-	font-size: 50%;
-	color: #000;
-
-	text-align: right;
-
-	background: none;
-
-	border-radius: 0;
-	border: none;
-
-	box-shadow: none;
-}
-header button#menu-button img {
-	height: 34%;
-}
-header button#menu-button:focus {
-	pointer-events: none;
-	outline: none;
-}
-header button#menu-button:focus::-moz-focus-inner {
-	border: 0;
-}
-header button#menu-button:focus + menu {
-	opacity: 1;
-	visibility: visible;
-}
-header menu {
-	display: block;
-	position: absolute;
-	top: 100%;
-	right: 0;
-
-	margin: 0;
-	padding: 0;
-
-	background: #f3f3f3;
-
-	opacity: 0;
-	visibility: hidden;
-	transition: visibility 0.5s;
-}
-
-header menu > * {
-	display: block;
-
-	padding: 0 1em 0 1em;
-
-	font-family: 'Proxima Nova Bold';
-	font-size: 35%;
-	text-align: right;
-}
-header menu a {
-	color: #000;
-	text-decoration: none;
 }
 
 header h1 {
@@ -462,7 +351,6 @@ h1 {
 	padding: 0;
 	margin: 1em 0 0 0;
 
-	font-family: 'Proxima Nova Black';
 	font-size: 100%;
 	line-height: 1.5;
 
@@ -476,7 +364,6 @@ h2,h3,h4,h5,h6 {
 	margin: 1em 0 0 0;
 	padding: 0;
 
-	font-family: 'Proxima Nova Bold';
 	font-size: 63%;
 
 	line-height: 1.5;
@@ -502,13 +389,6 @@ table {
 	font-size: 63%;
 	text-align: left;
 }
-thead {
-	font-family: 'Proxima Nova Bold';
-}
-
-strong {
-	font-family: 'Proxima Nova Bold';
-}
 
 code {
 	font-size: inherit;
@@ -533,36 +413,8 @@ ol li, ul li {
 ol li:before {
 	content: counter(item) ". ";
 	counter-increment: item;
-	font-family: 'Proxima Nova Bold';
 }
-ul.dynamic {
-	list-style-type: none;
-	padding: 0;
-}
-ul.dynamic li {
-	padding: 4% 15% 4% 4%;
 
-	border-radius: 4px;
-	border: none;
-
-	box-shadow: inset 0 -7px 12px -12px #000;
-
-	background-color: #f3f3f3;
-}
-ul.dynamic li:last-child {
-	box-shadow: none;
-}
-ul.dynamic li a {
-	color: #000;
-}
-ul.dynamic.arrow li,
-ul.dynamic li.arrow {
-	background-image: url('../images/arrow-right.svg');
-	background-position: 94% center; /* CSS 2 fallback */
-	background-position: right 5% center; /* requires CSS 3 */
-	background-size: 1em auto;
-	background-repeat: no-repeat;
-}
 
 article {
 	display: none;
@@ -570,8 +422,6 @@ article {
 
 	font-size: 100%;
 }
-
-
 
 
 /*  ----------------------------------------------------------
