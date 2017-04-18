@@ -34,16 +34,17 @@ const initialize = function() {
 const onSaveButton = function() {
 	const email = document.getElementById('email-address').value.trim().toLowerCase();
 	if (email.length > 0) {
-		repository.authorize(email, function(success) {
+		repository.authorize(email, function(success, message) {
 			// Need this error to be meaningful
 			if (success) {
-				alert("Phone registered");
+				alert("Phone successfully registered.");
 				// Clear the email from the UI and start scanning
 				clearEmail();
 				startScanning();
 			}
 			else {
-				alert("Send failed");
+				const alertMessage = (message) ? message : "Phone registration failed. Please check that your email address is correct."
+				alert(alertMessage);
 			}
 		})
 	}
