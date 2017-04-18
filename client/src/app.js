@@ -1,5 +1,4 @@
-const onStartScanButton = require('./view/ui').onStartScanButton;
-const onStopScanButton = require('./view/ui').onStopScanButton;
+const onSaveButton = require('./view/ui').onSaveButton;
 const initialize = require('./view/ui').initialize;
 const phone = require('./view/phone');
 const logger = require('./utility').logger;
@@ -9,8 +8,7 @@ const onDeviceReady = function() {
   // Allow the app to work in background mode
   cordova.plugins.backgroundMode.enable();
 	// Safe to use the buttons now
-	window.onStartScanButton = onStartScanButton;
-	window.onStopScanButton = onStopScanButton;
+	window.onSaveButton = onSaveButton;
 	initialize();
 };
 

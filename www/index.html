@@ -25,18 +25,15 @@
 		<img class="logotype" src="./img/logo.png" alt="City4Age" />
 	</header>
 
-	<div id="email"></div>
-
-	<button onclick="onStartScanButton()" class="green">
-		START SCAN
-	</button>
-
-	<button onclick="onStopScanButton()" class="charcoal">
-		STOP SCAN
-	</button>
-
-	<div id="scan-status">Scanning Paused</div>
-	<div id="found-devices" class="dynamic"></div>
+	<div id="ui-div">
+		<div id="scan-status-div"><i>Not Scanning.</i></div>
+		<div id="email-div">
+			<label for="email-address">Email</label>
+			<input id="email-address" type="email" placeholder="Your email...">
+			<button onclick="onSaveButton()">Save</button>
+		</div>
+		<div id="found-devices-div"></div>
+	</div>
 
 </body>
 

@@ -16,6 +16,8 @@ const Repository = function(baseURL, interval) {
 	this._token = localStorage.getItem(tokenKey);
 	this._interval = (interval) ? interval : defaultHelloInterval;
 	this._timer = this._startTimer();
+	
+	Object.defineProperty(this, "hasToken", { get: function() { return (this._token) ? true : false; } });
 };
 
 Repository.prototype._startTimer = function() {
