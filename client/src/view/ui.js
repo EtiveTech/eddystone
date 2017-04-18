@@ -11,7 +11,6 @@ const repository = new Repository("http://192.168.1.74:8080");
 // devices in case no devices are found by scan.
 let updateTimer = null;
 let scan = null;
-let email = "";
 
 const clearEmail = function() {
 	document.getElementById("ui-div").removeChild(document.getElementById("email-div"));
@@ -32,8 +31,8 @@ const initialize = function() {
 	}
 };
 
-const onSaveButton = function(event) {
-	const email = event.target.value.trim().toLowerCase();
+const onSaveButton = function() {
+	const email = document.getElementById('email-address').value.trim().toLowerCase();
 	if (email.length > 0) {
 		repository.authorize(email, function(success) {
 			// Need this error to be meaningful
