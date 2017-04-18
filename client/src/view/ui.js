@@ -5,25 +5,87 @@ const logger = require('../utility').logger;
 const arrayToHex = require('../utility').arrayToHex;
 const Scan = require('../model/scan');
 const Repository = require('../network/repository');
-const repository = new Repository("http://192.168.1.73:8080");
+const repository = new Repository("http://192.168.1.74:8080");
 
 // Timer that updates the device list and removes inactive
 // devices in case no devices are found by scan.
 let updateTimer = null;
 let scan = null;
+let email = "";
+
+const emptyEmail = function() {
+	let html = document.getElementById("email");
+	while (html.firstChild) {
+		html.removeChild(html.firstChild);
+	}
+	return html;
+}
+
+const emailForDisplay = function() {
+	const text = document.createElement("input");
+	text.placeholder = "email address"
+	text.value = email;
+	text.id = "emailText";
+	text.readOnly = true;
+
+	const button = document.createElement("button");
+	button.innerText = "Edit";
+	button.id = "editButton";
+	button.class = "charcoal";
+	button.onclick = function() { emailForEdit(email); };
+
+	const div = emptyEmail();
+	div.appendChild(text);
+	div.appendChild(button);
+}
+
+const emailForEdit = function() {
+	const text = document.createElement("input");
+	text.placeholder = "email address"
+	text.value = email;
+	text.type = "email";
+	text.id = "emailText"
+
+	const button = document.createElement("button");
+	button.innerText = "Send";
+	button.id = "sendButton";
+	button.class = "charcoal";
+	button.onclick = function() {
+		email = text.value.trim();
+		repository.authorize(email, function(success) {
+			// Need this error to be meaningful
+			if (!success) alert("Send failed");
+			emailForDisplay();
+		})
+	}
+
+	const div = emptyEmail();
+	div.appendChild(text);
+	div.appendChild(button);
+}
 
 const initialize = function() {
-	repository.authorize("test@etive.org");
+	cordova.plugins.backgroundMode.on('activate', function() {
+		logger("Entering background mode");
+	});
+
+	cordova.plugins.backgroundMode.on('deactivate', function() {
+		logger("Entering foreground mode");
+	});
+
+	emailForDisplay(email);
 };
 
 // Called when Start Scan button is selected.
 const onStartScanButton = function() {
-	scan = new Scan(repository.foundBeacon.bind(repository), repository.lostBeacon.bind(repository), function(errorCode) {
-		displayStatus('Scan Error: ' + errorCode);
+	repository.authorize("test@etive.org", function(status) {
+		scan = new Scan(repository.foundBeacon.bind(repository), repository.lostBeacon.bind(repository), function(errorCode) {
+			displayStatus('Scan Error: ' + errorCode);
+		});
+		scan.start();
+		updateTimer = setInterval(displayDeviceList, 500);
+		displayStatus('Scanning...');
 	});
-	scan.start();
-	updateTimer = setInterval(displayDeviceList, 500);
-	displayStatus('Scanning...');
 };
 
 // Called when Stop Scan button is selected.
@@ -38,6 +100,9 @@ const onStopScanButton = function() {
 const displayDeviceList = function() {
 	const devices = scan.beacons;
 	const foundDevices = document.getElementById('found-devices');
+
+  // UI not visible if in background mode
+	if (cordova.plugins.backgroundMode.isActive()) return;
 
 	// Clear device list.
   while(foundDevices.firstChild) {

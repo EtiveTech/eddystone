@@ -7,8 +7,8 @@ const arrayToHex = require('../utility').arrayToHex;
 const localStorage = (process.env.NODE_ENV === 'test') ? require("../stubs").localStorage : window.localStorage;
 const defaultHelloInterval = 60 * 60 * 1000;
 const tokenKey = "token";
-const beaconLog = "event";
-const authorise = "careReceiver";
+const beaconLog = "api/event";
+const authorize = "api/receiver";
 
 const Repository = function(baseURL, interval) {
 	this._baseURL = baseURL;
@@ -31,7 +31,7 @@ Repository.prototype._stopTimer = function() {
 Repository.prototype.authorize = function(emailAddress, onCompleted) {
 	logger("Sending authorisation request")
 	const request = new Request();
-	let url = this._baseURL + authorise;
+	let url = this._baseURL + authorize;
 	url += 	"/" + encodeURIComponent(emailAddress) + "?key=" + encodeURIComponent(apiKey);
 
 	request.makeGetRequest(url, true, function(status, response) {
@@ -40,7 +40,10 @@ Repository.prototype.authorize = function(emailAddress, onCompleted) {
     	localStorage.setItem(tokenKey, this._token);
 		  this._timer = this._startTimer();	
 		}
-	  if (onCompleted) onCompleted(status);
+	  if (onCompleted) {
+	  	const message = (response) ? response.message : null;
+	  	onCompleted(status === 200, message);
+	  }
 	}.bind(this));
 }
 

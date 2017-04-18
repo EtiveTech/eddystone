@@ -11,10 +11,9 @@
 
   <link rel="stylesheet" type="text/css" href="./css/style.css">
 	<script>
-	// Redirect console.log to Evothings Workbench.
-	if (window.hyper && window.hyper.log) { console.log = hyper.log }
+		// Redirect console.log to Evothings Workbench.
+		if (window.hyper && window.hyper.log) { console.log = hyper.log }
 	</script>
-
 	<script src="cordova.js"></script>
 	<script src="./js/bundle.js"></script>
 
@@ -26,7 +25,7 @@
 		<img class="logotype" src="./img/logo.png" alt="City4Age" />
 	</header>
 
-	<div id="email" />
+	<div id="email"></div>
 
 	<button onclick="onStartScanButton()" class="green">
 		START SCAN
@@ -37,8 +36,7 @@
 	</button>
 
 	<div id="scan-status">Scanning Paused</div>
-
-	<div id="found-devices" class="dynamic"><div>
+	<div id="found-devices" class="dynamic"></div>
 
 </body>
 

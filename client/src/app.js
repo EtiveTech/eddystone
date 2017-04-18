@@ -6,6 +6,8 @@ const logger = require('./utility').logger;
 
 const onDeviceReady = function() {
 	logger("onDeviceReady() called");
+  // Allow the app to work in background mode
+  cordova.plugins.backgroundMode.enable();
 	// Safe to use the buttons now
 	window.onStartScanButton = onStartScanButton;
 	window.onStopScanButton = onStopScanButton;
