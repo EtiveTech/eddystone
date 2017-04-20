@@ -23,7 +23,7 @@ const Repository = function(baseURL, interval) {
 };
 
 Repository.prototype._startTimer = function() {
-	if (this._token && this._interval > 0) return setInterval(this.hello.bind(this), this._interval);
+	if (this._token && this._interval > 0) return setInterval(this.heartBeat.bind(this), this._interval);
 	return null;  	
 };
 
@@ -78,6 +78,7 @@ Repository.prototype.foundBeacon = function(beacon, onCompleted) {
 		address: beacon.address,
 		rssi: beacon.rssi,
 		txPower: beacon.txPower,
+		uuid: (process.env.NODE_ENV === 'test') ? "Test UUID" : device.uuid,
 		token: this._token
 	}
 	request.makePostRequest(this._baseURL + beaconLog, content, false, function(status) {
@@ -97,6 +98,7 @@ Repository.prototype.lostBeacon = function (beacon, onCompleted) {
 		address: beacon.address,
 		rssi: beacon.rssi,
 		rssiMax: beacon.rssiMax,
+		uuid: (process.env.NODE_ENV === 'test') ? "Test UUID" : device.uuid,
 		token: this._token
 	}
 	request.makePostRequest(this._baseURL + beaconLog, content, false, function(status) {
@@ -105,16 +107,16 @@ Repository.prototype.lostBeacon = function (beacon, onCompleted) {
 	});
 }
 
-Repository.prototype.hello = function (onCompleted) {
+Repository.prototype.heartBeat = function (onCompleted) {
 	if (!this._token) return;
 	logger("Sending hello message")
 	const request = new Request();
 	const content = {
-		eventType: 'hello',
 		timestamp: Date.now(),
+		uuid: (process.env.NODE_ENV === 'test') ? "Test UUID" : device.uuid,
 		token: this._token
 	}
-	request.makePostRequest(this._baseURL + beaconLog, content, false, function(status) {
+	request.makePutRequest(this._baseURL + deviceRoute, content, false, function(status) {
 		// Might not be authorised to send to the server or the api key may be wrong
 		if (onCompleted) onCompleted(status);
 	});

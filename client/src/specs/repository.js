@@ -29,7 +29,7 @@ describe("Repository Requests", function() {
 	  it('Won\'t send a request without authorisation', function() {
 	  	const url = baseURL + beaconLog;
 
-	  	repository.hello();
+	  	repository.heartBeat();
 	  	repository.foundBeacon();
 	  	repository.lostBeacon();
 
@@ -72,13 +72,16 @@ describe("Repository Requests", function() {
 	  });
 
 	  it('Creates a request using authorisation', function() {
-	  	const url = baseURL + beaconLog;
+	  	const url = baseURL + "api/device";
 
-	  	repository.hello();
+	  	repository.heartBeat();
+
+	  	assert.strictEqual(server.requests[0].verb, "PUT");
+	  	assert.strictEqual(server.requests[0].url, url);
 
 			const content = JSON.parse(server.requests[0].content);
-	    assert.strictEqual(content.eventType, "hello");
 	    assert.strictEqual(content.token, token);
+	    assert.strictEqual(content.uuid, "Test UUID");
 	    assert.strictEqual(content.timestamp > 0, true);
 	  });
 
@@ -206,8 +209,10 @@ describe("Repository Requests", function() {
 	  		assert.strictEqual(repository._token, token);
 	  	  assert.notStrictEqual(repository._timer, null);
 		  	assert.strictEqual(server.requests.length, 1);
+		  	assert.strictEqual(server.requests[0].verb, "PUT");
 		  	let content = JSON.parse(server.requests[0].content);
-		  	assert.strictEqual(content.eventType, "hello");
+		  	assert.strictEqual(content.token, token);
+		  	assert.strictEqual(content.uuid, "Test UUID");
 	    	done();
 	    }, 1500);
 	  });
@@ -237,8 +242,10 @@ describe("Repository Requests", function() {
 	  	assert.strictEqual(repository._token, token);
 	  	assert.notStrictEqual(repository._timer, null);
 	  	assert.strictEqual(server.requests.length, 1);
+	  	assert.strictEqual(server.requests[0].verb, "PUT");
 	  	let content = JSON.parse(server.requests[0].content);
-	  	assert.strictEqual(content.eventType, "hello");
+	  	assert.strictEqual(content.token, token);
+	  	assert.strictEqual(content.uuid, "Test UUID");
 	  });
 	});
 });
