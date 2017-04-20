@@ -72,7 +72,7 @@ describe("Repository Requests", function() {
 	  });
 
 	  it('Creates a request using authorisation', function() {
-	  	const url = baseURL + "api/device";
+	  	const url = baseURL + "api/device/test-uuid";
 
 	  	repository.heartBeat();
 
@@ -81,7 +81,6 @@ describe("Repository Requests", function() {
 
 			const content = JSON.parse(server.requests[0].content);
 	    assert.strictEqual(content.token, token);
-	    assert.strictEqual(content.uuid, "Test UUID");
 	    assert.strictEqual(content.timestamp > 0, true);
 	  });
 
@@ -210,9 +209,9 @@ describe("Repository Requests", function() {
 	  	  assert.notStrictEqual(repository._timer, null);
 		  	assert.strictEqual(server.requests.length, 1);
 		  	assert.strictEqual(server.requests[0].verb, "PUT");
+		  	assert.strictEqual(server.requests[0].url, deviceUrl + "/test-uuid");
 		  	let content = JSON.parse(server.requests[0].content);
 		  	assert.strictEqual(content.token, token);
-		  	assert.strictEqual(content.uuid, "Test UUID");
 	    	done();
 	    }, 1500);
 	  });
@@ -220,6 +219,7 @@ describe("Repository Requests", function() {
 
 	 describe("Automatic hello messages sent immediately if already authorized", function() {
   	let repository = null;
+  	const deviceUrl = baseURL + "api/device"
 
   	// Automatic sending of hello messages is triggered when the repository is created
   	// In the test environment the messages are sent every 0.5 seconds
@@ -243,9 +243,9 @@ describe("Repository Requests", function() {
 	  	assert.notStrictEqual(repository._timer, null);
 	  	assert.strictEqual(server.requests.length, 1);
 	  	assert.strictEqual(server.requests[0].verb, "PUT");
+	  	assert.strictEqual(server.requests[0].url, deviceUrl + "/test-uuid");
 	  	let content = JSON.parse(server.requests[0].content);
 	  	assert.strictEqual(content.token, token);
-	  	assert.strictEqual(content.uuid, "Test UUID");
 	  });
 	});
 });

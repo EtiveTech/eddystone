@@ -45,7 +45,7 @@ Repository.prototype.authorize = function(emailAddress, onCompleted) {
 			// device is not defined in a test environment
 			const content  = (process.env.NODE_ENV === 'test') ?
 				{ os: "Test OS", osVersion: "Test Version", model: "Test Model", uuid: "Test UUID" } :
-				{ os: device.platform, osVersion: device.version, model: device.model, uuid: device.uuid };
+				{ os: device.platform, osVersion: device.version, model: device.model, uuid: device.uuid, timestamp: Date.now() };
 			const deviceRequest = new Request();
 			deviceRequest.makePostRequest(this._baseURL + deviceRoute, content, true, function(status, response) {
 				if (status === 201) {
@@ -113,10 +113,10 @@ Repository.prototype.heartBeat = function (onCompleted) {
 	const request = new Request();
 	const content = {
 		timestamp: Date.now(),
-		uuid: (process.env.NODE_ENV === 'test') ? "Test UUID" : device.uuid,
 		token: this._token
 	}
-	request.makePutRequest(this._baseURL + deviceRoute, content, false, function(status) {
+	const uuid = (process.env.NODE_ENV === 'test') ? "test-uuid" : device.uuid;
+	request.makePutRequest(this._baseURL + deviceRoute + "/" + uuid, content, false, function(status) {
 		// Might not be authorised to send to the server or the api key may be wrong
 		if (onCompleted) onCompleted(status);
 	});
