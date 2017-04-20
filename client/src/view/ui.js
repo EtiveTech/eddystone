@@ -4,7 +4,7 @@ const logger = require('../utility').logger;
 const arrayToHex = require('../utility').arrayToHex;
 const Scan = require('../model/scan');
 const Repository = require('../network/repository');
-const repository = new Repository((process.env.NODE_ENV === 'test') ? "https://cj101d.ifdnrg.com/" : "http://192.168.1.74:8080");
+const repository = new Repository((process.env.NODE_ENV === 'test') ? "https://cj101d.ifdnrg.com/" : "http://192.168.1.130:8080");
 
 // Timer that updates the device list and removes inactive
 // devices in case no devices are found by scan.
@@ -82,7 +82,7 @@ const displayDeviceList = function() {
 		// There are no devices in the list
 		let newEntry = document.createElement('p');
 		newEntry.innerText = "No beacons in range.";
-		foundDevices.appendChild();
+		foundDevices.appendChild(newEntry);
 	}
 	else {
 		for (let address in devices) {

@@ -33,7 +33,6 @@ ApiRequest.prototype._setRequest = function(options) {
     let errorStatus = (options.expected.indexOf(this.status) === -1);
     let content = ((this.status === 204) || errorStatus ) ? null : JSON.parse(this.responseText);
     logger( options.verb + " request to " + options.url + " returned status " + this.status);
-    if (content) logger(this.responseText);
     options.callback(this.status, content);
   };
 };
