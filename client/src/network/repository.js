@@ -43,11 +43,19 @@ Repository.prototype.authorize = function(emailAddress, onCompleted) {
 			this._token = response.token;
 			// The following test code should be removed when minified
 			// device is not defined in a test environment
-			const content  = (process.env.NODE_ENV === 'test') ?
-				{ os: "Test OS", osVersion: "Test Version", model: "Test Model", uuid: "Test UUID" } :
-				{ os: device.platform, osVersion: device.version, model: device.model, uuid: device.uuid, timestamp: Date.now() };
+			const content = (process.env.NODE_ENV === 'test') ?
+				{ os: "Test OS", osVersion: "Test Version", model: "Test Model", uuid: "Test UUID", token: this._token } :
+				{
+					os: device.platform,
+					osVersion: device.version,
+					model: device.model,
+					timestamp: Date.now(),
+					uuid: device.uuid,
+					token: this._token
+				};
 			const deviceRequest = new Request();
 			deviceRequest.makePostRequest(this._baseURL + deviceRoute, content, true, function(status, response) {
+				alert(status + " / " + JSON.stringify(response))
 				if (status === 201) {
 					// Everything is okay so persist the token and start the timer
 		    	localStorage.setItem(tokenKey, this._token);
@@ -109,7 +117,7 @@ Repository.prototype.lostBeacon = function (beacon, onCompleted) {
 
 Repository.prototype.heartBeat = function (onCompleted) {
 	if (!this._token) return;
-	logger("Sending hello message")
+	logger("Sending heartBeat message")
 	const request = new Request();
 	const content = {
 		timestamp: Date.now(),

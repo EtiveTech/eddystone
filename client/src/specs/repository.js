@@ -45,7 +45,8 @@ describe("Repository Requests", function() {
 	  		os: "Test OS",
 	  		osVersion: "Test Version",
 	  		model: "Test Model",
-	  		uuid: "Test UUID"
+	  		uuid: "Test UUID",
+	  		token: token
 	  	}
 
 	  	server.respondWith("GET", receiverUrl, [200, receiverJson]);
@@ -193,7 +194,8 @@ describe("Repository Requests", function() {
 	  		os: "Test OS",
 	  		osVersion: "Test Version",
 	  		model: "Test Model",
-	  		uuid: "Test UUID"
+	  		uuid: "Test UUID",
+	  		token: token
 	  	}
 
 	  	server.respondWith("GET", receiverUrl, [200, receiverJson]);
