@@ -21,11 +21,10 @@
         },
         "cordova-plugin-background-mode": {
             "PACKAGE_NAME": "org.etive.city4age.app"
-        }
-    },
-    "dependent_plugins": {
+        },
         "cordova-plugin-device": {
             "PACKAGE_NAME": "org.etive.city4age.app"
         }
-    }
+    },
+    "dependent_plugins": {}
 }

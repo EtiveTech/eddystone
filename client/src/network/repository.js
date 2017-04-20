@@ -8,13 +8,15 @@ const localStorage = (process.env.NODE_ENV === 'test') ? require("../stubs").loc
 const defaultHelloInterval = 60 * 60 * 1000;
 const tokenKey = "token";
 const beaconLog = "api/event";
-const authorize = "api/receiver";
+const authorizeRoute = "api/receiver";
+const deviceRoute = "api/device"
 
 const Repository = function(baseURL, interval) {
 	this._baseURL = baseURL;
 	if (this._baseURL[this._baseURL.length-1] !== "/") this._baseURL += "/";
 	this._token = localStorage.getItem(tokenKey);
 	this._interval = (interval) ? interval : defaultHelloInterval;
+  // Try and start the timer. It will fail if there is no token
 	this._timer = this._startTimer();
 	
 	Object.defineProperty(this, "hasToken", { get: function() { return (this._token) ? true : false; } });
@@ -32,20 +34,36 @@ Repository.prototype._stopTimer = function() {
 
 Repository.prototype.authorize = function(emailAddress, onCompleted) {
 	logger("Sending authorisation request")
-	const request = new Request();
-	let url = this._baseURL + authorize;
+	const authorizeRequest = new Request();
+	let url = this._baseURL + authorizeRoute;
 	url += 	"/" + encodeURIComponent(emailAddress) + "?key=" + encodeURIComponent(apiKey);
 
-	request.makeGetRequest(url, true, function(status, response) {
+	authorizeRequest.makeGetRequest(url, true, function(status, response) {
 		if (status === 200 && response.token) {
 			this._token = response.token;
-    	localStorage.setItem(tokenKey, this._token);
-		  this._timer = this._startTimer();	
+			// The following test code should be removed when minified
+			// device is not defined in a test environment
+			const content  = (process.env.NODE_ENV === 'test') ?
+				{ os: "Test OS", osVersion: "Test Version", model: "Test Model", uuid: "Test UUID" } :
+				{ os: device.platform, osVersion: device.version, model: device.model, uuid: device.uuid };
+			const deviceRequest = new Request();
+			deviceRequest.makePostRequest(this._baseURL + deviceRoute, content, true, function(status, response) {
+				if (status === 201) {
+					// Everything is okay so persist the token and start the timer
+		    	localStorage.setItem(tokenKey, this._token);
+				  this._timer = this._startTimer();
+				}
+				else {
+					// Couldn't save the device info so forget the token
+					this._token = null;
+				}
+				if (onCompleted) onCompleted(status === 201, (response) ? response.message : null);
+			}.bind(this))
 		}
-	  if (onCompleted) {
-	  	const message = (response) ? response.message : null;
-	  	onCompleted(status === 200, message);
-	  }
+		else {
+			// The GET failed
+			if (onCompleted) onCompleted(false, (response) ? response.message : null);
+		}
 	}.bind(this));
 }
 

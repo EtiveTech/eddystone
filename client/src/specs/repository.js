@@ -12,7 +12,7 @@ const apiKey = require('../keys').localRepository;
 const logger = require('../utility').logger;
 
 const baseURL = "https://cj101d.ifdnrg.com/";
-const beaconLog = "event";
+const beaconLog = "api/event";
 const tokenKey = "token";
 
 describe("Repository Requests", function() {
@@ -38,19 +38,36 @@ describe("Repository Requests", function() {
 
 	  it('Authorizes a user', function() {
 	  	const email = "test@etive.org";
-	  	const url = baseURL + "careReceiver/" + encodeURIComponent(email) + "?key=" + encodeURIComponent(apiKey);
-	  	const json = JSON.stringify({token: token});
+	  	const receiverUrl = baseURL + "api/receiver/" + encodeURIComponent(email) + "?key=" + encodeURIComponent(apiKey);
+	  	const deviceUrl = baseURL + "api/device"
+	  	const receiverJson = JSON.stringify({id: 1, token: token});
+	  	const deviceInfo = {
+	  		os: "Test OS",
+	  		osVersion: "Test Version",
+	  		model: "Test Model",
+	  		uuid: "Test UUID"
+	  	}
 
-	  	server.respondWith("GET", url, [200, json]);
+	  	server.respondWith("GET", receiverUrl, [200, receiverJson]);
+	  	server.respondWith("POST", deviceUrl, [201, JSON.stringify(deviceInfo)])
 
 	  	repository.authorize(email);
+	  	assert.strictEqual(server.requests.length, 1)
 	    assert.strictEqual(server.requests[0].verb, "GET");
-	    assert.strictEqual(server.requests[0].url, url);
+	    assert.strictEqual(server.requests[0].url, receiverUrl);
 			assert.strictEqual(server.requests[0].content, null);
 
 	    server.respond();
 
 	    assert.strictEqual(repository._token, token);
+
+    	assert.strictEqual(server.requests.length, 1)
+      assert.strictEqual(server.requests[0].verb, "POST");
+      assert.strictEqual(server.requests[0].url, deviceUrl);
+  		assert.strictEqual(server.requests[0].content, JSON.stringify(deviceInfo));
+
+  		server.respond();
+
 	    assert.strictEqual(localStorage.getItem(tokenKey), token);
 	  });
 
@@ -167,15 +184,23 @@ describe("Repository Requests", function() {
 
 	  it('Sends hello messages after authorization', function(done) {
 	  	const email = "test@etive.org";
-	  	const url = baseURL + "careReceiver/" + encodeURIComponent(email) + "?key=" + encodeURIComponent(apiKey);
+	  	const receiverUrl = baseURL + "api/receiver/" + encodeURIComponent(email) + "?key=" + encodeURIComponent(apiKey);
+	  	const deviceUrl = baseURL + "api/device"
+	  	const receiverJson = JSON.stringify({id: 1, token: token});
+	  	const deviceInfo = {
+	  		os: "Test OS",
+	  		osVersion: "Test Version",
+	  		model: "Test Model",
+	  		uuid: "Test UUID"
+	  	}
 
-	  	const json = JSON.stringify({token: token});
-
-	  	server.respondWith("GET", url, [200, json]);
+	  	server.respondWith("GET", receiverUrl, [200, receiverJson]);
+	  	server.respondWith("POST", deviceUrl, [201, JSON.stringify(deviceInfo)])
 
 	  	repository.authorize(email);
 
-	    server.respond();
+	    server.respond(); // To release the GET request
+	    server.respond(); // To release the POST request
 
 	    setTimeout(function() {
 	  		assert.strictEqual(repository._token, token);

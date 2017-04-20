@@ -90,11 +90,14 @@ const HttpServer = {
     this.responses.push({verb: verb, url: url, response: response, auto: auto})
   },
   respond: function() {
-    for (let request of this.requests) {
+    // Make a copy of the requests in case more requests are added while processing
+    const requests = this.requests.slice();
+    for (let request of requests) {
       const respondWith = this._findResponse(request);
-      if (respondWith) this._makeResponse(request, respondWith);
+      if (respondWith) this._makeResponse(request, respondWith);   
     }
-    this.requests = [];
+    // Remove the requests that have been processeed from the list
+    this.requests.splice(0, requests.length);
   },
   _findResponse: function(request) {
     return this.responses.find(function(item) {
