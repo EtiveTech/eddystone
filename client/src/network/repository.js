@@ -55,7 +55,6 @@ Repository.prototype.authorize = function(emailAddress, onCompleted) {
 				};
 			const deviceRequest = new Request();
 			deviceRequest.makePostRequest(this._baseURL + deviceRoute, content, true, function(status, response) {
-				alert(status + " / " + JSON.stringify(response))
 				if (status === 201) {
 					// Everything is okay so persist the token and start the timer
 		    	localStorage.setItem(tokenKey, this._token);
