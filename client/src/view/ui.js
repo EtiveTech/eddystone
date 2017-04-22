@@ -4,11 +4,11 @@ const logger = require('../utility').logger;
 const arrayToHex = require('../utility').arrayToHex;
 const Scan = require('../model/scan');
 const Repository = require('../network/repository');
-const repository = new Repository((process.env.NODE_ENV === 'test') ? "https://cj101d.ifdnrg.com/" : "http://192.168.1.74:8080");
 
 // Timer that updates the device list and removes inactive
 // devices in case no devices are found by scan.
 let updateTimer = null;
+let repository = null;
 let scan = null;
 
 const clearEmail = function() {
@@ -23,6 +23,8 @@ const initialize = function() {
 	cordova.plugins.backgroundMode.on('deactivate', function() {
 		logger("Entering foreground mode");
 	});
+
+	repository = new Repository((process.env.NODE_ENV === 'test') ? "https://cj101d.ifdnrg.com/" : "http://192.168.1.130:8080");
 
 	if (repository.hasToken) {
 		clearEmail();

@@ -23,7 +23,10 @@ const Repository = function(baseURL, interval) {
 };
 
 Repository.prototype._startTimer = function() {
-	if (this._token && this._interval > 0) return setInterval(this.heartBeat.bind(this), this._interval);
+	if (this._token && this._interval > 0) {
+		this.heartBeat();
+		return setInterval(this.heartBeat.bind(this), this._interval);
+	}
 	return null;  	
 };
 

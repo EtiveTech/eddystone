@@ -103,7 +103,7 @@ Scan.prototype._onDeviceFound = function(device, onError) {
 
 		if ((byteArray[0] === 0) && bleUtility.parseFrameUID(device, byteArray, onError)) {
 			// We have a UID frame
-			logger("Device", device.address, "sent out a UID frame.")
+			// logger("Device", device.address, "sent out a UID frame.")
 			if (bleUtility.arrayToHexString(device.nid) === CITY4AGE_NAMESPACE) {
 				// We have a City4Age beacon
 				device.rssiMax = device.rssi;

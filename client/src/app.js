@@ -1,6 +1,5 @@
 const onSaveButton = require('./view/ui').onSaveButton;
 const initialize = require('./view/ui').initialize;
-const phone = require('./view/phone');
 const logger = require('./utility').logger;
 
 const onDeviceReady = function() {
@@ -15,5 +14,4 @@ const onDeviceReady = function() {
 window.onload = function(){
 	logger("onload() called")
 	document.addEventListener('deviceready', onDeviceReady, false);
-	phone.adjustLayout();
 };
