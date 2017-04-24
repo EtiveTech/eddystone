@@ -5,7 +5,7 @@ const apiKey = require('../keys').localRepository;
 const logger = require('../utility').logger;
 const arrayToHex = require('../utility').arrayToHex;
 const localStorage = (process.env.NODE_ENV === 'test') ? require("../stubs").localStorage : window.localStorage;
-const defaultHelloInterval = 60 * 60 * 1000;
+const defaultHeartbeatInterval = ((process.env.NODE_ENV === 'test') ? 15 : 1) * 60 * 1000;
 const tokenKey = "token";
 const beaconLog = "api/event";
 const authorizeRoute = "api/receiver";
@@ -15,7 +15,7 @@ const Repository = function(baseURL, interval) {
 	this._baseURL = baseURL;
 	if (this._baseURL[this._baseURL.length-1] !== "/") this._baseURL += "/";
 	this._token = localStorage.getItem(tokenKey);
-	this._interval = (interval) ? interval : defaultHelloInterval;
+	this._interval = (interval) ? interval : defaultHeartbeatInterval;
   // Try and start the timer. It will fail if there is no token
 	this._timer = this._startTimer(true);
 	
