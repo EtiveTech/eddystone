@@ -209,7 +209,8 @@ describe("Repository Requests", function() {
 	    setTimeout(function() {
 	  		assert.strictEqual(repository._token, token);
 	  	  assert.notStrictEqual(repository._timer, null);
-		  	assert.notStrictEqual(server.requests.length, 0);
+	  	  // Don't issue an immediate hearbeat in this scenario so request count only 1
+		  	assert.strictEqual(server.requests.length, 1);
 		  	assert.strictEqual(server.requests[0].verb, "PUT");
 		  	assert.strictEqual(server.requests[0].url, deviceUrl + "/test-uuid");
 		  	let content = JSON.parse(server.requests[0].content);
@@ -244,6 +245,7 @@ describe("Repository Requests", function() {
 	  it('Sends hello messages on instantiation', function() {
 	  	assert.strictEqual(repository._token, token);
 	  	assert.notStrictEqual(repository._timer, null);
+	  	// Issue an immediate heartBeat in this scenario so request count is 2
 	  	assert.strictEqual(server.requests.length, 2);
 	  	assert.strictEqual(server.requests[0].verb, "PUT");
 	  	assert.strictEqual(server.requests[0].url, deviceUrl + "/test-uuid");

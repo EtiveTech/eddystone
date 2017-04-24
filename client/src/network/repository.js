@@ -17,14 +17,14 @@ const Repository = function(baseURL, interval) {
 	this._token = localStorage.getItem(tokenKey);
 	this._interval = (interval) ? interval : defaultHelloInterval;
   // Try and start the timer. It will fail if there is no token
-	this._timer = this._startTimer();
+	this._timer = this._startTimer(true);
 	
 	Object.defineProperty(this, "hasToken", { get: function() { return (this._token) ? true : false; } });
 };
 
-Repository.prototype._startTimer = function() {
+Repository.prototype._startTimer = function(issueNow) {
 	if (this._token && this._interval > 0) {
-		this.heartBeat();
+		if (issueNow) this.heartBeat();
 		return setInterval(this.heartBeat.bind(this), this._interval);
 	}
 	return null;  	
@@ -61,7 +61,7 @@ Repository.prototype.authorize = function(emailAddress, onCompleted) {
 				if (status === 201) {
 					// Everything is okay so persist the token and start the timer
 		    	localStorage.setItem(tokenKey, this._token);
-				  this._timer = this._startTimer();
+				  this._timer = this._startTimer(false);
 				}
 				else {
 					// Couldn't save the device info so forget the token
