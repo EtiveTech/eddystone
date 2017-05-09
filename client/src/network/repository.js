@@ -7,7 +7,7 @@ const arrayToHex = require('../utility').arrayToHex;
 const localStorage = (process.env.NODE_ENV === 'test') ? require("../stubs").localStorage : window.localStorage;
 const defaultHeartbeatInterval = ((process.env.NODE_ENV === 'test') ? 15 : 1) * 60 * 1000;
 const tokenKey = "token";
-const beaconLog = "api/event";
+const beaconLog = "api/proximity";
 const authorizeRoute = "api/receiver";
 const deviceRoute = "api/device"
 

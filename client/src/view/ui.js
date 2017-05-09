@@ -24,7 +24,7 @@ const initialize = function() {
 		logger("Entering foreground mode");
 	});
 
-	repository = new Repository((process.env.NODE_ENV === 'test') ? "https://cj101d.ifdnrg.com/" : "http://192.168.1.130:8080");
+	repository = new Repository((process.env.NODE_ENV === 'test') ? "https://c4a.etive.org:8443/" : "http://192.168.1.74:8080");
 
 	if (repository.hasToken) {
 		clearEmail();

@@ -9,7 +9,7 @@ const assert = require("assert");
 const server = require('../stubs').HttpServer;
 const network = require('../stubs').network;
 const baseURL = "https://cj101d.ifdnrg.com/";
-const route = "beacon-log";
+const route = "api/proximity";
 
 describe("API Dispatcher", function() {
 
