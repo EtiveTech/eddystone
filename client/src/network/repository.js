@@ -5,7 +5,7 @@ const apiKey = require('../keys').localRepository;
 const logger = require('../utility').logger;
 const arrayToHex = require('../utility').arrayToHex;
 const localStorage = (process.env.NODE_ENV === 'test') ? require("../stubs").localStorage : window.localStorage;
-const defaultHeartbeatInterval = ((process.env.NODE_ENV === 'test') ? 15 : 1) * 60 * 1000;
+const defaultHeartbeatInterval = ((process.env.NODE_ENV === 'test') ? 1 : 15) * 60 * 1000;
 const tokenKey = "token";
 const beaconLog = "proximity";
 const authorizeRoute = "receiver";
@@ -92,6 +92,7 @@ Repository.prototype.foundBeacon = function(beacon, onCompleted) {
 		uuid: (process.env.NODE_ENV === 'test') ? "Test UUID" : device.uuid,
 		token: this._token
 	}
+	// Beacon events are not allowed to time out
 	request.makePostRequest(this._baseURL + beaconLog, content, false, function(status) {
 		// Might not be authorised to send to the server or the api key may be wrong
 		if (onCompleted) onCompleted(status);
@@ -112,6 +113,7 @@ Repository.prototype.lostBeacon = function (beacon, onCompleted) {
 		uuid: (process.env.NODE_ENV === 'test') ? "Test UUID" : device.uuid,
 		token: this._token
 	}
+	// Beacon events are not allowed to time out
 	request.makePostRequest(this._baseURL + beaconLog, content, false, function(status) {
 		// Might not be authorised to send to the server or the api key may be wrong
 		if (onCompleted) onCompleted(status);
@@ -127,7 +129,8 @@ Repository.prototype.heartBeat = function (onCompleted) {
 		token: this._token
 	}
 	const uuid = (process.env.NODE_ENV === 'test') ? "test-uuid" : device.uuid;
-	request.makePutRequest(this._baseURL + deviceRoute + "/" + uuid, content, false, function(status) {
+	// Let heartbeat requests timeout if not sent. They are sent a few times every hour. No point in stock-piling
+	request.makePutRequest(this._baseURL + deviceRoute + "/" + uuid, content, true, function(status) {
 		// Might not be authorised to send to the server or the api key may be wrong
 		if (onCompleted) onCompleted(status);
 	});
