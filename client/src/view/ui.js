@@ -12,7 +12,7 @@ let repository = null;
 let scan = null;
 
 const clearEmail = function() {
-	document.getElementById("ui-div").removeChild(document.getElementById("email-div"));
+	document.getElementById("ui").removeChild(document.getElementById("email-div"));
 }
 
 const initialize = function() {
@@ -24,7 +24,7 @@ const initialize = function() {
 		logger("Entering foreground mode");
 	});
 
-	repository = new Repository((process.env.NODE_ENV === 'test') ? "https://c4a.etive.org:8443/" : "http://192.168.1.74:8080");
+	repository = new Repository((process.env.NODE_ENV === 'test') ? "https://c4a.etive.org:8443/api" : "http://192.168.1.74:8080");
 
 	if (repository.hasToken) {
 		clearEmail();
@@ -38,19 +38,19 @@ const onSaveButton = function() {
 		repository.authorize(email, function(success, message) {
 			// Need this error to be meaningful
 			if (success) {
-				alert("Phone successfully registered.");
+				navigator.notification.alert("Your phone has been successfully registered.", null, "Success", "OK");
 				// Clear the email from the UI and start scanning
 				clearEmail();
 				startScanning();
 			}
 			else {
-				const alertMessage = (message) ? message : "Phone registration failed. Please check that your email address is correct."
-				alert(alertMessage);
+				const alertMessage = (message) ? message : "Please check that you have an Internet connection and that your email address is correct."
+				navigator.notification.alert(alertMessage, null, "Registration Failed", "OK");
 			}
 		})
 	}
 	else {
-		alert("You must enter an email address.");
+		navigator.notification.alert("You must enter an email address before registering.", null, "Registration Failed", "OK");
 	}
 };
 
@@ -97,7 +97,7 @@ const displayDeviceList = function() {
 
 			// Create tag for device data.
 			const content =
-				'<tr><td width="33%">Beacon Id</td><td><strong>' + arrayToHex(device.bid) + '</strong></td></tr>' +
+				'<tr><td width="40%">Beacon Id</td><td><strong>' + arrayToHex(device.bid) + '</strong></td></tr>' +
 				'<tr><td>RSSI</td><td><strong>' + device.rssi + '</strong></td></tr>';
 
 			let newEntry = document.createElement('table');
