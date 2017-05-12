@@ -24,7 +24,9 @@ const initialize = function() {
 		logger("Entering foreground mode");
 	});
 
-	repository = new Repository((process.env.NODE_ENV === 'test') ? "https://c4a.etive.org:8443/api" : "http://192.168.1.74:8080");
+	cordova.plugins.backgroundMode.overrideBackButton();
+
+	repository = new Repository((process.env.NODE_ENV === 'test') ? "https://cj101d.ifdnrg.com/api" : "https://c4a.etive.org:8443/api");
 
 	if (repository.hasToken) {
 		clearEmail();

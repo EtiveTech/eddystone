@@ -11,8 +11,8 @@ const localStorage = require('../stubs').localStorage;
 const apiKey = require('../keys').localRepository;
 const logger = require('../utility').logger;
 
-const baseURL = "https://cj101d.ifdnrg.com/";
-const beaconLog = "api/proximity";
+const baseURL = "https://cj101d.ifdnrg.com/api/";
+const beaconLog = "proximity";
 const tokenKey = "token";
 
 describe("Repository Requests", function() {
@@ -38,8 +38,8 @@ describe("Repository Requests", function() {
 
 	  it('Authorizes a user', function() {
 	  	const email = "test@etive.org";
-	  	const receiverUrl = baseURL + "api/receiver/" + encodeURIComponent(email) + "?key=" + encodeURIComponent(apiKey);
-	  	const deviceUrl = baseURL + "api/device"
+	  	const receiverUrl = baseURL + "receiver/" + encodeURIComponent(email) + "?key=" + encodeURIComponent(apiKey);
+	  	const deviceUrl = baseURL + "device"
 	  	const receiverJson = JSON.stringify({id: 1, token: token});
 	  	const deviceInfo = {
 	  		os: "Test OS",
@@ -73,7 +73,7 @@ describe("Repository Requests", function() {
 	  });
 
 	  it('Creates a request using authorisation', function() {
-	  	const url = baseURL + "api/device/test-uuid";
+	  	const url = baseURL + "device/test-uuid";
 
 	  	repository.heartBeat();
 
@@ -187,8 +187,8 @@ describe("Repository Requests", function() {
 
 	  it('Sends hello messages after authorization', function(done) {
 	  	const email = "test@etive.org";
-	  	const receiverUrl = baseURL + "api/receiver/" + encodeURIComponent(email) + "?key=" + encodeURIComponent(apiKey);
-	  	const deviceUrl = baseURL + "api/device"
+	  	const receiverUrl = baseURL + "receiver/" + encodeURIComponent(email) + "?key=" + encodeURIComponent(apiKey);
+	  	const deviceUrl = baseURL + "device"
 	  	const receiverJson = JSON.stringify({id: 1, token: token});
 	  	const deviceInfo = {
 	  		os: "Test OS",
@@ -222,7 +222,7 @@ describe("Repository Requests", function() {
 
 	 describe("Automatic hello messages sent immediately if already authorized", function() {
   	let repository = null;
-  	const deviceUrl = baseURL + "api/device"
+  	const deviceUrl = baseURL + "device"
 
   	// Automatic sending of hello messages is triggered when the repository is created
   	// In the test environment the messages are sent every 1 second starting as soon as instantiated

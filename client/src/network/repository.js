@@ -12,6 +12,7 @@ const authorizeRoute = "receiver";
 const deviceRoute = "device"
 
 const Repository = function(baseURL, interval) {
+	logger("Initialising Repository at", baseURL)
 	this._baseURL = baseURL;
 	if (this._baseURL[this._baseURL.length-1] !== "/") this._baseURL += "/";
 	this._token = localStorage.getItem(tokenKey);
