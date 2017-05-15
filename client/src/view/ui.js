@@ -24,7 +24,10 @@ const initialize = function() {
 		logger("Entering foreground mode");
 	});
 
-	cordova.plugins.backgroundMode.overrideBackButton();
+	if (device.platform === "Android") {
+		// No back button on iOS
+		cordova.plugins.backgroundMode.overrideBackButton();
+	}
 
 	repository = new Repository((process.env.NODE_ENV === 'test') ? "https://cj101d.ifdnrg.com/api" : "https://c4a.etive.org:8443/api");
 

@@ -5,7 +5,7 @@ const apiKey = require('../keys').localRepository;
 const logger = require('../utility').logger;
 const arrayToHex = require('../utility').arrayToHex;
 const localStorage = (process.env.NODE_ENV === 'test') ? require("../stubs").localStorage : window.localStorage;
-const defaultHeartbeatInterval = ((process.env.NODE_ENV === 'test') ? 1 : 15) * 60 * 1000;
+const defaultHeartbeatInterval = ((process.env.NODE_ENV === 'test') ? 1 : 30) * 60 * 1000;
 const tokenKey = "token";
 const beaconLog = "proximity";
 const authorizeRoute = "receiver";
