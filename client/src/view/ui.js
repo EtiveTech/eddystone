@@ -101,9 +101,16 @@ const displayDeviceList = function() {
 			else if (device.rssi < 0) { rssiWidth = 100 + device.rssi; }
 
 			// Create tag for device data.
+			const status = (device.confirmed) ? "confirmed" : "unconfirmed";
 			const content =
-				'<tr><td width="40%">Beacon Id</td><td><strong>' + arrayToHex(device.bid) + '</strong></td></tr>' +
-				'<tr><td>RSSI</td><td><strong>' + device.rssi + '</strong></td></tr>';
+				'<tr>' +
+				  '<td width="40%">Beacon Id :</td>' +
+				  '<td class="' + status + '">' + arrayToHex(device.bid) + '</td>' +
+				'</tr>' +
+				'<tr>' +
+				  '<td>RSSI :</td>' +
+				  '<td class="' + status + '">' + device.rssi + '</td>' +
+				'</tr>';
 
 			let newEntry = document.createElement('table');
 			newEntry.innerHTML = content;

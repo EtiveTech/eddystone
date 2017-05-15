@@ -187,3 +187,11 @@ table {
 	background-color: #e6f2ff;
 	color: gray;
 }
+
+.confirmed {
+	font-weight: bold;
+}
+
+.unconfirmed {
+	font-weight: normal;
+}
