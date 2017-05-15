@@ -27,6 +27,9 @@
         },
         "cordova-plugin-dialogs": {
             "PACKAGE_NAME": "org.etive.city4age.app"
+        },
+        "cordova-plugin-autostart": {
+            "PACKAGE_NAME": "org.etive.city4age.app"
         }
     },
     "dependent_plugins": {}

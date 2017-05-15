@@ -4,15 +4,27 @@ const logger = require('../utility').logger;
 const arrayToHex = require('../utility').arrayToHex;
 const Scan = require('../model/scan');
 const Repository = require('../network/repository');
+const maxDevices = 8;
 
 // Timer that updates the device list and removes inactive
 // devices in case no devices are found by scan.
 let updateTimer = null;
 let repository = null;
 let scan = null;
+let uiHidden = false;	// UI cannot be hidden at start-up
 
 const clearEmail = function() {
 	document.getElementById("ui").removeChild(document.getElementById("email-div"));
+}
+
+const onPause = function() {
+	logger("Pause event raised");
+	uiHidden = true;
+}
+
+const onResume = function() {
+	logger("Resume event raised");
+	uiHidden = false;
 }
 
 const initialize = function() {
@@ -35,6 +47,9 @@ const initialize = function() {
 		clearEmail();
 		startScanning();
 	}
+	
+	document.addEventListener("pause", onPause, false);
+	document.addEventListener("resume", onResume, false);	
 };
 
 const onSaveButton = function() {
@@ -76,8 +91,8 @@ const displayDeviceList = function() {
 	const devices = scan.beacons;
 	const foundDevices = document.getElementById('found-devices-div');
 
-  // UI not visible if in background mode so do nothing
-	if (cordova.plugins.backgroundMode.isActive()) return;
+  // If paused, the UI is not visible so there is no need to update the screen
+	if (uiHidden) return;
 
 	// Clear device list.
   while (foundDevices.firstChild) {
@@ -92,6 +107,7 @@ const displayDeviceList = function() {
 		foundDevices.appendChild(newEntry);
 	}
 	else {
+		let deviceCount = 0;
 		for (let address in devices) {
 			const device = devices[address];
 
@@ -115,6 +131,8 @@ const displayDeviceList = function() {
 			let newEntry = document.createElement('table');
 			newEntry.innerHTML = content;
 			foundDevices.appendChild(newEntry);
+			deviceCount += 1;
+			if (deviceCount >= maxDevices) break;
 		};
 	};
 };

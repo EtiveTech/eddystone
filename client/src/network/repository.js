@@ -100,6 +100,11 @@ Repository.prototype.foundBeacon = function(beacon, onCompleted) {
 
 Repository.prototype.lostBeacon = function (beacon, onCompleted) {
 	if (!this._token) return;
+	if (!beacon.confirmed){
+		logger("Lost contact with unconfirmed beacon", arrayToHex(beacon.bid));
+		return;
+	}
+	
 	logger("Sending lost beacon message for", arrayToHex(beacon.bid));
 	const request = new Request();
 	const content = {
