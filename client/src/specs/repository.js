@@ -113,7 +113,7 @@ describe("Repository Requests", function() {
 	    assert.strictEqual(content.token, token);
 	  });
 
-	  it('Creates a Lost Beacon request', function() {
+	  it('Doesn\'t create a Lost Beacon request if beacon unconfirmed', function() {
 	  	const url = baseURL + beaconLog;
 	  	const beaconId = 'c4a000000001';
       const beaconAddress = 'DE:59:85:F2:EB:E9';
@@ -124,7 +124,26 @@ describe("Repository Requests", function() {
 	  		bid: [0xc4, 0xa0, 0, 0, 0, 1],
 	  		address: beaconAddress,
 	  		rssi: beaconRSSI,
-	  		rssiMax: beaconMaxRSSI
+	  		rssiMax: beaconMaxRSSI,
+	  		confirmed: false
+	  	});
+
+	    assert.strictEqual(server.requests.length, 0);
+	  });
+
+	  it('Creates a Lost Beacon request if beacon confirmed', function() {
+	  	const url = baseURL + beaconLog;
+	  	const beaconId = 'c4a000000001';
+      const beaconAddress = 'DE:59:85:F2:EB:E9';
+      const beaconRSSI = -90;
+      const beaconMaxRSSI = -72;
+
+	  	repository.lostBeacon({
+	  		bid: [0xc4, 0xa0, 0, 0, 0, 1],
+	  		address: beaconAddress,
+	  		rssi: beaconRSSI,
+	  		rssiMax: beaconMaxRSSI,
+	  		confirmed: true
 	  	});
 
 	    assert.strictEqual(server.requests[0].verb, "POST");
