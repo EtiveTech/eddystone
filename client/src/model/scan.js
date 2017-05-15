@@ -24,7 +24,6 @@ const Scan = function(onFound, onLost, onError){
 
 Scan.prototype.start = function(onError) {
 	// Start scanning.
-	logger("Starting the scan");
 	this._beacons = {};
 	this._preBeacons = {}; // Beacons that have not (yet) been reported as found
 	this._tidyTimer = setInterval(this._tidyBeaconLists.bind(this), TIDY_INTERVAL);
@@ -43,7 +42,6 @@ Scan.prototype.start = function(onError) {
 
 // Stop scanning for beacons.
 Scan.prototype.stop = function() {
-	logger("Stopping the scan");
 	if (this._tidyTimer) clearInterval(this._tidyTimer);
 	this._scanning = false;
 	evothings.ble.stopScan();
@@ -65,7 +63,7 @@ Scan.prototype._onDeviceFound = function(device, onError) {
 	device.timestamp = Date.now();
 
 	if (newDevice) {
-		logger("Device", device.address, "found and is not recorded as an in-range beacon");
+		// logger("Device", device.address, "found and is not recorded as an in-range beacon");
 
 		// Ensure we have advertisementData.
 		bleUtility.addAdvertisementData(device);
@@ -109,7 +107,7 @@ Scan.prototype._onDeviceFound = function(device, onError) {
 				device.rssiMax = device.rssi;
 				device.foundAfter = device.timestamp + WAIT_TIME;
 				this._preBeacons[device.address] = device;
-				logger("Device", device.address, "is beacon", bleUtility.arrayToHexString(device.bid));
+				logger("Device", device.address, "is new beacon", bleUtility.arrayToHexString(device.bid));
 			}
 		}
 
@@ -120,10 +118,6 @@ Scan.prototype._onDeviceFound = function(device, onError) {
 		storedBeacon.rssi = device.rssi;
 		if (storedBeacon.rssiMax < device.rssi) storedBeacon.rssiMax = device.rssi;
 		if (device.rssi > RSSI_THRESHOLD) storedBeacon.timestamp = device.timestamp;
-
-		// storedBeacon.name = device.name;
-		// storedBeacon.scanRecord = device.scanRecord;
-		// storedBeacon.advertisementData = device.advertisementData;
 	}
 }
 
@@ -135,7 +129,7 @@ Scan.prototype._tidyBeaconLists = function() {
 		const beacon = this._beacons[address];
 		// Only show devices that are updated during the last 2 seconds.
 		if (beacon.timestamp + (WAIT_TIME * LOST_FACTOR) < timeNow) {
-			logger("Beacon", bleUtility.arrayToHexString(beacon.bid), "is now lost")
+			// logger("Beacon", bleUtility.arrayToHexString(beacon.bid), "is now lost")
 			if (this._onLost) this._onLost(beacon);
 			delete this._beacons[address];
 		}
@@ -145,14 +139,14 @@ Scan.prototype._tidyBeaconLists = function() {
 	for (let address of addresses) {
 		const beacon = this._preBeacons[address];
 		if (beacon.timestamp > beacon.foundAfter) {
-			logger("Beacon", bleUtility.arrayToHexString(beacon.bid), "is now found");
+			// logger("Beacon", bleUtility.arrayToHexString(beacon.bid), "is now found");
 			this._beacons[beacon.address] = beacon;
 			delete this._preBeacons[address];
 			if (this._onFound) this._onFound(beacon);
 		}
 		else if (beacon.foundAfter < timeNow && beacon.timestamp + TIDY_INTERVAL < timeNow) {
 			delete this._preBeacons[address];
-			logger("Beacon", bleUtility.arrayToHexString(beacon.bid), "has been forgotten");
+			// logger("Beacon", bleUtility.arrayToHexString(beacon.bid), "has been forgotten");
 		}
 	}
 }

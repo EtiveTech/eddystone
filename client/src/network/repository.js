@@ -12,7 +12,6 @@ const authorizeRoute = "receiver";
 const deviceRoute = "device"
 
 const Repository = function(baseURL, interval) {
-	logger("Initialising Repository at", baseURL)
 	this._baseURL = baseURL;
 	if (this._baseURL[this._baseURL.length-1] !== "/") this._baseURL += "/";
 	this._token = localStorage.getItem(tokenKey);
@@ -37,7 +36,7 @@ Repository.prototype._stopTimer = function() {
 };
 
 Repository.prototype.authorize = function(emailAddress, onCompleted) {
-	logger("Sending authorisation request")
+	logger("Sending authorisation request for", emailAddress);
 	const authorizeRequest = new Request();
 	let url = this._baseURL + authorizeRoute;
 	url += 	"/" + encodeURIComponent(emailAddress) + "?key=" + encodeURIComponent(apiKey);
@@ -80,7 +79,7 @@ Repository.prototype.authorize = function(emailAddress, onCompleted) {
 
 Repository.prototype.foundBeacon = function(beacon, onCompleted) {
 	if (!this._token) return;
-	logger("Sending found beacon message");
+	logger("Sending found beacon message for", arrayToHex(beacon.bid));
 	const request = new Request();
 	const content = {
 		eventType: 'found',
@@ -101,7 +100,7 @@ Repository.prototype.foundBeacon = function(beacon, onCompleted) {
 
 Repository.prototype.lostBeacon = function (beacon, onCompleted) {
 	if (!this._token) return;
-	logger("Sending lost beacon message");
+	logger("Sending lost beacon message for", arrayToHex(beacon.bid));
 	const request = new Request();
 	const content = {
 		eventType: 'lost',
