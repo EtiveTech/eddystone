@@ -5,6 +5,10 @@ const logger = require('../utility').logger;
 
 const BLUETOOTH_BASE_UUID = '-0000-1000-8000-00805f9b34fb'
 
+const fromUtf8 = function(a) {
+	return decodeURIComponent(escape(String.fromCharCode.apply(null, new Uint8Array(a))));
+};
+
 /**
  * Interpret byte buffer as unsigned little endian 8 bit integer.
  * Returns converted number.
@@ -15,7 +19,7 @@ const BLUETOOTH_BASE_UUID = '-0000-1000-8000-00805f9b34fb'
  */
 const littleToUint8 = function(data, offset) {
 	return data[offset];
-}
+};
 
 /**
  * Interpret byte buffer as little endian 8 bit integer.
@@ -252,7 +256,7 @@ const addAdvertisementData = function(device)
 			case 0x08:
 			case 0x09:
 				// Local Name.
-				advertisementData.kCBAdvDataLocalName = evothings.ble.fromUtf8(
+				advertisementData.kCBAdvDataLocalName = fromUtf8(
 					new Uint8Array(byteArray.buffer, pos, length));
 				break;
 
