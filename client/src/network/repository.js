@@ -18,8 +18,13 @@ const Repository = function(baseURL, interval) {
 	this._interval = (interval) ? interval : defaultHeartbeatInterval;
   // Try and start the timer. It will fail if there is no token
 	this._timer = this._startTimer(true);
+	this._beaconCount = 0; // For debug
 	
 	Object.defineProperty(this, "hasToken", { get: function() { return (this._token) ? true : false; } });
+	Object.defineProperty(this, "knownBeaconCount", { get: function() {
+		return "(there " + ((this._beaconCount === 1) ? "is " : "are ") +
+	  	this._beaconCount + ((this._beaconCount === 1) ? " beacon" : " beacons") + " in range)";
+	} });
 };
 
 Repository.prototype._startTimer = function(issueNow) {
@@ -79,7 +84,8 @@ Repository.prototype.authorize = function(emailAddress, onCompleted) {
 
 Repository.prototype.foundBeacon = function(beacon, onCompleted) {
 	if (!this._token) return;
-	logger("Sending found beacon message for", arrayToHex(beacon.bid));
+	this._beaconCount += 1;
+	logger("Sending found beacon message for", arrayToHex(beacon.bid), this.knownBeaconCount);
 	const request = new Request();
 	const content = {
 		eventType: 'found',
@@ -100,12 +106,16 @@ Repository.prototype.foundBeacon = function(beacon, onCompleted) {
 
 Repository.prototype.lostBeacon = function (beacon, onCompleted) {
 	if (!this._token) return;
+
+	this._beaconCount -= 1;
+
 	if (!beacon.confirmed){
-		logger("Lost contact with unconfirmed beacon", arrayToHex(beacon.bid));
+		logger("Lost contact with unconfirmed beacon", arrayToHex(beacon.bid), this.knownBeaconCount);
+		// Don't bother reporting the loss to the server - it doesn't know about it
 		return;
 	}
 	
-	logger("Sending lost beacon message for", arrayToHex(beacon.bid));
+	logger("Sending lost beacon message for", arrayToHex(beacon.bid), this.knownBeaconCount);
 	const request = new Request();
 	const content = {
 		eventType: 'lost',

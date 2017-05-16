@@ -6,7 +6,7 @@ const bleUtility = require('./ble_utility');
 const CITY4AGE_NAMESPACE = 'edd1ebeac04e5defa017';
 const WAIT_TIME = 1400; // Wait 1.4 second before declaring a beacon found
 const LOST_FACTOR = 4; // Wait LOST_FACTOR * WAIT_TIME before declaring a beacon lost
-const TIDY_INTERVAL = 700; // Wait 0.5 second between tidy events
+const TIDY_INTERVAL = 700; // Wait 0.7 second between tidy events
 const RSSI_THRESHOLD = -90; // Beacon is ignored unless the signal is stronger than this
 
 const Scan = function(onFound, onLost, onError){

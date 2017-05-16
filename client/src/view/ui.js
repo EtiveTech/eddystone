@@ -50,6 +50,9 @@ const initialize = function() {
 	
 	document.addEventListener("pause", onPause, false);
 	document.addEventListener("resume", onResume, false);	
+	document.addEventListener("stop", function() {
+		logger("Stop event raised");
+	}, false);
 };
 
 const onSaveButton = function() {
@@ -74,7 +77,6 @@ const onSaveButton = function() {
 	}
 };
 
-// Called when Start Scan button is selected.
 const startScanning = function() {
 	scan = new Scan(
 		repository.foundBeacon.bind(repository),
