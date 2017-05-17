@@ -4,7 +4,7 @@ const logger = require('../utility').logger;
 const arrayToHex = require('../utility').arrayToHex;
 const Scan = require('../model/scan');
 const Repository = require('../network/repository');
-const maxDevices = 8;
+const maxBeacons = 8;
 
 // Timer that updates the device list and removes inactive
 // devices in case no devices are found by scan.
@@ -50,9 +50,6 @@ const initialize = function() {
 	
 	document.addEventListener("pause", onPause, false);
 	document.addEventListener("resume", onResume, false);	
-	document.addEventListener("stop", function() {
-		logger("Stop event raised");
-	}, false);
 };
 
 const onSaveButton = function() {
@@ -88,6 +85,11 @@ const startScanning = function() {
 	displayStatus('Scanning...');
 };
 
+const beaconOrder = function(a, b) {
+	if (a.bid === b.bid) return 0; // This should never happen
+	return (a.bid > b.bid) ? 1 : -1;
+}
+
 // Display the device list.
 const displayDeviceList = function() {
 	const devices = scan.beacons;
@@ -109,32 +111,38 @@ const displayDeviceList = function() {
 		foundDevices.appendChild(newEntry);
 	}
 	else {
-		let deviceCount = 0;
+		let confirmedBeacons = [];
+		let unconfirmedBeacons = [];
 		for (let address in devices) {
-			const device = devices[address];
+			let device = devices[address];
+			if (device.confirmed)
+				confirmedBeacons.push(device);
+			else
+				unconfirmedBeacons.push(device);
+		}
+		confirmedBeacons.sort(beaconOrder);
+		unconfirmedBeacons.sort(beaconOrder);
+		let beacons = confirmedBeacons.concat(unconfirmedBeacons);
 
-			// Map the RSSI value to a width in percent for the indicator.
-			let rssiWidth = 100; // Used when RSSI is zero or greater.
-			if (device.rssi < -100) { rssiWidth = 0; }
-			else if (device.rssi < 0) { rssiWidth = 100 + device.rssi; }
-
+		let beaconCount = 0;
+		for (let beacon of beacons) {
 			// Create tag for device data.
-			const status = (device.confirmed) ? "confirmed" : "unconfirmed";
+			const status = (beacon.confirmed) ? "confirmed" : "unconfirmed";
 			const content =
 				'<tr>' +
 				  '<td width="40%">Beacon Id :</td>' +
-				  '<td class="' + status + '">' + arrayToHex(device.bid) + '</td>' +
+				  '<td class="' + status + '">' + arrayToHex(beacon.bid) + '</td>' +
 				'</tr>' +
 				'<tr>' +
 				  '<td>RSSI :</td>' +
-				  '<td class="' + status + '">' + device.rssi + '</td>' +
+				  '<td class="' + status + '">' + beacon.rssi + '</td>' +
 				'</tr>';
 
 			let newEntry = document.createElement('table');
 			newEntry.innerHTML = content;
 			foundDevices.appendChild(newEntry);
-			deviceCount += 1;
-			if (deviceCount >= maxDevices) break;
+			beaconCount += 1;
+			if (beaconCount >= maxBeacons) break;
 		};
 	};
 };

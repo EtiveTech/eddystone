@@ -78,7 +78,8 @@ public class BLE extends CordovaPlugin implements LeScanCallback
 		//action.run();
 
 		// Possibly safer alternative, call on UI thread.
-		cordova.getActivity().runOnUiThread(action);
+		// cordova.getActivity().runOnUiThread(action);
+		cordova.getActivity().execute(action);
 
 		// See issue: https://github.com/evothings/cordova-ble/issues/122
 		// Some links:
@@ -144,19 +145,6 @@ public class BLE extends CordovaPlugin implements LeScanCallback
 			BluetoothAdapter a = BluetoothAdapter.getDefaultAdapter();
 			a.stopLeScan(this);
 			mScanCallbackContext = null;
-		}
-		if (mConnectedDevices != null) {
-			Iterator<GattHandler> itr = mConnectedDevices.values().iterator();
-			while (itr.hasNext()) {
-				GattHandler gh = itr.next();
-				if (gh.mGatt != null)
-					gh.mGatt.close();
-			}
-			mConnectedDevices.clear();
-		}
-		if (mGattServer != null) {
-			mGattServer.close();
-			mGattServer = null;
 		}
 	}
 
@@ -314,10 +302,7 @@ public class BLE extends CordovaPlugin implements LeScanCallback
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialogInterface, int i) {
 						Intent enableLocationIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-						cordova.startActivityForResult(
-							self,
-							enableLocationIntent,
-							ACTIVITY_REQUEST_ENABLE_LOCATION);
+						cordova.startActivityForResult(self, enableLocationIntent, ACTIVITY_REQUEST_ENABLE_LOCATION);
 					}
 				});
 			builder.setNegativeButton(
@@ -336,9 +321,8 @@ public class BLE extends CordovaPlugin implements LeScanCallback
 	private boolean isSystemLocationEnabled(Context context) {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 			try {
-				int locationMode = Settings.Secure.getInt(
-					context.getContentResolver(),
-					Settings.Secure.LOCATION_MODE);
+				int locationMode =
+					Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.LOCATION_MODE);
 				return locationMode != Settings.Secure.LOCATION_MODE_OFF;
 			}
 			catch (SettingNotFoundException e) {
@@ -347,9 +331,8 @@ public class BLE extends CordovaPlugin implements LeScanCallback
 			}
 		}
 		else {
-			String locationProviders = Settings.Secure.getString(
-				context.getContentResolver(),
-				Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
+			String locationProviders =
+				Settings.Secure.getString(context.getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
 			return !TextUtils.isEmpty(locationProviders);
 		}
 	}

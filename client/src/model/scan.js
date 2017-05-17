@@ -8,12 +8,14 @@ const WAIT_TIME = 1400; // Wait 1.4 second before declaring a beacon found
 const LOST_FACTOR = 4; // Wait LOST_FACTOR * WAIT_TIME before declaring a beacon lost
 const TIDY_INTERVAL = 700; // Wait 0.7 second between tidy events
 const RSSI_THRESHOLD = -90; // Beacon is ignored unless the signal is stronger than this
+const RESTART_INTERVAL = 5 * 60 * 1000; // Restart the scan every five minutes
 
 const Scan = function(onFound, onLost, onError){
 	this._onFound = onFound;
 	this._onLost = onLost;
 	this._onError = onError;
 	this._tidyTimer = null;
+	this._restartTimer = null;
 	this._beacons = null;
 	this._scanning = false;
 
@@ -22,26 +24,39 @@ const Scan = function(onFound, onLost, onError){
   Object.defineProperty(this, "beacons", { get: function(){ return this._beacons; } }); 
 };
 
-Scan.prototype.start = function(onError) {
-	// Start scanning.
-	this._beacons = {};
-	this._preBeacons = {}; // Beacons that have not (yet) been reported as found
-	this._tidyTimer = setInterval(this._tidyBeaconLists.bind(this), TIDY_INTERVAL);
-	this._scanning = true;
+Scan.prototype._start = function() {
 	evothings.ble.startScan(
 		['0000FEAA-0000-1000-8000-00805F9B34FB'],
 		function(device) {
 			if (device.rssi <= 0) {
 				// It seems some iPhones can return 127 as an RSSI value - ignore it
-				this._onDeviceFound(device, onError)
+				this._onDeviceFound(device, this._onError)
 			}
 		}.bind(this),
 		this._onError
 	);
 };
 
+Scan.prototype._restart = function() {
+	logger("Restarting the BLE scan");
+	evothings.ble.stopScan();
+	this._start();
+}
+
+Scan.prototype.start = function() {
+	// Start scanning.
+	logger("Starting the BLE scan");
+	this._beacons = {};
+	this._preBeacons = {}; // Beacons that have not (yet) been reported as found
+	this._tidyTimer = setInterval(this._tidyBeaconLists.bind(this), TIDY_INTERVAL);
+	this._restartTimer = setInterval(this._restart.bind(this), RESTART_INTERVAL);
+	this._scanning = true;
+	this._start();
+};
+
 // Stop scanning for beacons.
 Scan.prototype.stop = function() {
+	logger("Stopping the BLE scan");
 	if (this._tidyTimer) clearInterval(this._tidyTimer);
 	this._scanning = false;
 	evothings.ble.stopScan();
