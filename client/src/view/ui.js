@@ -140,6 +140,7 @@ const displayDeviceList = function() {
 
 			let newEntry = document.createElement('table');
 			newEntry.innerHTML = content;
+			if (beacon.confirmed) newEntry.className = "bordered";
 			foundDevices.appendChild(newEntry);
 			beaconCount += 1;
 			if (beaconCount >= maxBeacons) break;

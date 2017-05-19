@@ -5,7 +5,7 @@ const bleUtility = require('./ble_utility');
 
 const CITY4AGE_NAMESPACE = 'edd1ebeac04e5defa017';
 const WAIT_TIME = 1400; // Wait 1.4 second before declaring a beacon found
-const LOST_FACTOR = 4; // Wait LOST_FACTOR * WAIT_TIME before declaring a beacon lost
+const LOST_FACTOR = 6; // Wait LOST_FACTOR * WAIT_TIME before declaring a beacon lost
 const TIDY_INTERVAL = 700; // Wait 0.7 second between tidy events
 const RSSI_THRESHOLD = -90; // Beacon is ignored unless the signal is stronger than this
 const RESTART_INTERVAL = 5 * 60 * 1000; // Restart the scan every five minutes
@@ -80,6 +80,9 @@ Scan.prototype._onDeviceFound = function(device, onError) {
 	if (newDevice) {
 		// logger("Device", device.address, "found and is not recorded as an in-range beacon");
 
+		// Ignore devices that don't have a strong signal
+		if (device.rssi < RSSI_THRESHOLD) return;
+
 		// Ensure we have advertisementData.
 		bleUtility.addAdvertisementData(device);
 
@@ -129,10 +132,15 @@ Scan.prototype._onDeviceFound = function(device, onError) {
 	}
 	else {
 		// Avoid having to rescan everything - already know it's a beacon
-		let storedBeacon = this._preBeacons[device.address] || this._beacons[device.address];
+		const beaconFound = (this._beacons[device.address]) ? true : false;
+		let storedBeacon = (beaconFound) ? this._beacons[device.address] : this._preBeacons[device.address];
 		storedBeacon.rssi = device.rssi;
 		if (storedBeacon.rssiMax < device.rssi) storedBeacon.rssiMax = device.rssi;
-		if (device.rssi > RSSI_THRESHOLD) storedBeacon.timestamp = device.timestamp;
+		if (beaconFound || device.rssi >= RSSI_THRESHOLD) {
+			// IF the beacon is "found" OR hasn't been "found" but has a strong signal THEN update the timestamp
+			// This means a strong signal is needed to find a beacon but only a weak signal is required to hold onto it
+			storedBeacon.timestamp = device.timestamp;
+		}
 	}
 }
 
