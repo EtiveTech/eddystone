@@ -10,9 +10,6 @@
         "cordova-plugin-ble": {
             "PACKAGE_NAME": "org.etive.city4age.app"
         },
-        "cordova-plugin-console": {
-            "PACKAGE_NAME": "org.etive.city4age.app"
-        },
         "cordova-plugin-network-information": {
             "PACKAGE_NAME": "org.etive.city4age.app"
         },

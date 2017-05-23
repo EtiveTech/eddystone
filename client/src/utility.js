@@ -35,7 +35,7 @@ const getScript = function(source, callback) {
 };
 
 const logger = function() {
-  if (true) {
+  if (false) {
     const date = new Date();
     const ms = date.getMilliseconds();
     let padding = "";
