@@ -45,8 +45,7 @@ import android.provider.Settings.SettingNotFoundException;
 import android.app.AlertDialog;
 import android.text.TextUtils;
 
-public class BLE extends CordovaPlugin implements LeScanCallback
-{
+public class BLE extends CordovaPlugin implements LeScanCallback {
 	// ************* BLE CENTRAL ROLE *************
 
 	// Implementation of BLE Central API.
