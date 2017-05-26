@@ -6,18 +6,23 @@ const logger = require('../utility').logger;
 const arrayToHex = require('../utility').arrayToHex;
 const localStorage = (process.env.NODE_ENV === 'test') ? require("../stubs").localStorage : window.localStorage;
 const defaultHeartbeatInterval = ((process.env.NODE_ENV === 'test') ? 1 : 30) * 60 * 1000;
+const regionInterval = ((process.env.NODE_ENV === 'test') ? 1 : 1440) * 60 * 1000;
 const tokenKey = "token";
-const beaconLog = "proximity";
+const regionsKey = "regions";
+const beaconRoute = "proximity";
 const authorizeRoute = "receiver";
-const deviceRoute = "device"
+const deviceRoute = "device";
+const regionRoute = "region";
 
 const Repository = function(baseURL, interval) {
 	this._baseURL = baseURL;
 	if (this._baseURL[this._baseURL.length-1] !== "/") this._baseURL += "/";
 	this._token = localStorage.getItem(tokenKey);
-	this._interval = (interval) ? interval : defaultHeartbeatInterval;
+	let regions = localStorage.getItem(regionsKey);
+	this._regions = (regions) ? JSON.parse(regions) : null;
+	this._hearbeatInterval = (interval) ? interval : defaultHeartbeatInterval;
   // Try and start the timer. It will fail if there is no token
-	this._timer = this._startTimer(true);
+	this._heartbeatTimer = this._startHeartbeat(true);
 	this._beaconCount = 0; // For debug
 	
 	Object.defineProperty(this, "hasToken", { get: function() { return (this._token) ? true : false; } });
@@ -27,17 +32,17 @@ const Repository = function(baseURL, interval) {
 	} });
 };
 
-Repository.prototype._startTimer = function(issueNow) {
-	if (this._token && this._interval > 0) {
-		if (issueNow) this.heartBeat();
-		return setInterval(this.heartBeat.bind(this), this._interval);
+Repository.prototype._startHeartbeat = function(issueNow) {
+	if (this._token && this._hearbeatInterval > 0) {
+		if (issueNow) this.heartbeat();
+		return setInterval(this.heartbeat.bind(this), this._hearbeatInterval);
 	}
 	return null;  	
 };
 
 Repository.prototype._stopTimer = function() {
 	// This method intended to clear down tests
-	if (this._timer) clearInterval(this._timer);
+	if (this._heartbeatTimer) clearInterval(this._heartbeatTimer);
 };
 
 Repository.prototype.authorize = function(emailAddress, onCompleted) {
@@ -66,7 +71,7 @@ Repository.prototype.authorize = function(emailAddress, onCompleted) {
 				if (status === 201) {
 					// Everything is okay so persist the token and start the timer
 		    	localStorage.setItem(tokenKey, this._token);
-				  this._timer = this._startTimer(false);
+				  this._heartbeatTimer = this._startHeartbeat(false);
 				}
 				else {
 					// Couldn't save the device info so forget the token
@@ -98,7 +103,7 @@ Repository.prototype.foundBeacon = function(beacon, onCompleted) {
 		token: this._token
 	}
 	// Beacon events are not allowed to time out
-	request.makePostRequest(this._baseURL + beaconLog, content, false, function(status) {
+	request.makePostRequest(this._baseURL + beaconRoute, content, false, function(status) {
 		// Might not be authorised to send to the server or the api key may be wrong
 		if (onCompleted) onCompleted(status);
 	});
@@ -128,15 +133,15 @@ Repository.prototype.lostBeacon = function (beacon, onCompleted) {
 		token: this._token
 	}
 	// Beacon events are not allowed to time out
-	request.makePostRequest(this._baseURL + beaconLog, content, false, function(status) {
+	request.makePostRequest(this._baseURL + beaconRoute, content, false, function(status) {
 		// Might not be authorised to send to the server or the api key may be wrong
 		if (onCompleted) onCompleted(status);
 	});
 }
 
-Repository.prototype.heartBeat = function (onCompleted) {
+Repository.prototype.heartbeat = function(onCompleted) {
 	if (!this._token) return;
-	logger("Sending heartBeat message")
+	logger("Sending heartbeat message")
 	const request = new Request();
 	const content = {
 		timestamp: Date.now(),
@@ -148,6 +153,25 @@ Repository.prototype.heartBeat = function (onCompleted) {
 		// Might not be authorised to send to the server or the api key may be wrong
 		if (onCompleted) onCompleted(status);
 	});
+}
+
+Repository.prototype.fetchRegions = function(onCompleted) {
+	logger("Sending region request");
+	const regionRequest = new Request();
+	let url = this._baseURL + regionRoute;
+
+	if (this._regions) url += "?stamp=" + this._regions.timestamp;
+	regionRequest.makeGetRequest(url, false, function(status, response) {
+		if (status === 200) {
+			this._regions = response;
+			localStorage.setItem(regionsKey, JSON.stringify(this._regions));
+			onCompleted(response)
+		}
+		else if (status === 304) {
+			// Continue to use the values we already have
+			onCompleted(this._regions)
+		}
+	})
 }
 
 module.exports = Repository;

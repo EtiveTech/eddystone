@@ -29,7 +29,7 @@ describe("Repository Requests", function() {
 	  it('Won\'t send a request without authorisation', function() {
 	  	const url = baseURL + beaconLog;
 
-	  	repository.heartBeat();
+	  	repository.heartbeat();
 	  	repository.foundBeacon();
 	  	repository.lostBeacon();
 
@@ -75,7 +75,7 @@ describe("Repository Requests", function() {
 	  it('Creates a request using authorisation', function() {
 	  	const url = baseURL + "device/test-uuid";
 
-	  	repository.heartBeat();
+	  	repository.heartbeat();
 
 	  	assert.strictEqual(server.requests[0].verb, "PUT");
 	  	assert.strictEqual(server.requests[0].url, url);
@@ -264,7 +264,7 @@ describe("Repository Requests", function() {
 	  it('Sends hello messages on instantiation', function() {
 	  	assert.strictEqual(repository._token, token);
 	  	assert.notStrictEqual(repository._timer, null);
-	  	// Issue an immediate heartBeat in this scenario so request count is 2
+	  	// Issue an immediate heartbeat in this scenario so request count is 2
 	  	assert.strictEqual(server.requests.length, 2);
 	  	assert.strictEqual(server.requests[0].verb, "PUT");
 	  	assert.strictEqual(server.requests[0].url, deviceUrl + "/test-uuid");
