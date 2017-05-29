@@ -57,6 +57,7 @@ Scan.prototype.start = function() {
 // Stop scanning for beacons.
 Scan.prototype.stop = function() {
 	logger("Stopping the BLE scan");
+	if (this._restartTimer) clearInterval(this._restartTimer);
 	if (this._tidyTimer) clearInterval(this._tidyTimer);
 	this._scanning = false;
 	evothings.ble.stopScan();

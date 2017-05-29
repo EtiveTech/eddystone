@@ -6,7 +6,6 @@ const logger = require('../utility').logger;
 const arrayToHex = require('../utility').arrayToHex;
 const localStorage = (process.env.NODE_ENV === 'test') ? require("../stubs").localStorage : window.localStorage;
 const defaultHeartbeatInterval = ((process.env.NODE_ENV === 'test') ? 1 : 30) * 60 * 1000;
-const regionInterval = ((process.env.NODE_ENV === 'test') ? 1 : 1440) * 60 * 1000;
 const tokenKey = "token";
 const regionsKey = "regions";
 const beaconRoute = "proximity";
@@ -18,8 +17,10 @@ const Repository = function(baseURL, interval) {
 	this._baseURL = baseURL;
 	if (this._baseURL[this._baseURL.length-1] !== "/") this._baseURL += "/";
 	this._token = localStorage.getItem(tokenKey);
+
 	let regions = localStorage.getItem(regionsKey);
 	this._regions = (regions) ? JSON.parse(regions) : null;
+
 	this._hearbeatInterval = (interval) ? interval : defaultHeartbeatInterval;
   // Try and start the timer. It will fail if there is no token
 	this._heartbeatTimer = this._startHeartbeat(true);
@@ -160,18 +161,18 @@ Repository.prototype.fetchRegions = function(onCompleted) {
 	const regionRequest = new Request();
 	let url = this._baseURL + regionRoute;
 
-	if (this._regions) url += "?stamp=" + this._regions.timestamp;
+	if (this._regions) url += "?stamp=" + this._regions.changed;
 	regionRequest.makeGetRequest(url, false, function(status, response) {
 		if (status === 200) {
 			this._regions = response;
 			localStorage.setItem(regionsKey, JSON.stringify(this._regions));
 			onCompleted(response)
 		}
-		else if (status === 304) {
+		else {
 			// Continue to use the values we already have
-			onCompleted(this._regions)
+			if (status === 304) onCompleted(this._regions)
 		}
-	})
+	}.bind(this))
 }
 
 module.exports = Repository;

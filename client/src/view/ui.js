@@ -2,7 +2,7 @@
 
 const logger = require('../utility').logger;
 const arrayToHex = require('../utility').arrayToHex;
-const Scan = require('../model/scan');
+const Scanner = require('../model/scanner');
 const Repository = require('../network/repository');
 const maxBeacons = 8;
 
@@ -10,7 +10,7 @@ const maxBeacons = 8;
 // devices in case no devices are found by scan.
 let updateTimer = null;
 let repository = null;
-let scan = null;
+let scanner = null;
 let uiHidden = false;	// UI cannot be hidden at start-up
 
 const clearEmail = function() {
@@ -75,12 +75,10 @@ const onSaveButton = function() {
 };
 
 const startScanning = function() {
-	scan = new Scan(
-		repository.foundBeacon.bind(repository),
-		repository.lostBeacon.bind(repository),
-		function(errorCode) { displayStatus('Scan Error: ' + errorCode); }
+	scanner = new Scanner(repository,
+		function(message) { displayStatus(message); }
 	);
-	scan.start();
+	scanner.start();
 	updateTimer = setInterval(displayDeviceList, 500);
 	displayStatus('Scanning...');
 };
@@ -92,7 +90,7 @@ const beaconOrder = function(a, b) {
 
 // Display the device list.
 const displayDeviceList = function() {
-	const devices = scan.beacons;
+	const devices = scanner.beacons;
 	const foundDevices = document.getElementById('found-devices-div');
 
   // If paused, the UI is not visible so there is no need to update the screen
