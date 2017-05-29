@@ -80,7 +80,6 @@ const startScanning = function() {
 	);
 	scanner.start();
 	updateTimer = setInterval(displayDeviceList, 500);
-	displayStatus('Scanning...');
 };
 
 const beaconOrder = function(a, b) {
