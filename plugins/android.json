@@ -28,13 +28,11 @@
         "cordova-plugin-autostart": {
             "PACKAGE_NAME": "org.etive.city4age.app"
         },
-        "cordova-plugin-geolocation": {
+        "cordova-plugin-mauron85-background-geolocation": {
+            "ACCOUNT_TYPE": "$PACKAGE_NAME.account",
+            "CONTENT_AUTHORITY": "$PACKAGE_NAME",
             "PACKAGE_NAME": "org.etive.city4age.app"
         }
     },
-    "dependent_plugins": {
-        "cordova-plugin-compat": {
-            "PACKAGE_NAME": "org.etive.city4age.app"
-        }
-    }
+    "dependent_plugins": {}
 }

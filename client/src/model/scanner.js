@@ -3,38 +3,32 @@
 const Scan = require('./scan');
 const logger = require('../utility').logger;
 
-const regionInterval = ((process.env.NODE_ENV === 'test') ? 1 : 1440) * 60 * 1000;
-
 const Scanner = function(repository, onStatusChange){
   this._repository = repository;
   this._onStatusChange = onStatusChange;
   this._watchId = null;
   this._scanning = false;
-
-  this._regionTimestamp = 0;
-  this._regions = null;
-  this._regionTimer = setInterval(this._getRegions.bind(this), regionInterval);
-  this._getRegions();
-
   this._scan = new Scan(
     this._repository.foundBeacon.bind(this._repository),
     this._repository.lostBeacon.bind(this._repository),
     function(errorCode) { this._onStatusChange("Scan Error: " + errorCode) }.bind(this)
   );
 
+  backgroundGeolocation.configure(
+    this._movedTo.bind(this),
+    this._onGeoError.bind(this),
+    {
+      desiredAccuracy: 10,
+      stationaryRadius: 5,
+      distanceFilter: 10,
+      stopOnTerminate: true,
+      locationProvider: backgroundGeolocation.provider.ANDROID_DISTANCE_FILTER_PROVIDER
+    }
+  );
+
   Object.defineProperty(this, "beacons",
     { get: function(){ return (this._scanning) ? this._scan.beacons : {}; } }
   ); 
-};
-
-Scanner.prototype._getRegions = function() {
-  this._repository.fetchRegions(function(data) {
-    const timestamp = Number(data.changed);
-    if (timestamp > this._regionTimestamp) {
-      this._regionTimestamp = timestamp;
-      this._regions = data.regions;
-    }
-  }.bind(this));
 };
 
 Scanner.prototype._startScan = function() {
@@ -49,7 +43,7 @@ Scanner.prototype._stopScan = function() {
   this._onStatusChange("Scanning paused."); 
 }
 
-Scanner.prototype._distanceBetween = function( latLngA, latLngB ) {
+Scanner.prototype._metresBetween = function( latLngA, latLngB ) {
 
   // Haversine
   // formula:  a = sin²(Δφ/2) + cos φ1 ⋅ cos φ2 ⋅ sin²(Δλ/2)
@@ -62,42 +56,41 @@ Scanner.prototype._distanceBetween = function( latLngA, latLngB ) {
     return x * Math.PI / 180;
   }
 
-  var R = 6371e3; // metres
-  var φ1 = toRadians(latLngA.lat);
-  var φ2 = toRadians(latLngB.lat);
-  var Δφ = toRadians(latLngB.lat - latLngA.lat);
-  var Δλ = toRadians(latLngB.lng - latLngA.lng);
+  const R = 6371e3; // metres
+  const φ1 = toRadians(latLngA.lat);
+  const φ2 = toRadians(latLngB.lat);
+  const Δφ = toRadians(latLngB.lat - latLngA.lat);
+  const Δλ = toRadians(latLngB.lng - latLngA.lng);
 
-  var a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+  const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
           Math.cos(φ1) * Math.cos(φ2) *
           Math.sin(Δλ/2) * Math.sin(Δλ/2);
-  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-  var d = R * c;
+  const d = R * c;
 
   return d;
 }
 
-Scanner.prototype._nearBeacons = function(position) {
-  if (!this._regions) return true;
-  for (let region of this._regions) {
+Scanner.prototype._nearBeacons = function(geoLocation) {
+  if (!this._repository.regions) return true;
+
+  const position = { lat: geoLocation.latitude, lng: geoLocation.longitude };
+  const accuracy = geoLocation.accuracy;
+
+  for (let region of this._repository.regions) {
     // Check if region and position centres are closer together than the sum of the radii
     // If they are then return true
-    const d = this._distanceBetween(region.point, { lat: position.latitide, lng: position.longitude });
-    if (d < (region.radius + position.accuracy)) return true;
+    const d = this._metresBetween(region.point, position);
+    if (d < (region.radius + accuracy)) return true;
   }
   return false;
 }
 
-Scanner.prototype._startingPoint = function(position) {
-  logger("Starting at lat:", position.coords.latitude, "lng:", position.coords.longitude);
-  if (this._nearBeacons(position.coords)) this._startScan();
-};
-
 Scanner.prototype._movedTo = function(position) {
-  logger("Moved to lat:", position.coords.latitude,
-    "lng:", position.coords.longitude, "(accuracy:", position.coords.accuracy + ")");
-  if (this._nearBeacons(position.coords)) {
+  logger("Moved to lat:", position.latitude,
+    "lng:", position.longitude, "(" + position.provider + ", accuracy:", position.accuracy + ")");
+  if (this._nearBeacons(position)) {
     if (!this._scanning) this._startScan();
   }
   else {
@@ -111,15 +104,15 @@ Scanner.prototype._onGeoError = function(geolocationError) {
 
 Scanner.prototype.start = function() {
   this._onStatusChange("Scan pending.")
-  // navigator.geolocation.getCurrentPosition(
-    // this._startingPoint.bind(this), this._onGeoError, { maximumAge: 5000, timeout: 5000 });
-  this._watchId = navigator.geolocation.watchPosition(this._movedTo.bind(this));
+
+  // Turn ON the background-geolocation system.  The user will be tracked whenever they suspend the app. 
+  backgroundGeolocation.start();
 }
 
 Scanner.prototype.stop = function() {
   this._scan.stop();
   this._onStatusChange('Scanning stopped.');
-  navigator.geolocation.clearWatch(this._watchId);
+  backgroundGeolocation.stop();
 }
 
 module.exports = Scanner;

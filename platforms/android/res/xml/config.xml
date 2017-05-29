@@ -22,8 +22,8 @@
     <feature name="AutoStart">
         <param name="android-package" value="com.tonikorin.cordova.plugin.autostart.AutoStart" />
     </feature>
-    <feature name="Geolocation">
-        <param name="android-package" value="org.apache.cordova.geolocation.Geolocation" />
+    <feature name="BackgroundGeolocation">
+        <param name="android-package" value="com.tenforwardconsulting.cordova.BackgroundGeolocationPlugin" />
     </feature>
     <name>City4Age</name>
     <description>

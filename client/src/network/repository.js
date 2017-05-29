@@ -6,6 +6,8 @@ const logger = require('../utility').logger;
 const arrayToHex = require('../utility').arrayToHex;
 const localStorage = (process.env.NODE_ENV === 'test') ? require("../stubs").localStorage : window.localStorage;
 const defaultHeartbeatInterval = ((process.env.NODE_ENV === 'test') ? 1 : 30) * 60 * 1000;
+const regionInterval = ((process.env.NODE_ENV === 'test') ? 1 : 1440) * 60 * 1000;
+
 const tokenKey = "token";
 const regionsKey = "regions";
 const beaconRoute = "proximity";
@@ -18,15 +20,18 @@ const Repository = function(baseURL, interval) {
 	if (this._baseURL[this._baseURL.length-1] !== "/") this._baseURL += "/";
 	this._token = localStorage.getItem(tokenKey);
 
-	let regions = localStorage.getItem(regionsKey);
-	this._regions = (regions) ? JSON.parse(regions) : null;
-
 	this._hearbeatInterval = (interval) ? interval : defaultHeartbeatInterval;
   // Try and start the timer. It will fail if there is no token
 	this._heartbeatTimer = this._startHeartbeat(true);
 	this._beaconCount = 0; // For debug
+
+	let regions = localStorage.getItem(regionsKey);
+	this._regions = (regions) ? JSON.parse(regions) : null;
+	this._regionTimer = setInterval(this._fetchRegions.bind(this), regionInterval);
+	this._fetchRegions();
 	
 	Object.defineProperty(this, "hasToken", { get: function() { return (this._token) ? true : false; } });
+	Object.defineProperty(this, "regions", { get: function() { return this._regions.regions; } });
 	Object.defineProperty(this, "knownBeaconCount", { get: function() {
 		return "(there " + ((this._beaconCount === 1) ? "is " : "are ") +
 	  	this._beaconCount + ((this._beaconCount === 1) ? " beacon" : " beacons") + " in range)";
@@ -156,7 +161,7 @@ Repository.prototype.heartbeat = function(onCompleted) {
 	});
 }
 
-Repository.prototype.fetchRegions = function(onCompleted) {
+Repository.prototype._fetchRegions = function() {
 	logger("Sending region request");
 	const regionRequest = new Request();
 	let url = this._baseURL + regionRoute;
@@ -166,11 +171,6 @@ Repository.prototype.fetchRegions = function(onCompleted) {
 		if (status === 200) {
 			this._regions = response;
 			localStorage.setItem(regionsKey, JSON.stringify(this._regions));
-			onCompleted(response)
-		}
-		else {
-			// Continue to use the values we already have
-			if (status === 304) onCompleted(this._regions)
 		}
 	}.bind(this))
 }
