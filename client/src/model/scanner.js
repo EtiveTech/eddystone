@@ -6,7 +6,6 @@ const logger = require('../utility').logger;
 const Scanner = function(repository, onStatusChange){
   this._repository = repository;
   this._onStatusChange = onStatusChange;
-  this._watchId = null;
   this._scanning = false;
   this._scan = new Scan(
     this._repository.foundBeacon.bind(this._repository),
