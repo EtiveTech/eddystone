@@ -18,17 +18,17 @@ const regionRoute = "region";
 const Repository = function(baseURL, interval) {
 	this._baseURL = baseURL;
 	if (this._baseURL[this._baseURL.length-1] !== "/") this._baseURL += "/";
+	
 	this._token = localStorage.getItem(tokenKey);
-
-	this._hearbeatInterval = (interval) ? interval : defaultHeartbeatInterval;
-  // Try and start the timer. It will fail if there is no token
-	this._heartbeatTimer = this._startHeartbeat(true);
-	this._beaconCount = 0; // For debug
-
 	let regions = localStorage.getItem(regionsKey);
 	this._regions = (regions) ? JSON.parse(regions) : null;
-	this._regionTimer = setInterval(this._fetchRegions.bind(this), regionInterval);
-	this._fetchRegions();
+
+	// Try and start the timers. Will fail if there is no token
+	this._hearbeatInterval = (interval) ? interval : defaultHeartbeatInterval;
+	this._heartbeatTimer = this._regionTimer = null;
+	this._startTimers();
+
+	this._beaconCount = 0; // For debug
 	
 	Object.defineProperty(this, "hasToken", { get: function() { return (this._token) ? true : false; } });
 	Object.defineProperty(this, "regions", { get: function() { return this._regions.regions; } });
@@ -38,17 +38,17 @@ const Repository = function(baseURL, interval) {
 	} });
 };
 
-Repository.prototype._startHeartbeat = function(issueNow) {
-	if (this._token && this._hearbeatInterval > 0) {
-		if (issueNow) this.heartbeat();
-		return setInterval(this.heartbeat.bind(this), this._hearbeatInterval);
+Repository.prototype._startTimers = function(issueHearbeat) {
+	if (this._token) {
+		if (this._hearbeatInterval > 0) {
+			if (issueHearbeat) this.heartbeat();
+			this._heartbeatTimer = setInterval(this.heartbeat.bind(this), this._hearbeatInterval);
+		}
+		this._fetchRegions();
+		if (regionInterval > 0) this._regionTimer = setInterval(this._fetchRegions.bind(this), regionInterval);
 	}
-	return null;  	
-};
 
-Repository.prototype._stopTimer = function() {
-	// This method intended to clear down tests
-	if (this._heartbeatTimer) clearInterval(this._heartbeatTimer);
+	return null;  	
 };
 
 Repository.prototype.authorize = function(emailAddress, onCompleted) {
