@@ -20,11 +20,11 @@ const Scanner = function(repository, onStatusChange){
     {
       desiredAccuracy: 10,
       stationaryRadius: 3,
-      distanceFilter: 5,
+      distanceFilter: 3,
       stopOnTerminate: true,
       // locationProvider: backgroundGeolocation.provider.ANDROID_DISTANCE_FILTER_PROVIDER
       locationProvider: backgroundGeolocation.provider.ANDROID_ACTIVITY_PROVIDER,
-      interval: 15000,
+      interval: 10000,
       fastestInterval: 5000,
       activitiesInterval: 10000
     }
