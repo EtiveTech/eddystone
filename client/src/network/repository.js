@@ -5,8 +5,8 @@ const apiKey = require('../keys').localRepository;
 const logger = require('../utility').logger;
 const arrayToHex = require('../utility').arrayToHex;
 const localStorage = (process.env.NODE_ENV === 'test') ? require("../stubs").localStorage : window.localStorage;
-const defaultHeartbeatInterval = ((process.env.NODE_ENV === 'test') ? 1 : 30) * 60 * 1000;
-const regionInterval = ((process.env.NODE_ENV === 'test') ? 1 : 1440) * 60 * 1000;
+const defaultHeartbeatInterval = ((process.env.NODE_ENV === 'test') ? 1 : 30 * 60) * 1000;
+const regionInterval = ((process.env.NODE_ENV === 'test') ? 10 : 24 * 60 * 60) * 1000;
 
 const tokenKey = "token";
 const regionsKey = "regions";
@@ -18,7 +18,7 @@ const regionRoute = "region";
 const Repository = function(baseURL, interval) {
 	this._baseURL = baseURL;
 	if (this._baseURL[this._baseURL.length-1] !== "/") this._baseURL += "/";
-	
+
 	this._token = localStorage.getItem(tokenKey);
 	let regions = localStorage.getItem(regionsKey);
 	this._regions = (regions) ? JSON.parse(regions) : null;
@@ -38,18 +38,25 @@ const Repository = function(baseURL, interval) {
 	} });
 };
 
-Repository.prototype._startTimers = function(issueHearbeat) {
+Repository.prototype._startTimers = function(issueHeartbeat) {
 	if (this._token) {
+		logger("Repository starting timers")
+		logger("heartbeatInterval =", this._hearbeatInterval)
+		logger("regionInterval =", regionInterval)
 		if (this._hearbeatInterval > 0) {
-			if (issueHearbeat) this.heartbeat();
+			if (issueHeartbeat) this.heartbeat();
 			this._heartbeatTimer = setInterval(this.heartbeat.bind(this), this._hearbeatInterval);
 		}
 		this._fetchRegions();
 		if (regionInterval > 0) this._regionTimer = setInterval(this._fetchRegions.bind(this), regionInterval);
-	}
-
-	return null;  	
+	};	
 };
+
+Repository.prototype._stopTimers = function() {
+	// Used by tests
+	if (this._hearbeatTimer) clearInterval(this._hearbeatTimer);
+	if (this._regionTimer) clearInterval(this._regionTimer);
+}
 
 Repository.prototype.authorize = function(emailAddress, onCompleted) {
 	logger("Sending authorisation request for", emailAddress);
@@ -77,7 +84,7 @@ Repository.prototype.authorize = function(emailAddress, onCompleted) {
 				if (status === 201) {
 					// Everything is okay so persist the token and start the timer
 		    	localStorage.setItem(tokenKey, this._token);
-				  this._heartbeatTimer = this._startHeartbeat(false);
+				  this._heartbeatTimer = this._startTimers(false);
 				}
 				else {
 					// Couldn't save the device info so forget the token
@@ -162,10 +169,10 @@ Repository.prototype.heartbeat = function(onCompleted) {
 }
 
 Repository.prototype._fetchRegions = function() {
+	if (!this._token) return;
 	logger("Sending region request");
 	const regionRequest = new Request();
 	let url = this._baseURL + regionRoute;
-
 	if (this._regions) url += "?stamp=" + this._regions.changed;
 	regionRequest.makeGetRequest(url, false, function(status, response) {
 		if (status === 200) {

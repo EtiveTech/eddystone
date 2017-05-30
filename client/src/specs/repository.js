@@ -26,12 +26,17 @@ describe("Repository Requests", function() {
 	    network.online = true;
 	  });
 
+	  after(function() {
+	  	repository._stopTimers();
+	  });
+
 	  it('Won\'t send a request without authorisation', function() {
 	  	const url = baseURL + beaconLog;
 
 	  	repository.heartbeat();
 	  	repository.foundBeacon();
 	  	repository.lostBeacon();
+	  	repository._fetchRegions();
 
 	  	assert.strictEqual(server.requests.length, 0);
 	  });
@@ -161,7 +166,7 @@ describe("Repository Requests", function() {
 	  });
 	});
 
-  describe("Automatic hello messages not sent when not authorized", function() {
+  describe("Automatic (heartbeat and region) messages not sent when not authorized", function() {
   	let repository = null;
 
   	// Automatic sending of hello messages is triggered when the repository is created
@@ -178,16 +183,17 @@ describe("Repository Requests", function() {
 	  });
 
 	  after(function() {
-	  	repository._stopTimer();
+	  	repository._stopTimers();
 	  });
 
-	  it('Doesn\'t send any hello messages', function() {
+	  it('Doesn\'t send any heartbeat or region messages', function() {
+	  	assert.strictEqual(repository._token, null);
 	  	assert.strictEqual(server.requests.length, 0);
 	  });
 
 	});
 
-  describe("Automatic hello messages are sent as soon as authorized", function() {
+  describe("Automatic (heartbeat and region)  messages are sent as soon as authorized", function() {
   	let repository = null;
 
   	// Automatic sending of hello messages is triggered when the repository is created
@@ -201,13 +207,14 @@ describe("Repository Requests", function() {
 	  });
 
 	  after(function() {
-	  	repository._stopTimer();
+	  	repository._stopTimers();
 	  });
 
-	  it('Sends hello messages after authorization', function(done) {
+	  it('Sends heartbeat and region messages after authorization', function(done) {
 	  	const email = "test@etive.org";
 	  	const receiverUrl = baseURL + "receiver/" + encodeURIComponent(email) + "?key=" + encodeURIComponent(apiKey);
-	  	const deviceUrl = baseURL + "device"
+	  	const deviceUrl = baseURL + "device";
+	  	const regionUrl = baseURL + "region";
 	  	const receiverJson = JSON.stringify({id: 1, token: token});
 	  	const deviceInfo = {
 	  		os: "Test OS",
@@ -227,21 +234,27 @@ describe("Repository Requests", function() {
 
 	    setTimeout(function() {
 	  		assert.strictEqual(repository._token, token);
-	  	  assert.notStrictEqual(repository._timer, null);
+	  		assert.notStrictEqual(repository._regionTimer, null);
+	  	  assert.notStrictEqual(repository._heartbeatTimer, null);
+
 	  	  // Don't issue an immediate hearbeat in this scenario so request count only 1
-		  	assert.strictEqual(server.requests.length, 1);
-		  	assert.strictEqual(server.requests[0].verb, "PUT");
-		  	assert.strictEqual(server.requests[0].url, deviceUrl + "/test-uuid");
-		  	let content = JSON.parse(server.requests[0].content);
+		  	assert.strictEqual(server.requests.length, 2);
+		  	// region request sent first in this case
+		  	assert.strictEqual(server.requests[0].verb, "GET");
+		  	assert.strictEqual(server.requests[0].url, regionUrl);
+		  	assert.strictEqual(server.requests[1].verb, "PUT");
+		  	assert.strictEqual(server.requests[1].url, deviceUrl + "/test-uuid");
+		  	let content = JSON.parse(server.requests[1].content);
 		  	assert.strictEqual(content.token, token);
 	    	done();
 	    }, 1500);
 	  });
 	});
 
-	 describe("Automatic hello messages sent immediately if already authorized", function() {
+	 describe("Automatic heartbeat and region messages sent immediately if already authorized", function() {
   	let repository = null;
   	const deviceUrl = baseURL + "device"
+  	const regionUrl = baseURL + "region";
 
   	// Automatic sending of hello messages is triggered when the repository is created
   	// In the test environment the messages are sent every 1 second starting as soon as instantiated
@@ -258,21 +271,25 @@ describe("Repository Requests", function() {
 	  });
 
 	  after(function() {
-	  	repository._stopTimer();
+	  	repository._stopTimers();
 	  });
 
 	  it('Sends hello messages on instantiation', function() {
 	  	assert.strictEqual(repository._token, token);
-	  	assert.notStrictEqual(repository._timer, null);
+	  	assert.notStrictEqual(repository._heartbeatTimer, null);
+	  	assert.notStrictEqual(repository._regionTimer, null);
+
 	  	// Issue an immediate heartbeat in this scenario so request count is 2
-	  	assert.strictEqual(server.requests.length, 2);
+	  	assert.strictEqual(server.requests.length, 3);
 	  	assert.strictEqual(server.requests[0].verb, "PUT");
 	  	assert.strictEqual(server.requests[0].url, deviceUrl + "/test-uuid");
 	  	let content = JSON.parse(server.requests[0].content);
 	  	assert.strictEqual(content.token, token);
-	  	assert.strictEqual(server.requests[1].verb, "PUT");
-	  	assert.strictEqual(server.requests[1].url, deviceUrl + "/test-uuid");
-	  	content = JSON.parse(server.requests[1].content);
+	  	assert.strictEqual(server.requests[1].verb, "GET");
+	  	assert.strictEqual(server.requests[1].url, regionUrl);
+	  	assert.strictEqual(server.requests[2].verb, "PUT");
+	  	assert.strictEqual(server.requests[2].url, deviceUrl + "/test-uuid");
+	  	content = JSON.parse(server.requests[2].content);
 	  	assert.strictEqual(content.token, token);
 	  });
 	});
