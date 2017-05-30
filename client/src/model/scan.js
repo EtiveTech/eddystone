@@ -16,7 +16,7 @@ const Scan = function(onFound, onLost, onError){
 	this._onError = onError;
 	this._tidyTimer = null;
 	this._restartTimer = null;
-	this._beacons = null;
+	this._beacons = {};
 	this._scanning = false;
 
 	evothings.ble.stopScan();
@@ -46,7 +46,7 @@ Scan.prototype._restart = function() {
 Scan.prototype.start = function() {
 	// Start scanning.
 	logger("Starting the BLE scan");
-	this._beacons = {};
+	// Don't reinitialise this._beacons
 	this._preBeacons = {}; // Beacons that have not (yet) been reported as found
 	this._tidyTimer = setInterval(this._tidyBeaconLists.bind(this), TIDY_INTERVAL);
 	this._restartTimer = setInterval(this._restart.bind(this), RESTART_INTERVAL);

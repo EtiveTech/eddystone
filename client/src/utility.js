@@ -67,11 +67,24 @@ const arrayToHex = function(array) {
   return hexString;
 }
 
+const positionToString = function(position) {
+  const digits = 5;
+  const multiplier = Math.pow(10, digits);
+
+  const round = function(value) {
+    return Math.round(value * multiplier) / multiplier; 
+  }
+
+  return "lat: " + round(position.latitude) + ", lng: " + round(position.longitude) +
+    " (" + position.provider + ", " + "accuracy: " + round(position.accuracy) + ")";
+}
+
 module.exports = {
   getBrowserWidth: getBrowserWidth,
   getBrowserHeight: getBrowserHeight,
   getScript: getScript,
   logger: logger,
   network: network,
-  arrayToHex: arrayToHex
+  arrayToHex: arrayToHex,
+  positionToString: positionToString
 };

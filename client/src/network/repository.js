@@ -25,7 +25,8 @@ const Repository = function(baseURL, interval) {
 
 	// Try and start the timers. Will fail if there is no token
 	this._hearbeatInterval = (interval) ? interval : defaultHeartbeatInterval;
-	this._heartbeatTimer = this._regionTimer = null;
+	this._heartbeatTimer = null;
+	this._regionTimer = null;
 	this._startTimers();
 
 	this._beaconCount = 0; // For debug
@@ -41,8 +42,6 @@ const Repository = function(baseURL, interval) {
 Repository.prototype._startTimers = function(issueHeartbeat) {
 	if (this._token) {
 		logger("Repository starting timers")
-		logger("heartbeatInterval =", this._hearbeatInterval)
-		logger("regionInterval =", regionInterval)
 		if (this._hearbeatInterval > 0) {
 			if (issueHeartbeat) this.heartbeat();
 			this._heartbeatTimer = setInterval(this.heartbeat.bind(this), this._hearbeatInterval);
