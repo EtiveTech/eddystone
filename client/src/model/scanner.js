@@ -4,10 +4,13 @@ const Scan = require('./scan');
 const logger = require('../utility').logger;
 const positionToString = require('../utility').positionToString;
 
+const minScanLength = 10000; // milliseconds
+
 const Scanner = function(repository, onStatusChange){
   this._repository = repository;
   this._onStatusChange = onStatusChange;
-  this._scanning = false;
+  this._scanStartTime = null;
+  this._stopPending = false;
   this._scan = new Scan(
     this._repository.foundBeacon.bind(this._repository),
     this._repository.lostBeacon.bind(this._repository),
@@ -18,7 +21,7 @@ const Scanner = function(repository, onStatusChange){
     this._movedTo.bind(this),
     this._onGeoError.bind(this),
     {
-      desiredAccuracy: 10,
+      desiredAccuracy: 100, // Need a reading to be accurate to 100m
       stationaryRadius: 3,
       distanceFilter: 3,
       stopOnTerminate: true,
@@ -36,19 +39,32 @@ const Scanner = function(repository, onStatusChange){
 };
 
 Scanner.prototype._startScan = function() {
-  if (this._scanning) return;
+  if (this._stopPending) this._stopPending = false;
+  if (this._scanStartTime) return;
   logger("Starting the scan")
   this._scan.start();
-  this._scanning = true;
+  this._scanStartTime = Date.now();
   this._onStatusChange("Scanning..."); 
 }
 
-Scanner.prototype._stopScan = function() {
-  if (!this._scanning) return;
+Scanner.prototype._stopNow = function() {
+  if (!this._stopPending) return;
   logger("Pausing the scan")
   this._scan.stop();
-  this._scanning = false;
-  this._onStatusChange("Scanning paused"); 
+  this._scanStartTime = null;
+  this._stopPending = false;
+  this._onStatusChange("Scanning paused");
+}
+
+Scanner.prototype._stopScan = function() {
+  if (!this._scanStartTime) return;
+  logger("Scan pause requested")
+  const diff = Date.now() - this._scanStartTime;
+  this._stopPending = true;
+  if (diff >= minScanLength)
+    this._stopNow();
+  else
+    setTimeout(this._stopNow.bind(this), minScanLength - diff);
 }
 
 Scanner.prototype._metresBetween = function( latLngA, latLngB ) {
@@ -106,6 +122,7 @@ Scanner.prototype._movedTo = function(position) {
     this._startScan();
   else
     this._stopScan();
+  backgroundGeolocation.finish();
 };
 
 Scanner.prototype._stationaryAt = function(position) {
@@ -115,16 +132,23 @@ Scanner.prototype._stationaryAt = function(position) {
   this._stopScan();
 }
 
+Scanner.prototype._geolocationModeChange = function(enabled) {
+  // If the location service is not enabled have to scan all the time
+  if (!enabled) this._startScan();
+}
+
 Scanner.prototype._onGeoError = function(geolocationError) {
   this._onStatusChange(geolocationError.message);
 }
 
 Scanner.prototype.start = function() {
-  this._onStatusChange("Scan pending.")
-
+  this._onStatusChange("Scan pending.");
+  // Start the scan immediately - if stationary it will be turned off quickly.
+  this._startScan();
   // Turn ON the background-geolocation system.  The user will be tracked whenever they suspend the app. 
   backgroundGeolocation.start();
   backgroundGeolocation.onStationary(this._stationaryAt.bind(this), this._onGeoError)
+  backgroundGeolocation.watchLocationMode(this._geolocationModeChange.bind(this), this._onGeoError)
 }
 
 Scanner.prototype.stop = function() {
