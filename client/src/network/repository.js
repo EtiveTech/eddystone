@@ -5,7 +5,7 @@ const apiKey = require('../keys').localRepository;
 const logger = require('../utility').logger;
 const arrayToHex = require('../utility').arrayToHex;
 const localStorage = (process.env.NODE_ENV === 'test') ? require("../stubs").localStorage : window.localStorage;
-const defaultHeartbeatInterval = ((process.env.NODE_ENV === 'test') ? 1 : 30 * 60) * 1000;
+const defaultHeartbeatInterval = ((process.env.NODE_ENV === 'test') ? 1 : 60 * 60) * 1000;
 const regionInterval = ((process.env.NODE_ENV === 'test') ? 10 : 24 * 60 * 60) * 1000;
 
 const tokenKey = "token";
