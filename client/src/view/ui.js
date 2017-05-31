@@ -18,12 +18,10 @@ const clearEmail = function() {
 }
 
 const onPause = function() {
-	logger("Pause event raised");
 	uiHidden = true;
 }
 
 const onResume = function() {
-	logger("Resume event raised");
 	uiHidden = false;
 }
 

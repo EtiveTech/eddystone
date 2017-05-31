@@ -47,24 +47,26 @@ Scanner.prototype._startScan = function() {
   this._onStatusChange("Scanning..."); 
 }
 
-Scanner.prototype._stopNow = function() {
-  if (!this._stopPending) return;
-  logger("Pausing the scan")
-  this._scan.stop();
-  this._scanStartTime = null;
-  this._stopPending = false;
-  this._onStatusChange("Scanning paused");
-}
-
 Scanner.prototype._stopScan = function() {
+
+  const stopNow = function(scanner) {
+    // Don't stop the scan if the pending flag has been reset by a _startScan() request
+    if (!scanner._stopPending) return;
+    logger("Pausing the scan")
+    scanner._scan.stop();
+    scanner._scanStartTime = null;
+    scanner._stopPending = false;
+    scanner._onStatusChange("Scanning paused");
+  }
+
   if (!this._scanStartTime) return;
   logger("Scan pause requested")
   const diff = Date.now() - this._scanStartTime;
   this._stopPending = true;
   if (diff >= minScanLength)
-    this._stopNow();
+    stopNow(this);
   else
-    setTimeout(this._stopNow.bind(this), minScanLength - diff);
+    setTimeout(function() { stopNow(this) }.bind(this), minScanLength - diff);
 }
 
 Scanner.prototype._metresBetween = function( latLngA, latLngB ) {
@@ -134,10 +136,12 @@ Scanner.prototype._stationaryAt = function(position) {
 
 Scanner.prototype._geolocationModeChange = function(enabled) {
   // If the location service is not enabled have to scan all the time
+  logger("Geolocation has been turned", (enabled) ? "on" : "off");
   if (!enabled) this._startScan();
 }
 
 Scanner.prototype._onGeoError = function(geolocationError) {
+  logger(JSON.stringify(geolocationError));
   this._onStatusChange(geolocationError.message);
 }
 
@@ -146,9 +150,9 @@ Scanner.prototype.start = function() {
   // Start the scan immediately - if stationary it will be turned off quickly.
   this._startScan();
   // Turn ON the background-geolocation system.  The user will be tracked whenever they suspend the app. 
-  backgroundGeolocation.start();
   backgroundGeolocation.onStationary(this._stationaryAt.bind(this), this._onGeoError)
   backgroundGeolocation.watchLocationMode(this._geolocationModeChange.bind(this), this._onGeoError)
+  backgroundGeolocation.start();
 }
 
 Scanner.prototype.stop = function() {
