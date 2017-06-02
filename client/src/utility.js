@@ -75,7 +75,7 @@ const positionToString = function(position) {
     return Math.round(value * multiplier) / multiplier; 
   }
 
-  return "lat: " + round(position.latitude) + ", lng: " + round(position.longitude) +
+  return "lat, lng: " + round(position.latitude) + ", " + round(position.longitude) +
     " (" + position.provider + ", " + "accuracy: " + round(position.accuracy) + ")";
 }
 

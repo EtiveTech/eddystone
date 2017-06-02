@@ -5,6 +5,7 @@ const logger = require('../utility').logger;
 const positionToString = require('../utility').positionToString;
 
 const minScanLength = 10000; // milliseconds
+const marginOfError = 100; // metres
 
 const Scanner = function(repository, onStatusChange){
   this._repository = repository;
@@ -21,15 +22,15 @@ const Scanner = function(repository, onStatusChange){
     this._movedTo.bind(this),
     this._onGeoError.bind(this),
     {
-      desiredAccuracy: 100, // Need a reading to be accurate to 100m
+      desiredAccuracy: marginOfError,
       stationaryRadius: 3,
       distanceFilter: 3,
       stopOnTerminate: true,
       // locationProvider: backgroundGeolocation.provider.ANDROID_DISTANCE_FILTER_PROVIDER
       locationProvider: backgroundGeolocation.provider.ANDROID_ACTIVITY_PROVIDER,
-      interval: 10000,
+      interval: 15000,
       fastestInterval: 5000,
-      activitiesInterval: 10000
+      activitiesInterval: 30000
     }
   );
 
@@ -108,8 +109,8 @@ Scanner.prototype._nearBeacons = function(geoLocation) {
     // Check if region and position centres are closer together than the sum of the radii
     // If they are then return true
     const d = this._metresBetween(region.point, position);
-    if (d < (region.radius + accuracy)) {
-      logger("Beacons are", Math.round(d), "metres away or less")
+    if (d < (region.radius + marginOfError + accuracy)) {
+      logger("Beacons in range:", Math.round(d), "metres away or less")
       return true;
     }
   }
@@ -117,7 +118,7 @@ Scanner.prototype._nearBeacons = function(geoLocation) {
 }
 
 Scanner.prototype._movedTo = function(position) {
-  logger("Moved to", positionToString(position));
+  // logger("Moved to", positionToString(position));
 
   // Only scan whilest close to beacons
   if (this._nearBeacons(position))
