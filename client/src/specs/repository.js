@@ -14,9 +14,16 @@ const logger = require('../utility').logger;
 const baseURL = "https://cj101d.ifdnrg.com/api/";
 const beaconLog = "proximity";
 const tokenKey = "token";
+const regionsKey = "regions";
 
 describe("Repository Requests", function() {
 	const token = "01234-01234567-0123456789";
+	const position = {
+		latitude: 55.88358,
+		longitude: -3.08531,
+		accuracy: 24.644
+	}
+	const timestamp = new Date("1981-03-21").getTime();
 
   describe("All Request Types", function() {
 		const repository = new Repository(baseURL);
@@ -37,6 +44,7 @@ describe("Repository Requests", function() {
 	  	repository.foundBeacon();
 	  	repository.lostBeacon();
 	  	repository._fetchRegions();
+	  	repository.trackStationary(position, timestamp, 180);
 
 	  	assert.strictEqual(server.requests.length, 0);
 	  });
@@ -293,4 +301,39 @@ describe("Repository Requests", function() {
 	  	assert.strictEqual(content.token, token);
 	  });
 	});
+
+	describe('Sends track request', function() {
+		const trackUrl = baseURL + "track";
+		let repository = null;
+
+	  before(function() {
+	    server.initialize();
+	    network.online = true;
+	    localStorage.setItem(tokenKey, token);
+  	  repository = new Repository(baseURL, 10000000);
+	  });
+
+	  after(function() {
+	  	repository._stopTimers();
+	  });
+
+	  it('Sends correct arguments', function() {
+	  	repository.trackStationary(position, timestamp, 180);
+	  	assert.strictEqual(server.requests.length, 2);
+	  	assert.strictEqual(server.requests[1].verb, "POST");
+	  	assert.strictEqual(server.requests[1].url, trackUrl);
+	  	let content = JSON.parse(server.requests[1].content);
+	  	assert.deepStrictEqual(content, {
+	  		tst: Math.round(timestamp / 1000),
+	  		token: token,
+	  		lat: position.latitude,
+	  		lng: position.longitude,
+	  		acc: Math.round(position.accuracy),
+	  		batt: 0,
+	  		time: 180,
+	  		t: "s"
+	  	})
+	  })
+
+	})
 });

@@ -5,13 +5,15 @@ const logger = require('../utility').logger;
 const positionToString = require('../utility').positionToString;
 
 const minScanLength = 10000; // milliseconds
-const marginOfError = 100; // metres
+const desiredAccuracy = 100; // metres
+const marginOfError = Math.floor(desiredAccuracy / 2);
 
 const Scanner = function(repository, onStatusChange){
   this._repository = repository;
   this._onStatusChange = onStatusChange;
   this._scanStartTime = null;
   this._stopPending = false;
+  this._stationary = 0;
   this._scan = new Scan(
     this._repository.foundBeacon.bind(this._repository),
     this._repository.lostBeacon.bind(this._repository),
@@ -22,7 +24,7 @@ const Scanner = function(repository, onStatusChange){
     this._movedTo.bind(this),
     this._onGeoError.bind(this),
     {
-      desiredAccuracy: marginOfError,
+      desiredAccuracy: desiredAccuracy,
       stationaryRadius: 3,
       distanceFilter: 3,
       stopOnTerminate: true,
@@ -36,7 +38,7 @@ const Scanner = function(repository, onStatusChange){
 
   Object.defineProperty(this, "beacons",
     { get: function(){ return this._scan.beacons; } }
-  ); 
+  );
 };
 
 Scanner.prototype._startScan = function() {
@@ -118,7 +120,13 @@ Scanner.prototype._nearBeacons = function(geoLocation) {
 }
 
 Scanner.prototype._movedTo = function(position) {
-  // logger("Moved to", positionToString(position));
+  if (this._stationary) {
+    const secondsStationary = Math.round((Date.now() - this._stationary) / 1000);
+    logger("Time stationary", Math.round(secondsStationary * 10 / 6) / 100, "minutes");
+    // Log the currrent position?
+    this._repository.trackStationary(position, this._stationary, secondsStationary)
+    this._stationary = 0;
+  }
 
   // Only scan whilest close to beacons
   if (this._nearBeacons(position))
@@ -130,9 +138,10 @@ Scanner.prototype._movedTo = function(position) {
 
 Scanner.prototype._stationaryAt = function(position) {
   logger("Stationary at", positionToString(position));
-
+  this._stationary = Date.now();
   // Don't scan whilst stationary
   this._stopScan();
+  backgroundGeolocation.finish();
 }
 
 Scanner.prototype._geolocationModeChange = function(enabled) {
