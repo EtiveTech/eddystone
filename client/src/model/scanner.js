@@ -12,8 +12,9 @@ const Scanner = function(repository, onStatusChange){
   this._repository = repository;
   this._onStatusChange = onStatusChange;
   this._scanStartTime = null;
+  this._startPending = false;
   this._stopPending = false;
-  this._stationary = 0;
+  this._stationary = null;
   this._scan = new Scan(
     this._repository.foundBeacon.bind(this._repository),
     this._repository.lostBeacon.bind(this._repository),
@@ -35,6 +36,8 @@ const Scanner = function(repository, onStatusChange){
       activitiesInterval: 30000
     }
   );
+  backgroundGeolocation.onStationary(this._stationaryAt.bind(this), this._onGeoError)
+  backgroundGeolocation.watchLocationMode(this._geolocationModeChange.bind(this), this._onGeoError)
 
   Object.defineProperty(this, "beacons",
     { get: function(){ return this._scan.beacons; } }
@@ -121,11 +124,11 @@ Scanner.prototype._nearBeacons = function(geoLocation) {
 
 Scanner.prototype._movedTo = function(position) {
   if (this._stationary) {
-    const secondsStationary = Math.round((Date.now() - this._stationary) / 1000);
+    const secondsStationary = Math.round((Date.now() - this._stationary.time) / 1000);
     logger("Time stationary", Math.round(secondsStationary * 10 / 6) / 100, "minutes");
     // Log the currrent position?
-    this._repository.trackStationary(position, this._stationary, secondsStationary)
-    this._stationary = 0;
+    this._repository.trackStationary(this._stationary.position, this._stationary.time, secondsStationary)
+    this._stationary = null;
   }
 
   // Only scan whilest close to beacons
@@ -138,7 +141,7 @@ Scanner.prototype._movedTo = function(position) {
 
 Scanner.prototype._stationaryAt = function(position) {
   logger("Stationary at", positionToString(position));
-  this._stationary = Date.now();
+  this._stationary = { position: position, time: Date.now() };
   // Don't scan whilst stationary
   this._stopScan();
   backgroundGeolocation.finish();
@@ -147,22 +150,29 @@ Scanner.prototype._stationaryAt = function(position) {
 Scanner.prototype._geolocationModeChange = function(enabled) {
   // If the location service is not enabled have to scan all the time
   logger("Geolocation has been turned", (enabled) ? "on" : "off");
-  if (!enabled) this._startScan();
+  if (!enabled)
+    this._startScan();
+  else
+    if (this._startPending) this.start()
 }
 
 Scanner.prototype._onGeoError = function(geolocationError) {
-  logger(JSON.stringify(geolocationError));
   this._onStatusChange(geolocationError.message);
 }
 
 Scanner.prototype.start = function() {
-  this._onStatusChange("Scan pending.");
+  // this._onStatusChange("Scan pending.");
   // Start the scan immediately - if stationary it will be turned off quickly.
   this._startScan();
-  // Turn ON the background-geolocation system.  The user will be tracked whenever they suspend the app. 
-  backgroundGeolocation.onStationary(this._stationaryAt.bind(this), this._onGeoError)
-  backgroundGeolocation.watchLocationMode(this._geolocationModeChange.bind(this), this._onGeoError)
-  backgroundGeolocation.start();
+  // Turn ON the background-geolocation system.  The user will be tracked whenever they suspend the app.
+  backgroundGeolocation.isLocationEnabled(function(enabled){
+    this._startPending = true;
+    if (enabled) {
+      logger("Geolocation starting")
+      backgroundGeolocation.start();
+      this._startPending = false;
+    }
+  }.bind(this), this._onGeoError);
 }
 
 Scanner.prototype.stop = function() {

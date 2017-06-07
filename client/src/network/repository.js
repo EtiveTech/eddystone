@@ -190,15 +190,18 @@ Repository.prototype.trackStationary = function(position, timestamp, duration) {
 	logger("Sending track request");
 	const trackRequest = new Request();
 	const url = this._baseURL + trackRoute;
+	// content has the format of an OwnTracks message
 	const content = {
+		_type: "stationary",
 		tst: Math.round(timestamp / 1000),
-		token: this._token,
 		lat: position.latitude,
-		lng: position.longitude,
+		lon: position.longitude,
 		acc: Math.round(position.accuracy),
 		batt: this._battery.chargeLevel,
 		time: duration,
-		t: "s"
+		t: "s",
+		uuid: (process.env.NODE_ENV === 'test') ? "Test UUID" : device.uuid,
+		token: this._token
 	}
 	trackRequest.makePostRequest(url, content, false, function(){});
 }

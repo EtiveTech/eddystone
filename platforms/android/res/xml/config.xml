@@ -25,6 +25,9 @@
     <feature name="BackgroundGeolocation">
         <param name="android-package" value="com.tenforwardconsulting.cordova.BackgroundGeolocationPlugin" />
     </feature>
+    <feature name="Battery">
+        <param name="android-package" value="org.apache.cordova.batterystatus.BatteryListener" />
+    </feature>
     <name>City4Age</name>
     <description>
         An app that detects Eddystone beacons and sends proximity info to the City4Age Repository.
@@ -41,7 +44,4 @@
     <preference name="KeepRunning" value="true" />
     <preference name="android-minSdkVersion" value="18" />
     <preference name="android-targetSdkVersion" value="24" />
-    <feature name="Battery">
-        <param name="android-package" value="org.apache.cordova.batterystatus.BatteryListener" />
-    </feature>
 </widget>
