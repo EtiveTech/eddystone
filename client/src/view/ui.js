@@ -51,20 +51,19 @@ const initialize = function() {
 	document.addEventListener("resume", onResume, false);	
 };
 
-const onSaveButton = function() {
+const registerPhone = function(onRegistration) {
 	const email = document.getElementById('email-address').value.trim().toLowerCase();
 	if (email.length > 0) {
 		repository.authorize(email, function(success, message) {
 			// Need this error to be meaningful
 			if (success) {
-				navigator.notification.alert("Your phone has been successfully registered.", null, "Success", "OK");
-				// Clear the email from the UI and start scanning
-				clearEmail();
-				startScanning();
+				navigator.notification.alert("Your phone has been successfully registered.",
+					function() { onRegistration(success); }, "Success", "OK");
 			}
 			else {
 				const alertMessage = (message) ? message : "Please check that you have an Internet connection and that your email address is correct."
-				navigator.notification.alert(alertMessage, null, "Registration Failed", "OK");
+				navigator.notification.alert(alertMessage,
+					function() { onRegistration(success); }, "Registration Failed", "OK");
 			}
 		})
 	}
@@ -72,6 +71,27 @@ const onSaveButton = function() {
 		navigator.notification.alert("You must enter an email address before registering.", null, "Registration Failed", "OK");
 	}
 };
+
+const onSaveButton = function() {
+	registerPhone(function(success){
+		if (success) {
+			// Clear the email from the UI and start scanning
+			clearEmail();
+			if (device.platform !== "Android") {
+				startScanning();
+			}
+			else {
+				const permissions = cordova.plugins.permissions
+				permissions.checkPermission(permissions.ACCESS_COARSE_LOCATION, function(checked){
+				  if (checked.hasPermission)
+				  	startScanning();
+				  else
+				  	permissions.requestPermission(permissions.ACCESS_COARSE_LOCATION, function(){ startScanning(); });
+				});
+			}
+		}
+	});
+}
 
 const startScanning = function() {
 	scanner = new Scanner(repository,
