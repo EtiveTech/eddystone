@@ -39,8 +39,8 @@ const initialize = function() {
 		cordova.plugins.backgroundMode.overrideBackButton();
 	}
 
-	// repository = new Repository((process.env.NODE_ENV === 'test') ? "https://cj101d.ifdnrg.com/api" : "https://c4a.etive.org:8443/api");
-	repository = new Repository("http://192.168.1.74:8080");
+	repository = new Repository((process.env.NODE_ENV === 'test') ? "https://cj101d.ifdnrg.com/api" : "https://c4a.etive.org:8443/api");
+	// repository = new Repository("http://192.168.1.74:8080");
 
 	if (repository.hasToken) {
 		clearEmail();

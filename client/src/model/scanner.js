@@ -6,14 +6,14 @@ const positionToString = require('../utility').positionToString;
 
 const minScanLength = 10000; // milliseconds
 const desiredAccuracy = 100; // metres
-const marginOfError = Math.floor(desiredAccuracy / 2);
+const marginOfError = desiredAccuracy;
 
 const Scanner = function(repository, onStatusChange){
   this._repository = repository;
   this._onStatusChange = onStatusChange;
   this._scanStartTime = null;
-  this._startPending = false;
-  this._stopPending = false;
+  this._startGeolocationPending = false;
+  this._stopScanPending = false;
   this._stationary = null;
   this._scan = new Scan(
     this._repository.foundBeacon.bind(this._repository),
@@ -26,8 +26,8 @@ const Scanner = function(repository, onStatusChange){
     this._onGeoError.bind(this),
     {
       desiredAccuracy: desiredAccuracy,
-      stationaryRadius: 3,
-      distanceFilter: 3,
+      stationaryRadius: 5,
+      distanceFilter: 5,
       stopOnTerminate: true,
       // locationProvider: backgroundGeolocation.provider.ANDROID_DISTANCE_FILTER_PROVIDER
       locationProvider: backgroundGeolocation.provider.ANDROID_ACTIVITY_PROVIDER,
@@ -44,8 +44,14 @@ const Scanner = function(repository, onStatusChange){
   );
 };
 
+Scanner.prototype._startGeolocation = function() {
+  logger("Geolocation starting")
+  backgroundGeolocation.start();
+  this._startGeolocationPending = false;
+}
+
 Scanner.prototype._startScan = function() {
-  if (this._stopPending) this._stopPending = false;
+  if (this._stopScanPending) this._stopScanPending = false;
   if (this._scanStartTime) return;
   logger("Starting the scan")
   this._scan.start();
@@ -57,18 +63,18 @@ Scanner.prototype._stopScan = function() {
 
   const stopNow = function(scanner) {
     // Don't stop the scan if the pending flag has been reset by a _startScan() request
-    if (!scanner._stopPending) return;
+    if (!scanner._stopScanPending) return;
     logger("Pausing the scan")
     scanner._scan.stop();
     scanner._scanStartTime = null;
-    scanner._stopPending = false;
+    scanner._stopScanPending = false;
     scanner._onStatusChange("Scanning paused");
   }
 
   if (!this._scanStartTime) return;
   logger("Scan pause requested")
   const diff = Date.now() - this._scanStartTime;
-  this._stopPending = true;
+  this._stopScanPending = true;
   if (diff >= minScanLength)
     stopNow(this);
   else
@@ -124,10 +130,11 @@ Scanner.prototype._nearBeacons = function(geoLocation) {
 
 Scanner.prototype._movedTo = function(position) {
   if (this._stationary) {
-    const secondsStationary = Math.round((Date.now() - this._stationary.time) / 1000);
+    const now = Date.now();
+    const secondsStationary = Math.round((now - this._stationary.time) / 1000);
     logger("Time stationary", Math.round(secondsStationary * 10 / 6) / 100, "minutes");
     // Log the currrent position?
-    this._repository.trackStationary(this._stationary.position, this._stationary.time, secondsStationary)
+    this._repository.trackStationary(this._stationary.position, now, secondsStationary)
     this._stationary = null;
   }
 
@@ -142,6 +149,8 @@ Scanner.prototype._movedTo = function(position) {
 Scanner.prototype._stationaryAt = function(position) {
   logger("Stationary at", positionToString(position));
   this._stationary = { position: position, time: Date.now() };
+  this._repository.trackStationary(this._stationary.position, this._stationary.time, 0)
+
   // Don't scan whilst stationary
   this._stopScan();
   backgroundGeolocation.finish();
@@ -153,7 +162,7 @@ Scanner.prototype._geolocationModeChange = function(enabled) {
   if (!enabled)
     this._startScan();
   else
-    if (this._startPending) this.start()
+    if (this._startGeolocationPending) this._startGeolocation();
 }
 
 Scanner.prototype._onGeoError = function(geolocationError) {
@@ -166,12 +175,8 @@ Scanner.prototype.start = function() {
   this._startScan();
   // Turn ON the background-geolocation system.  The user will be tracked whenever they suspend the app.
   backgroundGeolocation.isLocationEnabled(function(enabled){
-    this._startPending = true;
-    if (enabled) {
-      logger("Geolocation starting")
-      backgroundGeolocation.start();
-      this._startPending = false;
-    }
+    this._startGeolocationPending = true;
+    if (enabled) this._startGeolocation();
   }.bind(this), this._onGeoError);
 }
 

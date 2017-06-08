@@ -32,9 +32,6 @@
             "ACCOUNT_TYPE": "$PACKAGE_NAME.account",
             "CONTENT_AUTHORITY": "$PACKAGE_NAME",
             "PACKAGE_NAME": "org.etive.city4age.app"
-        },
-        "cordova-plugin-battery-status": {
-            "PACKAGE_NAME": "org.etive.city4age.app"
         }
     },
     "dependent_plugins": {}

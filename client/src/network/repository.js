@@ -5,7 +5,6 @@ const apiKey = require('../keys').localRepository;
 const logger = require('../utility').logger;
 const arrayToHex = require('../utility').arrayToHex;
 const localStorage = (process.env.NODE_ENV === 'test') ? require("../stubs").localStorage : window.localStorage;
-const Battery = require('../model/battery')
 const defaultHeartbeatInterval = ((process.env.NODE_ENV === 'test') ? 1 : 60 * 60) * 1000;
 const regionInterval = ((process.env.NODE_ENV === 'test') ? 10 : 24 * 60 * 60) * 1000;
 
@@ -32,8 +31,6 @@ const Repository = function(baseURL, interval) {
 	this._startTimers();
 
 	this._beaconCount = 0; // For debug
-
-	this._battery = new Battery();
 	
 	Object.defineProperty(this, "hasToken", { get: function() { return (this._token) ? true : false; } });
 	Object.defineProperty(this, "regions", { get: function() { return this._regions.regions; } });
@@ -197,7 +194,6 @@ Repository.prototype.trackStationary = function(position, timestamp, duration) {
 		lat: position.latitude,
 		lon: position.longitude,
 		acc: Math.round(position.accuracy),
-		batt: this._battery.chargeLevel,
 		time: duration,
 		t: "s",
 		uuid: (process.env.NODE_ENV === 'test') ? "Test UUID" : device.uuid,
