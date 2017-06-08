@@ -128,13 +128,19 @@ Scanner.prototype._nearBeacons = function(geoLocation) {
   return false;
 }
 
+Scanner.prototype._recordStationaryTime = function() {
+  const now = Date.now();
+  const secondsStationary = Math.round((now - this._stationary.time) / 1000);
+  logger("Time stationary", Math.round(secondsStationary * 10 / 6) / 100, "minutes");
+  this._repository.trackStationary(this._stationary.position, now, secondsStationary)
+}
+
 Scanner.prototype._movedTo = function(position) {
-  if (this._stationary) {
-    const now = Date.now();
-    const secondsStationary = Math.round((now - this._stationary.time) / 1000);
-    logger("Time stationary", Math.round(secondsStationary * 10 / 6) / 100, "minutes");
-    // Log the currrent position?
-    this._repository.trackStationary(this._stationary.position, now, secondsStationary)
+  // Sometimes a phone "moves" to the same location at which it was stationary
+  // This move is disregarded
+  if (this._stationary && ((this._stationary.position.latitude !== position.latitude) ||
+    (this._stationary.position.longitude !== position.longitude))) {
+    this._recordStationaryTime()
     this._stationary = null;
   }
 
@@ -147,9 +153,21 @@ Scanner.prototype._movedTo = function(position) {
 };
 
 Scanner.prototype._stationaryAt = function(position) {
-  logger("Stationary at", positionToString(position));
-  this._stationary = { position: position, time: Date.now() };
-  this._repository.trackStationary(this._stationary.position, this._stationary.time, 0)
+  // If there is a already record of a stationary point - check to see if the phone has moved at all
+  if (this._stationary && ((this._stationary.position.latitude !== position.latitude) ||
+    (this._stationary.position.longitude !== position.longitude))) {
+    // The phone has moved so record the amount of time the phone was static
+    this._recordStationaryTime()
+    this._stationary = null;
+  }
+
+  // If a move was disregarded (because the device did not move from the point it was stationary)
+  // Then do NOT record another stationary event now
+  if (!this._stationary) {
+    logger("Stationary at", positionToString(position));
+    this._stationary = { position: position, time: Date.now() };
+    this._repository.trackStationary(this._stationary.position, this._stationary.time, 0)
+  }
 
   // Don't scan whilst stationary
   this._stopScan();
