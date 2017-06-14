@@ -53,17 +53,17 @@ ApiRequestDispatcher.prototype._dispatch = function() {
 	}
 };
 
-ApiRequestDispatcher.prototype._suspendDispatch = function() {
-	this._dispatchSuspended = true;
-	setTimeout(this._restartDispatch.bind(this), suspendPeriod);
-};
+// ApiRequestDispatcher.prototype._suspendDispatch = function() {
+// 	this._dispatchSuspended = true;
+// 	setTimeout(this._restartDispatch.bind(this), suspendPeriod);
+// };
 
-ApiRequestDispatcher.prototype._restartDispatch = function() {
-	// Attempt to retrieve a small amount of data from the server
-	// If that succeeds restart 
-	this._dispatchSuspended = false;
-	this._dispatch();
-};
+// ApiRequestDispatcher.prototype._restartDispatch = function() {
+// 	// Attempt to retrieve a small amount of data from the server
+// 	// If that succeeds restart 
+// 	this._dispatchSuspended = false;
+// 	this._dispatch();
+// };
 
 ApiRequestDispatcher.prototype._retry = function(request) {
 	// Prepare the request for resending
