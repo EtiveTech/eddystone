@@ -25,10 +25,10 @@ const Repository = function(baseURL, interval) {
 	this._regions = (regions) ? JSON.parse(regions) : null;
 
 	// Try and start the timers. Will fail if there is no token
-	this._hearbeatInterval = (interval) ? interval : defaultHeartbeatInterval;
-	this._heartbeatTimer = null;
-	this._regionTimer = null;
-	this._startTimers();
+	this._heartbeatInterval = (interval) ? interval : defaultHeartbeatInterval;
+	this._heartbeatTimerID = null;
+	this._regionTimerID = null;
+	this._startTimers(true);
 
 	this._beaconCount = 0; // For debug
 	
@@ -43,19 +43,33 @@ const Repository = function(baseURL, interval) {
 Repository.prototype._startTimers = function(issueHeartbeat) {
 	if (this._token) {
 		logger("Repository starting timers")
-		if (this._hearbeatInterval > 0) {
+		if (this._heartbeatInterval > 0) {
 			if (issueHeartbeat) this.heartbeat();
-			this._heartbeatTimer = setInterval(this.heartbeat.bind(this), this._hearbeatInterval);
+			this._heartbeatTimerID = setInterval(this.heartbeat.bind(this), this._heartbeatInterval);
 		}
 		this._fetchRegions();
-		if (regionInterval > 0) this._regionTimer = setInterval(this._fetchRegions.bind(this), regionInterval);
+		if (regionInterval > 0) this._regionTimerID = setInterval(this._fetchRegions.bind(this), regionInterval);
 	};	
 };
 
 Repository.prototype._stopTimers = function() {
 	// Used by tests
-	if (this._hearbeatTimer) clearInterval(this._hearbeatTimer);
-	if (this._regionTimer) clearInterval(this._regionTimer);
+	let count = 0;
+
+	if (this._heartbeatTimerID) {
+		clearInterval(this._heartbeatTimerID);
+		this._heartbeatTimerID = null;
+		count += 1;
+	}
+
+	if (this._regionTimerID) {
+		clearInterval(this._regionTimerID);
+		this._regionTimerID = null;
+		count += 1;
+	}
+
+	logger("Repository stopped", count, "timers.");
+	return count;
 }
 
 Repository.prototype.authorize = function(emailAddress, onCompleted) {
@@ -84,7 +98,7 @@ Repository.prototype.authorize = function(emailAddress, onCompleted) {
 				if (status === 201) {
 					// Everything is okay so persist the token and start the timer
 		    	localStorage.setItem(tokenKey, this._token);
-				  this._heartbeatTimer = this._startTimers(false);
+				  this._startTimers(false);
 				}
 				else {
 					// Couldn't save the device info so forget the token
@@ -199,7 +213,9 @@ Repository.prototype.trackStationary = function(position, timestamp, duration) {
 		uuid: (process.env.NODE_ENV === 'test') ? "Test UUID" : device.uuid,
 		token: this._token
 	}
-	trackRequest.makePostRequest(url, content, false, function(){});
+	// Allow track requests to timeout if there is a problem sending
+	// They are useful but not fundamental and there could be a lot of them
+	trackRequest.makePostRequest(url, content, true, function(){});
 }
 
 module.exports = Repository;

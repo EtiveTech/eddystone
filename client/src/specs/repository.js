@@ -15,9 +15,9 @@ const baseURL = "https://cj101d.ifdnrg.com/api/";
 const beaconLog = "proximity";
 const tokenKey = "token";
 const regionsKey = "regions";
+const token = "01234-01234567-0123456789";
 
 describe("Repository Requests", function() {
-	const token = "01234-01234567-0123456789";
 	const position = {
 		latitude: 55.88358,
 		longitude: -3.08531,
@@ -80,8 +80,9 @@ describe("Repository Requests", function() {
       assert.strictEqual(server.requests[0].url, deviceUrl);
   		assert.strictEqual(server.requests[0].content, JSON.stringify(deviceInfo));
 
-  		server.respond();
+  		server.respond(); // This will start the timers and send a region request
 
+  		assert.strictEqual(repository._stopTimers(), 2);
 	    assert.strictEqual(localStorage.getItem(tokenKey), token);
 	  });
 
@@ -177,8 +178,7 @@ describe("Repository Requests", function() {
   describe("Automatic (heartbeat and region) messages not sent when not authorized", function() {
   	let repository = null;
 
-  	// Automatic sending of hello messages is triggered when the repository is created
-  	// In the test environment the messages are sent every 0.5 seconds
+  	// Automatic sending of hearbeat messages is triggered when the repository is created
 
 	  before(function(done) {
 	  	localStorage.clear();
@@ -196,12 +196,13 @@ describe("Repository Requests", function() {
 
 	  it('Doesn\'t send any heartbeat or region messages', function() {
 	  	assert.strictEqual(repository._token, null);
+	  	assert.strictEqual(repository.hasToken, false);
 	  	assert.strictEqual(server.requests.length, 0);
 	  });
 
 	});
 
-  describe("Automatic (heartbeat and region)  messages are sent as soon as authorized", function() {
+  describe("Automatic (heartbeat and region) messages are sent as soon as authorized", function() {
   	let repository = null;
 
   	// Automatic sending of hello messages is triggered when the repository is created
@@ -269,6 +270,7 @@ describe("Repository Requests", function() {
   	// Two hello messages should be sent
 
 	  before(function(done) {
+	  	localStorage.clear();
 	    server.initialize();
 	    network.online = true;
 	    localStorage.setItem(tokenKey, token);
@@ -276,14 +278,16 @@ describe("Repository Requests", function() {
 	    setTimeout(function() {
 	    	done();
 	    }, 1500)
+	    // In 1.5 seconds should get two heartbeat messages and one region request
 	  });
 
 	  after(function() {
 	  	repository._stopTimers();
 	  });
 
-	  it('Sends hello messages on instantiation', function() {
+	  it('Sends heartbeat messages on instantiation', function() {
 	  	assert.strictEqual(repository._token, token);
+	  	assert.strictEqual(repository.hasToken, true);
 	  	assert.notStrictEqual(repository._heartbeatTimer, null);
 	  	assert.notStrictEqual(repository._regionTimer, null);
 
@@ -304,13 +308,17 @@ describe("Repository Requests", function() {
 
 	describe('Sends track request', function() {
 		const trackUrl = baseURL + "track";
+		const deviceUrl = baseURL + "device"
+		const regionUrl = baseURL + "region";
 		let repository = null;
 
 	  before(function() {
 	    server.initialize();
 	    network.online = true;
 	    localStorage.setItem(tokenKey, token);
+	    // Make sure the first heartbeat is a long time in the future
   	  repository = new Repository(baseURL, 10000000);
+  	  // Will immediately send heartbeat and region requests
 	  });
 
 	  after(function() {
@@ -319,19 +327,24 @@ describe("Repository Requests", function() {
 
 	  it('Sends correct arguments', function() {
 	  	repository.trackStationary(position, timestamp, 180);
-	  	assert.strictEqual(server.requests.length, 2);
-	  	assert.strictEqual(server.requests[1].verb, "POST");
-	  	assert.strictEqual(server.requests[1].url, trackUrl);
-	  	let content = JSON.parse(server.requests[1].content);
+	  	assert.strictEqual(server.requests.length, 3);
+	  	assert.strictEqual(server.requests[0].verb, "PUT");
+	  	assert.strictEqual(server.requests[0].url, deviceUrl + "/test-uuid");
+	  	assert.strictEqual(server.requests[1].verb, "GET");
+	  	assert.strictEqual(server.requests[1].url, regionUrl);
+	  	assert.strictEqual(server.requests[2].verb, "POST");
+	  	assert.strictEqual(server.requests[2].url, trackUrl);
+	  	let content = JSON.parse(server.requests[2].content);
 	  	assert.deepStrictEqual(content, {
+	  		_type: "stationary",
 	  		tst: Math.round(timestamp / 1000),
 	  		token: token,
 	  		lat: position.latitude,
-	  		lng: position.longitude,
+	  		lon: position.longitude,
 	  		acc: Math.round(position.accuracy),
-	  		batt: 0,
 	  		time: 180,
-	  		t: "s"
+	  		t: "s",
+	  		uuid: "Test UUID"
 	  	})
 	  })
 

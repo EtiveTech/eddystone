@@ -3,10 +3,15 @@
 const logger = require('../utility').logger;
 const network = (process.env.NODE_ENV === 'test') ? require('../stubs').network : require('../utility').network;
 const timeoutDuration = (process.env.NODE_ENV === 'test') ? 100 : 15000; // ms
+const suspendPeriod = 2 * 60 * 1000; // 2 minutes
+const maxQueueLength = (process.env.NODE_ENV === 'test') ? 5 : 500;
 
 const ApiRequestDispatcher = function() {
 	this._queue = [];
 	this._id = 0;
+	this._dispatchSuspended = false;
+	this._suspendFactor = 0;
+
 	if (typeof document !== "undefined") {
 		// document won't exist when running tests outside a browser
 		document.addEventListener("online", this._online.bind(this), false);
@@ -16,27 +21,71 @@ const ApiRequestDispatcher = function() {
 	}
 };
 
-ApiRequestDispatcher.prototype.dispatch = function(request) {
+ApiRequestDispatcher.prototype.enqueue = function(request) {
+	if (this._queue.length >= maxQueueLength) {
+		logger("Dispatch queue too long - rejecting request.");
+		request.callback(601, null);
+		return null;
+	}
+
 	request._id = this._nextId();
-
 	request._setTxTimeout(timeoutDuration, this._onTxTimeout.bind(this));
+	request._setOnError(this._onError.bind(this));
 
-	if (!network.online) {
-		if (request.timeout) request._startTimeout(timeoutDuration, this._onTimeout.bind(this));
-		this._enqueue(request);
-	}
-	else {
-		request._status = "sent";
-		request._send();
-	}
+	logger("Adding request with id", request.id, "to the dispatcher queue.");
+	// How long is the queue allowed to get?
+	this._queue.push(request);
+	if (request.timeout) request._startTimeout(timeoutDuration, this._onTimeout.bind(this));
+	this._dispatch();
+
 	return request;
 };
 
-ApiRequestDispatcher.prototype._enqueue = function(request) {
-	logger("Adding request with id", request.id, "to the dispatcher queue.");
-	request._status = "waiting";
-	this._queue.push(request);
+ApiRequestDispatcher.prototype._dispatch = function() {
+	// If the network is offline, no messages should be sent until the newtwork is online
+	// If an attempt to send has timed out or has generated a network error then dispatch should be
+	// suspended to give the problem a chance to clear.
+	while (network.online && !this._dispatchSuspended && (this._queue.length > 0)) {
+		let request = this._queue.shift();
+		request._stopTimeout();
+		logger("Sending request with id", request.id + ".");
+		request._send();
+	}
 };
+
+ApiRequestDispatcher.prototype._suspendDispatch = function() {
+	this._dispatchSuspended = true;
+	setTimeout(this._restartDispatch.bind(this), suspendPeriod);
+};
+
+ApiRequestDispatcher.prototype._restartDispatch = function() {
+	// Attempt to retrieve a small amount of data from the server
+	// If that succeeds restart 
+	this._dispatchSuspended = false;
+	this._dispatch();
+};
+
+ApiRequestDispatcher.prototype._retry = function(request) {
+	// Prepare the request for resending
+	request._resetRequest();
+	request._setTxTimeout(timeoutDuration, this._onTxTimeout.bind(this));
+	request._setOnError(this._onError.bind(this));
+
+	// This assumes that the value of the request id will always increase (which cannot happen)
+	// However, with only one request being sent out every hour or so, the assumption is safe enough
+	logger("Putting request with id", request.id, "back on the dispatcher queue.");
+	// Find the first queued request with an id greater than request id ainsert the request before it.
+	const i = this._queue.findIndex(function(queued) {
+		return queued.id > request.id
+	})
+	if (i < 0)
+		this._queue.push(request);
+	else
+		this._queue.splice(i, 0, request);
+
+	if (request.timeout) request._startTimeout(timeoutDuration, this._onTimeout.bind(this));
+	this._dispatch();
+}
 
 ApiRequestDispatcher.prototype._dequeue = function(request) {
 	logger("Removing request with id", request.id, "from the dispatcher queue.");
@@ -48,79 +97,39 @@ ApiRequestDispatcher.prototype._dequeue = function(request) {
 	}
 };
 
-ApiRequestDispatcher.prototype._requeue = function(request) {
-	// This method assumes that the value of the request id will always increase (which cannot happen)
-	// However, with only one request being sent out every hour or so, the assumption is safe enough
-	logger("Putting request with id", request.id, "back on the dispatcher queue.");
-	request._status = "waiting";
-	// Find the first queued request with an id greater than request id ainsert the request before it.
-	const i = this._queue.findIndex(function(queued) {
-		return queued.id > request.id
-	})
-	if (i < 0)
-		this._queue.push(request);
-	else
-		this._queue.splice(i, 0, request);
-};
-
 ApiRequestDispatcher.prototype._online = function() {
 	logger("Online event received.");
-	while (this._queue.length > 0) {
-		if (network.online) {
-			let request = this._queue.shift();
-			request._stopTimeout();
-			logger("Sending request with id", request.id + ".");
-			request._status = "sent";
-			request._send();
-		}
-	}
+	this._dispatch();
 };
 
 ApiRequestDispatcher.prototype._onTxTimeout = function(request) {
+	// The request was sent but has not been acknowledged in time
 	logger("Transmission timeout for request with id", request.id +".");
-	if (request.timeout) {
-		request._status = "timeout";
+	//this._suspendDispatch();
+	if (request.timeout)
 		request.callback(600, null);	
-	}
-	else {
-		// Prepare the request for resending
-		request._resetRequest()._setTxTimeout(timeoutDuration, this._onTxTimeout.bind(this));
-		if (network.online)
-			request._send();
-		else
-			this._requeue(request); // Put the request back on the queue
-	}
+	else
+		this._retry(request);
 };
 
 ApiRequestDispatcher.prototype._onTimeout = function(request) {
+	// The request has been sitting, unsent on the queue for too long and will now be removed
 	logger("Timeout, ending request with id", request.id + ".");
 	this._dequeue(request);
-	request._status = "terminated";
 	request.callback(600, null);
 };
 
-// ApiRequestDispatcher.prototype._onPause = function() {
-// 	logger("Pause event, cancelling timeouts.");
-// 	// Cancel all the timeouts
-// 	for (let i = 0; i < this._queue.length; i++) {
-// 		if (this._queue[i].timeout) {
-// 			this._queue[i]._stopTimeout();
-// 		}
-// 	}
-// };
-
-// ApiRequestDispatcher.prototype._onResume = function() {
-// 	logger("Resume event, restarting timeouts.");
-// 	// Restart all the timeouts
-// 	for (let i = 0; i < this._queue.length; i++) {
-// 		if (this._queue[i].timeout) this._queue[i]._startTimeout(timeoutDuration, this._onTimeout.bind(this));
-// 	}
-
-// 	// Won't get an online event when paused so check network status
-// 	// if (navigator.connection.type !== Connection.NONE) this._online();
-// };
+ApiRequestDispatcher.prototype._onError = function(request) {
+	// The request was sent but there has been a network level error
+	// Prepare the request for resending
+	//this._suspendDispatch();
+	this._retry(request);
+}
 
 ApiRequestDispatcher.prototype._nextId = function() {
+	// MAX_SAFE_INTEGER === 9007199254740991
+	// This equates to over 2 billion years of messages if sending one message every 10 seconds (which is realistic)
+	// So don't really have to worry about the wrap around
 	if (this._id === Number.MAX_SAFE_INTEGER) this._id = 0;
 	this._id += 1;
 	return this._id;

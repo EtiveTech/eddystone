@@ -69,6 +69,29 @@ describe("API Dispatcher", function() {
       assert.strictEqual(call.args[0], 201);
       assert.deepStrictEqual(call.args[1], params);
     });
+
+    it("Rejects calls when buffer is full", function() {
+      network.online = false;
+      callback.reset();
+
+      new ApiRequest().makePostRequest(baseURL + "beacon-log", params, false, callback);
+      new ApiRequest().makePostRequest(baseURL + "beacon-log", params, false, callback);
+      new ApiRequest().makePostRequest(baseURL + "beacon-log", params, false, callback);
+      new ApiRequest().makePostRequest(baseURL + "beacon-log", params, false, callback);
+      new ApiRequest().makePostRequest(baseURL + "beacon-log", params, false, callback);
+      new ApiRequest().makePostRequest(baseURL + "beacon-log", params, false, callback);
+
+      assert.strictEqual(callback.callCount, 1);
+      let call = callback.getCall(0);
+      assert.strictEqual(call.args[0], 601);
+      assert.strictEqual(call.args[1], null);
+
+      // Flush all the requests
+      network.online = true;
+      dispatcher._online();
+      server.respond();
+      assert.strictEqual(callback.callCount, 6);
+    })
   });
 
   describe ("Queue with timeouts", function() {

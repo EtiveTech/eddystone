@@ -9,7 +9,6 @@ const ApiRequest = function() {
   this._options = null;
   this._json = null;
   this._timeoutID = null;
-  this._status = 'created';
   this._id = 0;
   this._tries = 0;
 
@@ -46,7 +45,7 @@ ApiRequest.prototype._resetRequest = function() {
 ApiRequest.prototype._makeRequest = function(options) {
   this._options = options;
   this._setRequest(options);
-  return dispatcher.dispatch(this);
+  return dispatcher.enqueue(this);
 };
 
 ApiRequest.prototype._send = function() {
@@ -66,6 +65,12 @@ ApiRequest.prototype._stopTimeout = function() {
 ApiRequest.prototype._setTxTimeout = function(duration, callback) {
   this._request.timeout = duration;
   this._request.ontimeout = function() {
+    callback(this);
+  }.bind(this);
+};
+
+ApiRequest.prototype._setOnError = function(callback) {
+  this._request.onerror = function() {
     callback(this);
   }.bind(this);
 };

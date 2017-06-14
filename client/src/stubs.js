@@ -35,6 +35,7 @@ const XMLHttpRequest = function() {
   this.url = undefined;
   this.onload = undefined;
   this.ontimeout = undefined;
+  this.onerror = undefined;
   this.timeout = 0;
   this.headers = {};
   this.content = undefined;
