@@ -256,12 +256,15 @@ describe("API Dispatcher", function() {
       assert.strictEqual(dispatcher._queue.length, 1);
     });
 
-    it("Empties the queue", function () {
+    it("Empties the queue", function (done) {
       network.online = true;
       dispatcher._online();
 
-      assert.strictEqual(dispatcher._queue.length, 0);
-      assert.strictEqual(server.requests.length, 1);
+      setTimeout(function() {
+        assert.strictEqual(dispatcher._queue.length, 0);
+        assert.strictEqual(server.requests.length, 1);
+        done();
+      }, 1500)
     });
 
     it("Returns the correct data", function () {
@@ -323,12 +326,15 @@ describe("API Dispatcher", function() {
       assert.strictEqual(dispatcher._queue[2].id, id3);
     });
 
-    it("Empties the queue", function () {
+    it("Empties the queue", function (done) {
       network.online = true;
       dispatcher._online();
 
-      assert.strictEqual(dispatcher._queue.length, 0);
-      assert.strictEqual(server.requests.length, 3);
+      setTimeout(function() {
+        assert.strictEqual(dispatcher._queue.length, 0);
+        assert.strictEqual(server.requests.length, 3);
+        done();
+      }, 1500);
     });
 
     it("Returns the correct data", function () {
@@ -347,4 +353,88 @@ describe("API Dispatcher", function() {
       assert.deepStrictEqual(call.args[1], params);
     });
   });
+
+  describe('Handles network issues:', function() {
+    const regionUrl = baseURL + "region";
+    const callback = sinon.spy();
+    const regions = {
+      "changed": 1497344487627,
+      "regions": [
+        {
+          "point": {
+            "lat": 52.558301,
+            "lng": -1.823587
+          },
+          "radius": 25
+        },
+        {
+          "point": {
+            "lat": 52.578182,
+            "lng": -1.804926
+          },
+          "radius": 25
+        },
+        {
+          "point": {
+            "lat": 52.582995,
+            "lng": -1.828277
+          },
+          "radius": 25
+        }
+      ]
+    };
+    const regionJson = JSON.stringify(regions);
+
+    beforeEach(function() {
+      server.initialize();
+      network.online = true;
+      callback.reset();
+    });
+
+    it('Handles Timeouts', function(done){
+      new ApiRequest().makeGetRequest(regionUrl, false, callback);
+      // Ignore the region request and report a network timeout
+      assert.strictEqual(server.requests.length, 1);
+      assert.strictEqual(callback.callCount, 0);
+
+      server.requests[0].ontimeout();
+      server.initialize();
+      server.respondWith("GET", regionUrl, [200, regionJson]);
+
+      // The message should be resent after 1 second
+      assert.strictEqual(server.requests.length, 0);
+      setTimeout(function() {
+        assert.strictEqual(server.requests.length, 1);
+        server.respond();
+        assert.strictEqual(callback.callCount, 1);
+        const call = callback.getCall(0);
+        assert.strictEqual(call.args[0], 200);
+        assert.deepStrictEqual(call.args[1], regions);
+        done();
+      }, 1500)
+    })
+
+    it('Handles Errors', function(done){
+      new ApiRequest().makeGetRequest(regionUrl, false, callback);
+      // Ignore the region request and report a network timeout
+      assert.strictEqual(server.requests.length, 1);
+      assert.strictEqual(callback.callCount, 0);
+
+      server.requests[0].onerror();
+
+      // The message should be resent after 1 second
+      server.initialize();
+      server.respondWith("GET", regionUrl, [200, regionJson]);
+      assert.strictEqual(server.requests.length, 0);
+      setTimeout(function() {
+        assert.strictEqual(server.requests.length, 1);
+        server.respond();
+        assert.strictEqual(callback.callCount, 1);
+        const call = callback.getCall(0);
+        assert.strictEqual(call.args[0], 200);
+        assert.deepStrictEqual(call.args[1], regions);
+        done();
+      }, 1500)
+    })
+  })
 });

@@ -2,6 +2,8 @@
 
 // This file is used for testing only
 
+const logger = require('./utility').logger;
+
 const localStorage = {
   _storage: {},
 
@@ -95,7 +97,10 @@ const HttpServer = {
     const requests = this.requests.slice();
     for (let request of requests) {
       const respondWith = this._findResponse(request);
-      if (respondWith) this._makeResponse(request, respondWith);   
+      if (respondWith)
+        this._makeResponse(request, respondWith);
+      else
+        logger("Did not find a response for request.");
     }
     // Remove the requests that have been processeed from the list
     this.requests.splice(0, requests.length);

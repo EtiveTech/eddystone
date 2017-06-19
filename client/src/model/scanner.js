@@ -7,6 +7,7 @@ const positionToString = require('../utility').positionToString;
 const minScanLength = 10000; // milliseconds
 const desiredAccuracy = 100; // metres
 const marginOfError = desiredAccuracy;
+const reportPosition = false;
 
 const Scanner = function(repository, onStatusChange){
   this._repository = repository;
@@ -129,10 +130,12 @@ Scanner.prototype._nearBeacons = function(geoLocation) {
 }
 
 Scanner.prototype._recordStationaryTime = function() {
-  const now = Date.now();
-  const secondsStationary = Math.round((now - this._stationary.time) / 1000);
-  logger("Time stationary", Math.round(secondsStationary * 10 / 6) / 100, "minutes");
-  this._repository.trackStationary(this._stationary.position, now, secondsStationary)
+  if (reportPosition) {
+    const now = Date.now();
+    const secondsStationary = Math.round((now - this._stationary.time) / 1000);
+    logger("Time stationary", Math.round(secondsStationary * 10 / 6) / 100, "minutes");
+    this._repository.trackStationary(this._stationary.position, now, secondsStationary);
+  }
 }
 
 Scanner.prototype._movedTo = function(position) {

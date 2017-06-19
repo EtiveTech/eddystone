@@ -3,14 +3,13 @@
 const logger = require('../utility').logger;
 const network = (process.env.NODE_ENV === 'test') ? require('../stubs').network : require('../utility').network;
 const timeoutDuration = (process.env.NODE_ENV === 'test') ? 100 : 15000; // ms
-const suspendPeriod = 2 * 60 * 1000; // 2 minutes
+const suspendPeriod = (process.env.NODE_ENV === 'test') ? 1000 : 2 * 60 * 1000; // 2 minutes
 const maxQueueLength = (process.env.NODE_ENV === 'test') ? 5 : 500;
 
 const ApiRequestDispatcher = function() {
 	this._queue = [];
 	this._id = 0;
 	this._dispatchSuspended = false;
-	this._suspendFactor = 0;
 
 	if (typeof document !== "undefined") {
 		// document won't exist when running tests outside a browser
@@ -29,8 +28,8 @@ ApiRequestDispatcher.prototype.enqueue = function(request) {
 	}
 
 	request._id = this._nextId();
-	request._setTxTimeout(timeoutDuration, this._onTxTimeout.bind(this));
-	request._setOnError(this._onError.bind(this));
+	request._setTxTimeout(timeoutDuration, function(){this._onTxTimeout(request)}.bind(this));
+	request._setOnError(function(){this._onError(request)}.bind(this));
 
 	logger("Adding request with id", request.id, "to the dispatcher queue.");
 	// How long is the queue allowed to get?
@@ -53,23 +52,23 @@ ApiRequestDispatcher.prototype._dispatch = function() {
 	}
 };
 
-// ApiRequestDispatcher.prototype._suspendDispatch = function() {
-// 	this._dispatchSuspended = true;
-// 	setTimeout(this._restartDispatch.bind(this), suspendPeriod);
-// };
+ApiRequestDispatcher.prototype._suspendDispatch = function() {
+	logger("Suspending dispatch.");
+	this._dispatchSuspended = true;
+	setTimeout(this._restartDispatch.bind(this), suspendPeriod);
+};
 
-// ApiRequestDispatcher.prototype._restartDispatch = function() {
-// 	// Attempt to retrieve a small amount of data from the server
-// 	// If that succeeds restart 
-// 	this._dispatchSuspended = false;
-// 	this._dispatch();
-// };
+ApiRequestDispatcher.prototype._restartDispatch = function() {
+	logger("Restarting dispatch.");
+	this._dispatchSuspended = false;
+	this._dispatch();
+};
 
 ApiRequestDispatcher.prototype._retry = function(request) {
 	// Prepare the request for resending
 	request._resetRequest();
-	request._setTxTimeout(timeoutDuration, this._onTxTimeout.bind(this));
-	request._setOnError(this._onError.bind(this));
+	request._setTxTimeout(timeoutDuration, function(){this._onTxTimeout(request)}.bind(this));
+	request._setOnError(function(){this._onError(request)}.bind(this));
 
 	// This assumes that the value of the request id will always increase (which cannot happen)
 	// However, with only one request being sent out every hour or so, the assumption is safe enough
@@ -108,8 +107,10 @@ ApiRequestDispatcher.prototype._onTxTimeout = function(request) {
 	//this._suspendDispatch();
 	if (request.timeout)
 		request.callback(600, null);	
-	else
+	else {
+		this._suspendDispatch();
 		this._retry(request);
+	}
 };
 
 ApiRequestDispatcher.prototype._onTimeout = function(request) {
@@ -122,7 +123,8 @@ ApiRequestDispatcher.prototype._onTimeout = function(request) {
 ApiRequestDispatcher.prototype._onError = function(request) {
 	// The request was sent but there has been a network level error
 	// Prepare the request for resending
-	//this._suspendDispatch();
+	logger("Network error sending request with id", request.id + ".");
+	this._suspendDispatch();
 	this._retry(request);
 }
 

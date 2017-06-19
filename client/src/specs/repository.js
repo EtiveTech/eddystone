@@ -347,6 +347,5 @@ describe("Repository Requests", function() {
 	  		uuid: "Test UUID"
 	  	})
 	  })
-
 	})
 });
