@@ -55,10 +55,12 @@ Scan.prototype.start = function() {
 };
 
 // Stop scanning for beacons.
-Scan.prototype.stop = function() {
+Scan.prototype.stop = function(outOfRange) {
 	logger("Stopping the BLE scan");
 	if (this._restartTimer) clearInterval(this._restartTimer);
 	if (this._tidyTimer) clearInterval(this._tidyTimer);
+	// If geoLocation says there are no beacons in range, forget all the beacons
+	if (outOfRange) this._beacons = {};
 	this._scanning = false;
 	evothings.ble.stopScan();
 };

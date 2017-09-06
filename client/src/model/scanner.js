@@ -15,7 +15,6 @@ const Scanner = function(repository, onStatusChange){
   this._scanStartTime = null;
   this._startGeolocationPending = false;
   this._stopScanPending = false;
-  this._stationary = null;
   this._scan = new Scan(
     this._repository.foundBeacon.bind(this._repository),
     this._repository.lostBeacon.bind(this._repository),
@@ -57,19 +56,19 @@ Scanner.prototype._startScan = function() {
   logger("Starting the scan")
   this._scan.start();
   this._scanStartTime = Date.now();
-  this._onStatusChange("Scanning..."); 
+  this._onStatusChange("Scanning for Beacons."); 
 }
 
-Scanner.prototype._stopScan = function() {
+Scanner.prototype._stopScan = function(outOfRange) {
 
   const stopNow = function(scanner) {
     // Don't stop the scan if the pending flag has been reset by a _startScan() request
     if (!scanner._stopScanPending) return;
     logger("Pausing the scan")
-    scanner._scan.stop();
+    scanner._scan.stop(outOfRange);
     scanner._scanStartTime = null;
     scanner._stopScanPending = false;
-    scanner._onStatusChange("Scanning paused");
+    scanner._onStatusChange("Scanning paused.");
   }
 
   if (!this._scanStartTime) return;
@@ -129,51 +128,20 @@ Scanner.prototype._nearBeacons = function(geoLocation) {
   return false;
 }
 
-Scanner.prototype._recordStationaryTime = function() {
-  if (reportPosition) {
-    const now = Date.now();
-    const secondsStationary = Math.round((now - this._stationary.time) / 1000);
-    logger("Time stationary", Math.round(secondsStationary * 10 / 6) / 100, "minutes");
-    this._repository.trackStationary(this._stationary.position, now, secondsStationary);
-  }
-}
-
 Scanner.prototype._movedTo = function(position) {
-  // Sometimes a phone "moves" to the same location at which it was stationary
-  // This move is disregarded
-  if (this._stationary && ((this._stationary.position.latitude !== position.latitude) ||
-    (this._stationary.position.longitude !== position.longitude))) {
-    this._recordStationaryTime()
-    this._stationary = null;
-  }
-
   // Only scan whilest close to beacons
+  logger("Device moved")
   if (this._nearBeacons(position))
     this._startScan();
   else
-    this._stopScan();
+    this._stopScan(true); // out of range
   backgroundGeolocation.finish();
 };
 
 Scanner.prototype._stationaryAt = function(position) {
-  // If there is a already record of a stationary point - check to see if the phone has moved at all
-  if (this._stationary && ((this._stationary.position.latitude !== position.latitude) ||
-    (this._stationary.position.longitude !== position.longitude))) {
-    // The phone has moved so record the amount of time the phone was static
-    this._recordStationaryTime()
-    this._stationary = null;
-  }
-
-  // If a move was disregarded (because the device did not move from the point it was stationary)
-  // Then do NOT record another stationary event now
-  if (!this._stationary) {
-    logger("Stationary at", positionToString(position));
-    this._stationary = { position: position, time: Date.now() };
-    this._repository.trackStationary(this._stationary.position, this._stationary.time, 0)
-  }
-
   // Don't scan whilst stationary
-  this._stopScan();
+  logger("Device stationary");
+  this._stopScan(false); // still in range
   backgroundGeolocation.finish();
 }
 

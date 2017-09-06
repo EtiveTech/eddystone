@@ -14,7 +14,6 @@ const beaconRoute = "proximity";
 const authorizeRoute = "receiver";
 const deviceRoute = "device";
 const regionRoute = "region";
-const trackRoute = "track";
 
 const Repository = function(baseURL, interval) {
 	this._baseURL = baseURL;
@@ -123,7 +122,7 @@ Repository.prototype.foundBeacon = function(beacon, onCompleted) {
 		eventType: 'found',
 		timestamp: Date.now(),
 		beaconId: arrayToHex(beacon.bid),
-		address: beacon.address,
+		// address: beacon.address,
 		rssi: beacon.rssi,
 		txPower: beacon.txPower,
 		uuid: (process.env.NODE_ENV === 'test') ? "Test UUID" : device.uuid,
@@ -153,7 +152,7 @@ Repository.prototype.lostBeacon = function (beacon, onCompleted) {
 		eventType: 'lost',
 		timestamp: Date.now(),
 		beaconId: arrayToHex(beacon.bid),
-		address: beacon.address,
+		// address: beacon.address,
 		rssi: beacon.rssi,
 		rssiMax: beacon.rssiMax,
 		uuid: (process.env.NODE_ENV === 'test') ? "Test UUID" : device.uuid,
@@ -194,28 +193,6 @@ Repository.prototype._fetchRegions = function() {
 			localStorage.setItem(regionsKey, JSON.stringify(this._regions));
 		}
 	}.bind(this))
-}
-
-Repository.prototype.trackStationary = function(position, timestamp, duration) {
-	if (!this._token) return;
-	logger("Sending track request");
-	const trackRequest = new Request();
-	const url = this._baseURL + trackRoute;
-	// content has the format of an OwnTracks message
-	const content = {
-		_type: "stationary",
-		tst: Math.round(timestamp / 1000),
-		lat: position.latitude,
-		lon: position.longitude,
-		acc: Math.round(position.accuracy),
-		time: duration,
-		t: "s",
-		uuid: (process.env.NODE_ENV === 'test') ? "Test UUID" : device.uuid,
-		token: this._token
-	}
-	// Allow track requests to timeout if there is a problem sending
-	// They are useful but not fundamental and there could be a lot of them
-	trackRequest.makePostRequest(url, content, true, function(){});
 }
 
 module.exports = Repository;

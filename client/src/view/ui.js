@@ -34,10 +34,23 @@ const initialize = function() {
 		logger("Entering foreground mode");
 	});
 
+	cordova.plugins.backgroundMode.setDefaults({
+	    title:   'App running in the background',
+	    text:    'Scanning for beacons.',
+	    icon:    'icon',
+	    bigText: false,
+	    resume:  true,
+	    hidden:  true
+	});
+
 	if (device.platform === "Android") {
 		// No back button on iOS
 		cordova.plugins.backgroundMode.overrideBackButton();
 	}
+
+	cordova.getAppVersion.getVersionNumber(function (version) {
+		document.getElementById('version').innerText = "v" + version;
+	});
 
 	repository = new Repository((process.env.NODE_ENV === 'test') ? "https://cj101d.ifdnrg.com/api" : "https://c4a.etive.org:8443/api");
 	// repository = new Repository("http://192.168.1.74:8080");
@@ -123,6 +136,8 @@ const displayDeviceList = function() {
 	if (Object.keys(devices).length === 0) {
 		// There are no devices in the list
 		let newEntry = document.createElement('p');
+		newEntry.setAttribute("align", "center");
+		newEntry.setAttribute("style", "font-weight:bold;");
 		newEntry.innerText = "No beacons in range.";
 		foundDevices.appendChild(newEntry);
 	}
@@ -166,8 +181,9 @@ const displayDeviceList = function() {
 
 // Display a status message
 const displayStatus = function(message) {
-	const scanStatus = document.getElementById('scan-status-div');
-	scanStatus.innerHTML = '<i>' + message + '</i>';
+	const scanStatus = document.getElementById('scan-status');
+	scanStatus.innerText = message;
+	cordova.plugins.backgroundMode.configure({ text: message });
 };
 
 module.exports = {

@@ -114,8 +114,24 @@ input {
 	margin: 20px 10%;
 }
 
-#scan-status-div {
+#textbox {
+	width: 90%;
+	margin: 0 auto 10px auto;
+	padding: 10px;
+	border: 2px solid #2eaac6;
+	border-radius: 6px;
+}
+
+#scan-status {
 	color: grey;
+	float: left;
+}
+
+#version {
+	font-style: normal;
+	font-weight: bold;
+	color: grey;
+	float: right;
 }
 
 #found-devices-div {
@@ -173,6 +189,14 @@ input.btn-group:focus {
 #save-button {
 	float: right;
 	margin-top: 15px;
+}
+
+#found-devices-div {
+	width: 90%;
+	margin: auto;
+	padding: 10px;
+	border: 2px solid #2eaac6;
+	border-radius: 6px;
 }
 
 table {
