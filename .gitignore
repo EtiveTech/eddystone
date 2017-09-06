@@ -1,0 +1,12 @@
+node_modules/
+www/js/bundle.*
+plugins/*
+!plugins/android.json
+!plugins/fetch.json
+!plugins/ios.json
+!plugins/cordova-plugin-ble
+platforms/android/*
+!platforms/android/res/
+platforms/ios/*
+client/src/keys.js
+scratch/
