@@ -68,7 +68,7 @@ main {
 	left: 0;
 	right: 0;
 	z-index: 0;
-	margin: 20px;
+	margin: 0px;
 	padding: 0;
 	font-size: 14px;
 }
@@ -115,9 +115,9 @@ input {
 }
 
 #textbox {
-	width: 90%;
-	margin: 0 auto 10px auto;
-	padding: 10px;
+	width: 80%;
+	margin: 5px auto 0px;
+	padding: 5px 10px;
 	border: 2px solid #2eaac6;
 	border-radius: 6px;
 }
@@ -133,14 +133,6 @@ input {
 	color: grey;
 	float: right;
 }
-
-#found-devices-div {
-	color: grey;
-	margin: 10px 7.5% 0 7.5%;
-	padding: 0;
-}
-
-
 
 /*  ----------------------------------------------------------
 								BUTTONS
@@ -192,11 +184,12 @@ input.btn-group:focus {
 }
 
 #found-devices-div {
-	width: 90%;
-	margin: auto;
-	padding: 10px;
+	width: 80%;
+	margin: 5px auto 0px;
+	padding: 5px 10px;
 	border: 2px solid #2eaac6;
 	border-radius: 6px;
+	color: grey;
 }
 
 table {
