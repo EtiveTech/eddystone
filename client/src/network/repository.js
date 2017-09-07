@@ -128,8 +128,16 @@ Repository.prototype.foundBeacon = function(beacon, onCompleted) {
 		uuid: (process.env.NODE_ENV === 'test') ? "Test UUID" : device.uuid,
 		token: this._token
 	}
+
+	// Mark the beacon as a confirmed beacon in case the reply to the network request
+	// comes after the lost event. If unconfirmed the lost event would not be sent.
+	beacon.confirmed = true;
+
 	// Beacon events are not allowed to time out
 	request.makePostRequest(this._baseURL + beaconRoute, content, false, function(status) {
+		// Beacon is confirmed by default now update with the server response
+		// Note that the lost event may have been sent before this code is executed
+		beacon.confirmed = (status === 201);
 		// Might not be authorised to send to the server or the api key may be wrong
 		if (onCompleted) onCompleted(status);
 	});
