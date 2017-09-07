@@ -17,9 +17,18 @@ const clearEmail = function() {
 	document.getElementById("ui").removeChild(document.getElementById("email-div"));
 }
 
-const onPause = function() {
-	uiHidden = true;
+const postRegistration = function() {
+	document.getElementById("email-div").setAttribute("style", "display:none;");
+	document.getElementById("textbox").setAttribute("style", "display:block;");
+	document.getElementById("found-devices-div").setAttribute("style", "display:block;");
 }
+
+const preRegistration = function() {
+	document.getElementById("email-div").setAttribute("style", "display:block;");
+}
+
+const onPause = function() {
+	uiHidden = true()}
 
 const onResume = function() {
 	uiHidden = false;
@@ -56,8 +65,11 @@ const initialize = function() {
 	// repository = new Repository("http://192.168.1.74:8080");
 
 	if (repository.hasToken) {
-		clearEmail();
+		postRegistration();
 		startScanning();
+	}
+	else {
+		preRegistration();
 	}
 	
 	document.addEventListener("pause", onPause, false);
@@ -89,7 +101,7 @@ const onSaveButton = function() {
 	registerPhone(function(success){
 		if (success) {
 			// Clear the email from the UI and start scanning
-			clearEmail();
+			postRegistration();
 			if (device.platform !== "Android") {
 				startScanning();
 			}

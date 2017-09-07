@@ -168,9 +168,7 @@ Scan.prototype._tidyBeaconLists = function() {
 			// logger("Beacon", bleUtility.arrayToHexString(beacon.bid), "is now found");
 			this._beacons[beacon.address] = beacon;
 			delete this._preBeacons[address];
-			if (this._onFound) this._onFound(beacon, function(status) {
-				beacon.confirmed = (status === 201);
-			});
+			if (this._onFound) this._onFound(beacon);
 		}
 		else if (beacon.foundAfter < timeNow && beacon.timestamp + TIDY_INTERVAL < timeNow) {
 			delete this._preBeacons[address];
