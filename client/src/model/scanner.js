@@ -8,7 +8,7 @@ const minScanLength = 10000; // milliseconds
 const desiredAccuracy = 100; // metres
 const marginOfError = desiredAccuracy;
 const reportPosition = false;
-const SCAN_ONLY = true;
+const IGNORE_LOCATION = false;
 
 const Scanner = function(repository, onStatusChange){
   this._repository = repository;
@@ -74,7 +74,7 @@ Scanner.prototype._stopScan = function(outOfRange) {
 
   if (!this._scanStartTime) return;
   logger("Scan pause requested")
-  if (SCAN_ONLY) {
+  if (IGNORE_LOCATION) {
     logger("Debug mode: Will not pause scan");
     return;
   }
