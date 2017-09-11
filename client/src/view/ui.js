@@ -28,7 +28,7 @@ const preRegistration = function() {
 }
 
 const onPause = function() {
-	uiHidden = true
+	uiHidden = true;
 }
 
 const onResume = function() {
