@@ -27,8 +27,8 @@ const Scanner = function(repository, onStatusChange){
     this._onGeoError.bind(this),
     {
       desiredAccuracy: desiredAccuracy,
-      stationaryRadius: 5,
-      distanceFilter: 5,
+      stationaryRadius: 3,
+      distanceFilter: 3,
       stopOnTerminate: true,
       // locationProvider: backgroundGeolocation.provider.ANDROID_DISTANCE_FILTER_PROVIDER
       locationProvider: backgroundGeolocation.provider.ANDROID_ACTIVITY_PROVIDER,
