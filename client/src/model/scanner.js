@@ -120,10 +120,11 @@ Scanner.prototype._nearBeacons = function(geoLocation) {
 
   const position = { lat: geoLocation.latitude, lng: geoLocation.longitude };
   const accuracy = geoLocation.accuracy;
-
-  for (let region of this._repository.regions) {
+  const regions = this._repository.regions;
+  for (let i = 0; i < regions.length; i++) {
     // Check if region and position centres are closer together than the sum of the radii
     // If they are then return true
+    const region = regions[i];
     const d = this._metresBetween(region.point, position);
     if (d < (region.radius + marginOfError + accuracy)) {
       logger("Beacons in range:", Math.round(d), "metres away or less")
