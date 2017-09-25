@@ -151,7 +151,8 @@ Scan.prototype._tidyBeaconLists = function() {
 	const timeNow = Date.now();
 
 	let addresses = Object.keys(this._beacons);
-	for (let address of addresses) {
+	for (let i = 0; i < addresses.length; i++) {
+		const address = addresses[i];
 		const beacon = this._beacons[address];
 		// Only show devices that are updated during the last 2 seconds.
 		if (beacon.timestamp + (WAIT_TIME * LOST_FACTOR) < timeNow) {
@@ -162,7 +163,9 @@ Scan.prototype._tidyBeaconLists = function() {
 	}
 
 	addresses = Object.keys(this._preBeacons);
-	for (let address of addresses) {
+	for (let i = 0; i < addresses.length; i++) {
+	//for (let address of addresses) {
+		const address = addresses[i];
 		const beacon = this._preBeacons[address];
 		if (beacon.timestamp > beacon.foundAfter) {
 			// logger("Beacon", bleUtility.arrayToHexString(beacon.bid), "is now found");

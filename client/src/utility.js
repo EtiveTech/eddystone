@@ -43,9 +43,8 @@ const logger = function() {
       padding = (ms < 10) ? "00" : "0";
     }
     let text = date.toTimeString().split(" ")[0] + "." + padding + ms;
-    let args = Array.prototype.slice.call(arguments);
-    for (let arg of args) {
-      text += " " + arg;
+    for (let i = 0; i < arguments.length; i++) {
+      text += " " + arguments[i]
     }
     console.log(text);
   }
