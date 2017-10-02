@@ -1,6 +1,7 @@
 "use strict"
 
 const Request = require('./api_request');
+const EventFactory = require('./event_factory')
 const apiKey = require('../keys').localRepository;
 const logger = require('../utility').logger;
 const arrayToHex = require('../utility').arrayToHex;
@@ -27,6 +28,7 @@ const Repository = function(baseURL, interval) {
 	this._heartbeatInterval = (interval) ? interval : defaultHeartbeatInterval;
 	this._heartbeatTimerID = null;
 	this._regionTimerID = null;
+	this._eventFactory = (this._token) ? new EventFactory(this._baseURL, this._token) : null;
 	this._startTimers(true);
 
 	this._beaconCount = 0; // For debug
@@ -97,6 +99,7 @@ Repository.prototype.authorize = function(emailAddress, onCompleted) {
 				if (status === 201) {
 					// Everything is okay so persist the token and start the timer
 		    	localStorage.setItem(tokenKey, this._token);
+		    	this._eventFactory = new EventFactory(this._baseURL, this._token);
 				  this._startTimers(false);
 				}
 				else {
@@ -117,30 +120,7 @@ Repository.prototype.foundBeacon = function(beacon, onCompleted) {
 	if (!this._token) return;
 	this._beaconCount += 1;
 	logger("Sending found beacon message for", arrayToHex(beacon.bid), this.knownBeaconCount);
-	const request = new Request();
-	const content = {
-		eventType: 'found',
-		timestamp: Date.now(),
-		beaconId: arrayToHex(beacon.bid),
-		// address: beacon.address,
-		rssi: beacon.rssi,
-		txPower: beacon.txPower,
-		uuid: (process.env.NODE_ENV === 'test') ? "Test UUID" : device.uuid,
-		token: this._token
-	}
-
-	// Mark the beacon as a confirmed beacon in case the reply to the network request
-	// comes after the lost event. If unconfirmed the lost event would not be sent.
-	beacon.confirmed = true;
-
-	// Beacon events are not allowed to time out
-	request.makePostRequest(this._baseURL + beaconRoute, content, false, function(status) {
-		// Beacon is confirmed by default now update with the server response
-		// Note that the lost event may have been sent before this code is executed
-		beacon.confirmed = (status === 201);
-		// Might not be authorised to send to the server or the api key may be wrong
-		if (onCompleted) onCompleted(status);
-	});
+	this._eventFactory.foundBeaconEvent(beacon, onCompleted)
 }
 
 Repository.prototype.lostBeacon = function (beacon, onCompleted) {
@@ -155,38 +135,13 @@ Repository.prototype.lostBeacon = function (beacon, onCompleted) {
 	}
 	
 	logger("Sending lost beacon message for", arrayToHex(beacon.bid), this.knownBeaconCount);
-	const request = new Request();
-	const content = {
-		eventType: 'lost',
-		timestamp: Date.now(),
-		beaconId: arrayToHex(beacon.bid),
-		// address: beacon.address,
-		rssi: beacon.rssi,
-		rssiMax: beacon.rssiMax,
-		uuid: (process.env.NODE_ENV === 'test') ? "Test UUID" : device.uuid,
-		token: this._token
-	}
-	// Beacon events are not allowed to time out
-	request.makePostRequest(this._baseURL + beaconRoute, content, false, function(status) {
-		// Might not be authorised to send to the server or the api key may be wrong
-		if (onCompleted) onCompleted(status);
-	});
+	this._eventFactory.lostBeaconEvent(beacon, onCompleted)
 }
 
 Repository.prototype.heartbeat = function(onCompleted) {
 	if (!this._token) return;
 	logger("Sending heartbeat message")
-	const request = new Request();
-	const content = {
-		timestamp: Date.now(),
-		token: this._token
-	}
-	const uuid = (process.env.NODE_ENV === 'test') ? "test-uuid" : device.uuid;
-	// Let heartbeat requests timeout if not sent. They are sent a few times every hour. No point in stock-piling
-	request.makePutRequest(this._baseURL + deviceRoute + "/" + uuid, content, true, function(status) {
-		// Might not be authorised to send to the server or the api key may be wrong
-		if (onCompleted) onCompleted(status);
-	});
+	this._eventFactory.heartbeatEvent(onCompleted)
 }
 
 Repository.prototype._fetchRegions = function() {
