@@ -1,10 +1,13 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget defaultlocale="en" id="org.etive.city4age.app" version="0.2.8" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
-    <feature name="BLE">
-        <param name="android-package" value="com.evothings.BLE" />
+<widget defaultlocale="en" id="org.etive.city4age.app" version="0.2.9" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <feature name="Permissions">
+        <param name="android-package" value="com.android.plugins.Permissions" />
     </feature>
-    <feature name="NetworkStatus">
-        <param name="android-package" value="org.apache.cordova.networkinformation.NetworkManager" />
+    <feature name="AppVersion">
+        <param name="android-package" value="uk.co.whiteoctober.cordova.AppVersion" />
+    </feature>
+    <feature name="AutoStart">
+        <param name="android-package" value="com.tonikorin.cordova.plugin.autostart.AutoStart" />
     </feature>
     <feature name="Device">
         <param name="android-package" value="org.apache.cordova.device.Device" />
@@ -12,24 +15,21 @@
     <feature name="BackgroundMode">
         <param name="android-package" value="de.appplant.cordova.plugin.background.BackgroundMode" />
     </feature>
-    <feature name="Whitelist">
-        <param name="android-package" value="org.apache.cordova.whitelist.WhitelistPlugin" />
-        <param name="onload" value="true" />
+    <feature name="BLE">
+        <param name="android-package" value="com.evothings.BLE" />
     </feature>
     <feature name="Notification">
         <param name="android-package" value="org.apache.cordova.dialogs.Notification" />
     </feature>
-    <feature name="AutoStart">
-        <param name="android-package" value="com.tonikorin.cordova.plugin.autostart.AutoStart" />
-    </feature>
     <feature name="BackgroundGeolocation">
         <param name="android-package" value="com.tenforwardconsulting.cordova.BackgroundGeolocationPlugin" />
     </feature>
-    <feature name="Permissions">
-        <param name="android-package" value="com.android.plugins.Permissions" />
+    <feature name="NetworkStatus">
+        <param name="android-package" value="org.apache.cordova.networkinformation.NetworkManager" />
     </feature>
-    <feature name="AppVersion">
-        <param name="android-package" value="uk.co.whiteoctober.cordova.AppVersion" />
+    <feature name="Whitelist">
+        <param name="android-package" value="org.apache.cordova.whitelist.WhitelistPlugin" />
+        <param name="onload" value="true" />
     </feature>
     <name>City4Age</name>
     <description>
@@ -46,5 +46,5 @@
     <preference name="HideKeyboardFormAccessoryBar" value="true" />
     <preference name="KeepRunning" value="true" />
     <preference name="android-minSdkVersion" value="19" />
-    <preference name="android-targetSdkVersion" value="23" />
+    <preference name="android-targetSdkVersion" value="19" />
 </widget>

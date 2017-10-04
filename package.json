@@ -1,40 +1,51 @@
 {
-  "name": "City4Age",
-  "version": "1.0.0",
-  "description": "App that scans for Bluetooth Low Energy (BLE) Eddystone beacons and reports found devices to a server",
-  "main": "app.js",
-  "scripts": {
-    "test": "mocha ./client/src/specs/",
-    "start": "cordova emulate android",
-    "bundle": "cd client && webpack -w",
-    "bundle-p": "cd client && webpack -p"
-  },
-  "author": {
-    "name": "Etive Technologies Limited",
-    "url": "http://www.etive.org"
-  },
-  "contributors": [
-    {
-      "name": "Phil Crooks",
-      "email": "coder.crooks@gmail.com"
+    "name": "City4Age",
+    "version": "1.0.0",
+    "description": "App that scans for Bluetooth Low Energy (BLE) Eddystone beacons and reports found devices to a server",
+    "main": "app.js",
+    "scripts": {
+        "test": "mocha ./client/src/specs/",
+        "start": "cordova emulate android",
+        "bundle": "cd client && webpack -w",
+        "bundle-p": "cd client && webpack -p"
+    },
+    "author": {
+        "name": "Etive Technologies Limited",
+        "url": "http://www.etive.org"
+    },
+    "contributors": [
+        {
+            "name": "Phil Crooks",
+            "email": "coder.crooks@gmail.com"
+        }
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git@github.com:philcrooks/eddystone.git"
+    },
+    "homepage": "http://www.city4ageproject.eu/index.php/testbed-birmingham/",
+    "license": "ISC",
+    "dependencies": {
+        "cordova-android": "^6.2.3",
+        "cordova-plugin-whitelist": "1"
+    },
+    "devDependencies": {
+        "babel": "^6.5.2",
+        "babel-core": "^6.17.0",
+        "babel-loader": "^6.2.5",
+        "babel-preset-es2015": "^6.16.0",
+        "css-loader": "^0.25.0",
+        "mocha": "^3.2.0",
+        "sinon": "^2.1.0",
+        "style-loader": "^0.13.1",
+        "webpack": "^1.13.3"
+    },
+    "cordova": {
+        "plugins": {
+            "cordova-plugin-whitelist": {}
+        },
+        "platforms": [
+            "android"
+        ]
     }
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:philcrooks/eddystone.git"
-  },
-  "homepage": "http://www.city4ageproject.eu/index.php/testbed-birmingham/",
-  "license": "ISC",
-  "dependencies": {},
-  "devDependencies": {
-    "babel": "^6.5.2",
-    "babel-core": "^6.17.0",
-    "babel-loader": "^6.2.5",
-    "babel-preset-es2015": "^6.16.0",
-    "css-loader": "^0.25.0",
-    "mocha": "^3.2.0",
-    "sinon": "^2.1.0",
-    "style-loader": "^0.13.1",
-    "webpack": "^1.13.3"
-  }
 }

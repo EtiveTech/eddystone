@@ -19,7 +19,11 @@ const Scanner = function(repository, onStatusChange){
   this._scan = new Scan(
     this._repository.foundBeacon.bind(this._repository),
     this._repository.lostBeacon.bind(this._repository),
-    function(errorCode) { this._onStatusChange("Scan Error: " + errorCode) }.bind(this)
+    function(error) {
+      logger("Scan Error:", error);
+      this._onStatusChange("Scan Error: " + error);
+      this._resetScan();
+    }.bind(this)
   );
 
   backgroundGeolocation.configure(
@@ -60,15 +64,19 @@ Scanner.prototype._startScan = function() {
   this._onStatusChange("Scanning for Beacons."); 
 }
 
+Scanner.prototype._resetScan = function (outOfRange = true) {
+  this._scan.stop(outOfRange);
+  this._scanStartTime = null;
+  this._stopScanPending = false;
+}
+
 Scanner.prototype._stopScan = function(outOfRange) {
 
   const stopNow = function(scanner) {
     // Don't stop the scan if the pending flag has been reset by a _startScan() request
     if (!scanner._stopScanPending) return;
     logger("Pausing the scan")
-    scanner._scan.stop(outOfRange);
-    scanner._scanStartTime = null;
-    scanner._stopScanPending = false;
+    scanner._resetScan(outOfRange);
     scanner._onStatusChange("Scanning paused.");
   }
 
