@@ -46,5 +46,5 @@
     <preference name="HideKeyboardFormAccessoryBar" value="true" />
     <preference name="KeepRunning" value="true" />
     <preference name="android-minSdkVersion" value="19" />
-    <preference name="android-targetSdkVersion" value="25" />
+    <preference name="android-targetSdkVersion" value="24" />
 </widget>
