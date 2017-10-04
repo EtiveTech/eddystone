@@ -14,7 +14,7 @@
     <platform name="android">
         <preference name="KeepRunning" value="true" />
         <preference name="android-minSdkVersion" value="19" />
-        <preference name="android-targetSdkVersion" value="19" />
+        <preference name="android-targetSdkVersion" value="25" />
     </platform>
     <platform name="ios">
         <preference name="BackupWebStorage" value="none" />
