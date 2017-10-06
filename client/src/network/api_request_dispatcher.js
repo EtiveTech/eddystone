@@ -1,10 +1,12 @@
 "use strict"
 
 const logger = require('../utility').logger;
+const XMLHttpRequest = (process.env.NODE_ENV === 'test') ? require('../stubs').XMLHttpRequest : window.XMLHttpRequest;
 const network = (process.env.NODE_ENV === 'test') ? require('../stubs').network : require('../utility').network;
 const timeoutDuration = (process.env.NODE_ENV === 'test') ? 100 : 15000; // ms
-const suspendPeriod = (process.env.NODE_ENV === 'test') ? 1000 : 2 * 60 * 1000; // 2 minutes
+const suspendPeriod = (process.env.NODE_ENV === 'test') ? 1000 : 1000 * 60 * 2; // 2 minutes
 const maxQueueLength = (process.env.NODE_ENV === 'test') ? 5 : 500;
+const echoURL = ((process.env.NODE_ENV === 'test') ? "https://cj101d.ifdnrg.com/api/device" : "https://c4a.etive.org:8443/api/device");
 
 const ApiRequestDispatcher = function() {
 	this._queue = [];
@@ -41,27 +43,27 @@ ApiRequestDispatcher.prototype.enqueue = function(request) {
 };
 
 ApiRequestDispatcher.prototype._dispatch = function() {
-	// If the network is offline, no messages should be sent until the newtwork is online
-	// If an attempt to send has timed out or has generated a network error then dispatch should be
-	// suspended to give the problem a chance to clear.
-	while (network.online && !this._dispatchSuspended && (this._queue.length > 0)) {
+	this._dispatchSuspended = this._dispatchSuspended || network.offline;
+	while (!this._dispatchSuspended && (this._queue.length > 0)) {
 		let request = this._queue.shift();
 		request._stopTimeout();
 		request._send();
 	}
 };
 
-ApiRequestDispatcher.prototype._suspendDispatch = function() {
-	logger("Suspending dispatch.");
-	this._dispatchSuspended = true;
-	setTimeout(this._restartDispatch.bind(this), suspendPeriod);
-};
+// ApiRequestDispatcher.prototype._suspendDispatch = function() {
+// 	if (this._dispatchSuspended) return;
+// 	logger("Suspending dispatch.");
+// 	this._dispatchSuspended = true;
+// 	setTimeout(this._restartDispatch.bind(this), suspendPeriod);
+// };
 
-ApiRequestDispatcher.prototype._restartDispatch = function() {
-	logger("Restarting dispatch.");
-	this._dispatchSuspended = false;
-	this._dispatch();
-};
+// ApiRequestDispatcher.prototype._restartDispatch = function() {
+// 	if (!this._dispatchSuspended) return;
+// 	logger("Restarting dispatch.");
+// 	this._dispatchSuspended = false;
+// 	this._dispatch();
+// };
 
 ApiRequestDispatcher.prototype._retry = function(request) {
 	// Prepare the request for resending
@@ -98,11 +100,33 @@ ApiRequestDispatcher.prototype._dequeue = function(request) {
 ApiRequestDispatcher.prototype._online = function() {
 	logger("Online event received.");
 	logger("Network connection type is:", network.connectionType + ".")
-	this._dispatch();
+	if (this._dispatchSuspended && network.online) {
+		// Stuff to send, let's see if it's possible
+		const echoRequest = new XMLHttpRequest();
+		echoRequest.open("GET", echoURL + "/" + device.uuid);
+		echoRequest.onload = function() {
+		  if (echoRequest.status === 200) {
+		  	logger("Echo request to", echoURL, "succeeded.");
+		  	this._dispatchSuspended = false;
+		  	this._dispatch();
+		  }
+		}.bind(this);
+		echoRequest.timeout = timeoutDuration;
+		echoRequest.ontimeout = function() {
+			logger("Echo request to", echoURL, "failed");
+			setTimeout(this._online.bind(this), suspendPeriod);
+		};
+		echoRequest.onerror = function() {
+			logger("Echo request to", echoURL, "failed");
+			setTimeout(this._online.bind(this), suspendPeriod);
+		};
+		echoRequest.send();
+	}
 };
 
 ApiRequestDispatcher.prototype._offline = function() {
 	logger("Offline event received.");
+	this._dispatchSuspended = true;
 };
 
 ApiRequestDispatcher.prototype._onTxTimeout = function(request) {
@@ -112,7 +136,7 @@ ApiRequestDispatcher.prototype._onTxTimeout = function(request) {
 	if (request.timeout)
 		request.callback(600, null);	
 	else {
-		this._suspendDispatch();
+		// this._suspendDispatch();
 		this._retry(request);
 	}
 };
@@ -128,7 +152,7 @@ ApiRequestDispatcher.prototype._onError = function(request) {
 	// The request was sent but there has been a network level error
 	// Prepare the request for resending
 	logger("Network error sending request with id", request.id + ".");
-	this._suspendDispatch();
+	// this._suspendDispatch();
 	this._retry(request);
 }
 

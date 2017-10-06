@@ -69,6 +69,8 @@ const network = {
   // navigator.connection.type will only exist after the device is ready
   get online() { return((navigator.connection.type !== Connection.NONE) &&
                         (navigator.connection.type !== Connection.UNKNOWN)) },
+  get offline() { return((navigator.connection.type === Connection.NONE) ||
+                        (navigator.connection.type === Connection.UNKNOWN)) },
   get connectionType() { if (!connectionTypes) _initConnectionTypes(); return connectionTypes[navigator.connection.type]; }
 };
 

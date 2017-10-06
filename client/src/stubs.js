@@ -29,6 +29,7 @@ const localStorage = {
 
 const network = {
   online: true,
+  offline: false,
   connectionType: "Unknown connection"
 };
 
