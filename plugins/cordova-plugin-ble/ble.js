@@ -71,17 +71,14 @@ exports.startScan = function(arg1, arg2, arg3, arg4)
 	var options;
 	var parseAdvertisementData = true;
 
-	function onFail(error)
-	{
+	function onFail(error) {
 		isScanning = false;
 		fail(error);
 	}
 
-	function onSuccess(device)
-	{
+	function onSuccess(device) {
 		// Only report results while scanning is requested.
-		if (isScanning)
-		{
+		if (isScanning) {
 			if (parseAdvertisementData)
 			{
 				exports.parseAdvertisementData(device);
@@ -91,16 +88,14 @@ exports.startScan = function(arg1, arg2, arg3, arg4)
 	}
 
 	// Determine parameters.
-	if (Array.isArray(arg1))
-	{
+	if (Array.isArray(arg1)) {
 		// First param is an array of serviceUUIDs.
 		serviceUUIDs = arg1;
 		success = arg2;
 		fail = arg3;
 		options = arg4;
 	}
-	else if ('function' == typeof arg1)
-	{
+	else if ('function' == typeof arg1) {
 		// First param is a function.
 		serviceUUIDs = null;
 		success = arg1;
@@ -108,8 +103,7 @@ exports.startScan = function(arg1, arg2, arg3, arg4)
 		options = arg3;
 	}
 
-	if (isScanning)
-	{
+	if (isScanning) {
 		fail('Scan already in progress');
 		return;
 	}
@@ -117,32 +111,26 @@ exports.startScan = function(arg1, arg2, arg3, arg4)
 	isScanning = true;
 
 	// Set options.
-	if (options)
-	{
-		if (Array.isArray(options.serviceUUIDs))
-		{
+	if (options) {
+		if (Array.isArray(options.serviceUUIDs)) {
 			serviceUUIDs = options.serviceUUIDs;
 		}
 
-		if (options.parseAdvertisementData === true)
-		{
+		if (options.parseAdvertisementData === true) {
 			parseAdvertisementData = true;
 		}
-		else if (options.parseAdvertisementData === false)
-		{
+		else if (options.parseAdvertisementData === false) {
 			parseAdvertisementData = false;
 		}
 	}
 
 	// Start scanning.
 	isScanning = true;
-	if (Array.isArray(serviceUUIDs))
-	{
+	if (Array.isArray(serviceUUIDs)) {
 		serviceUUIDs = getCanonicalUUIDArray(serviceUUIDs);
 		exec(onSuccess, onFail, 'BLE', 'startScan', [serviceUUIDs]);
 	}
-	else
-	{
+	else {
 		exec(onSuccess, onFail, 'BLE', 'startScan', []);
 	}
 };
@@ -151,12 +139,10 @@ exports.startScan = function(arg1, arg2, arg3, arg4)
  * Ensure that all UUIDs in an array has canonical form.
  * @private
  */
-function getCanonicalUUIDArray(uuidArray)
-{
+function getCanonicalUUIDArray(uuidArray) {
 	var result = [];
 
-	for (var i in uuidArray)
-	{
+	for (var i in uuidArray) {
 		result.push(exports.getCanonicalUUID(uuidArray[i]));
 	}
 
@@ -240,8 +226,7 @@ function getCanonicalUUIDArray(uuidArray)
  * @example
  *   evothings.ble.stopScan();
  */
-exports.stopScan = function()
-{
+exports.stopScan = function() {
 	isScanning = false;
 	exec(null, null, 'BLE', 'stopScan', []);
 };
@@ -249,8 +234,7 @@ exports.stopScan = function()
 // Create closure for parseAdvertisementData and helper functions.
 // TODO: Investigate if the code can be simplified, compare to how
 // how the Evothings Bleat implementation does this.
-;(function()
-{
+;(function() {
 var base64;
 
 /**
@@ -260,8 +244,7 @@ var base64;
  * See  {@link AdvertisementData} for reference documentation.
  * @param {DeviceInfo} device - Device object.
  */
-exports.parseAdvertisementData = function(device)
-{
+exports.parseAdvertisementData = function(device) {
 	if (!base64) { base64 = cordova.require('cordova/base64'); }
 
 	// If device object already has advertisementData we
@@ -285,13 +268,9 @@ exports.parseAdvertisementData = function(device)
 	// Each structure has a length byte, a type byte, and (length-1) data bytes.
 	// The format of the data bytes depends on the type.
 	// Malformed scanRecords will likely cause an exception in this function.
-	while (pos < byteArray.length)
-	{
+	while (pos < byteArray.length) {
 		var length = byteArray[pos++];
-		if (length == 0)
-		{
-			break;
-		}
+		if (length == 0) break;
 		length -= 1;
 		var type = byteArray[pos++];
 
@@ -301,30 +280,22 @@ exports.parseAdvertisementData = function(device)
 		var BLUETOOTH_BASE_UUID = '-0000-1000-8000-00805f9b34fb'
 
 		// Convert 16-byte Uint8Array to RFC-4122-formatted UUID.
-		function arrayToUUID(array, offset)
-		{
+		function arrayToUUID(array, offset) {
 			var k=0;
 			var string = '';
 			var UUID_format = [4, 2, 2, 2, 6];
-			for (var l=0; l<UUID_format.length; l++)
-			{
-				if (l != 0)
-				{
-					string += '-';
-				}
-				for (var j=0; j<UUID_format[l]; j++, k++)
-				{
+			for (var l=0; l<UUID_format.length; l++) {
+				if (l != 0) string += '-';
+				for (var j=0; j<UUID_format[l]; j++, k++) {
 					string += toHexString(array[offset+k], 1);
 				}
 			}
 			return string;
 		}
 
-		if (type == 0x02 || type == 0x03) // 16-bit Service Class UUIDs.
-		{
+		if (type == 0x02 || type == 0x03) { // 16-bit Service Class UUIDs.
 			serviceUUIDs = serviceUUIDs ? serviceUUIDs : [];
-			for(var i=0; i<length; i+=2)
-			{
+			for(var i=0; i<length; i+=2) {
 				serviceUUIDs.push(
 					'0000' +
 					toHexString(
@@ -333,11 +304,10 @@ exports.parseAdvertisementData = function(device)
 					BLUETOOTH_BASE_UUID);
 			}
 		}
-		if (type == 0x04 || type == 0x05) // 32-bit Service Class UUIDs.
-		{
+
+		if (type == 0x04 || type == 0x05) { // 32-bit Service Class UUIDs.
 			serviceUUIDs = serviceUUIDs ? serviceUUIDs : [];
-			for (var i=0; i<length; i+=4)
-			{
+			for (var i=0; i<length; i+=4) {
 				serviceUUIDs.push(
 					toHexString(
 						littleEndianToUint32(byteArray, pos + i),
@@ -345,26 +315,25 @@ exports.parseAdvertisementData = function(device)
 					BLUETOOTH_BASE_UUID);
 			}
 		}
-		if (type == 0x06 || type == 0x07) // 128-bit Service Class UUIDs.
-		{
+
+		if (type == 0x06 || type == 0x07) {// 128-bit Service Class UUIDs.
 			serviceUUIDs = serviceUUIDs ? serviceUUIDs : [];
-			for (var i=0; i<length; i+=16)
-			{
+			for (var i=0; i<length; i+=16) {
 				serviceUUIDs.push(arrayToUUID(byteArray, pos + i));
 			}
 		}
-		if (type == 0x08 || type == 0x09) // Local Name.
-		{
+
+		if (type == 0x08 || type == 0x09) { // Local Name.
 			advertisementData.kCBAdvDataLocalName = evothings.ble.fromUtf8(
 				new Uint8Array(byteArray.buffer, pos, length));
 		}
-		if (type == 0x0a) // TX Power Level.
-		{
+
+		if (type == 0x0a) { // TX Power Level.
 			advertisementData.kCBAdvDataTxPowerLevel =
 				littleEndianToInt8(byteArray, pos);
 		}
-		if (type == 0x16) // Service Data, 16-bit UUID.
-		{
+
+		if (type == 0x16) { // Service Data, 16-bit UUID.
 			serviceData = serviceData ? serviceData : {};
 			var uuid =
 				'0000' +
@@ -375,8 +344,8 @@ exports.parseAdvertisementData = function(device)
 			var data = new Uint8Array(byteArray.buffer, pos+2, length-2);
 			serviceData[uuid] = base64.fromArrayBuffer(data);
 		}
-		if (type == 0x20) // Service Data, 32-bit UUID.
-		{
+
+		if (type == 0x20) { // Service Data, 32-bit UUID.
 			serviceData = serviceData ? serviceData : {};
 			var uuid =
 				toHexString(
@@ -386,15 +355,15 @@ exports.parseAdvertisementData = function(device)
 			var data = new Uint8Array(byteArray.buffer, pos+4, length-4);
 			serviceData[uuid] = base64.fromArrayBuffer(data);
 		}
-		if (type == 0x21) // Service Data, 128-bit UUID.
-		{
+
+		if (type == 0x21) { // Service Data, 128-bit UUID.
 			serviceData = serviceData ? serviceData : {};
 			var uuid = arrayToUUID(byteArray, pos);
 			var data = new Uint8Array(byteArray.buffer, pos+16, length-16);
 			serviceData[uuid] = base64.fromArrayBuffer(data);
 		}
-		if (type == 0xff) // Manufacturer-specific Data.
-		{
+
+		if (type == 0xff) {// Manufacturer-specific Data.
 			// Annoying to have to transform base64 back and forth,
 			// but it has to be done in order to maintain the API.
 			advertisementData.kCBAdvDataManufacturerData =
@@ -489,8 +458,7 @@ function toHexString(i, byteCount) {
  * @return Converted number.
  * @public
  */
-function littleEndianToUint16(data, offset)
-{
+function littleEndianToUint16(data, offset) {
 	return (littleEndianToUint8(data, offset + 1) << 8) +
 		littleEndianToUint8(data, offset)
 }
@@ -503,8 +471,7 @@ function littleEndianToUint16(data, offset)
  * @return Converted number.
  * @public
  */
-function littleEndianToUint32(data, offset)
-{
+function littleEndianToUint32(data, offset) {
 	return (littleEndianToUint8(data, offset + 3) << 24) +
 		(littleEndianToUint8(data, offset + 2) << 16) +
 		(littleEndianToUint8(data, offset + 1) << 8) +
@@ -519,8 +486,7 @@ function littleEndianToUint32(data, offset)
  * @return Converted number.
  * @public
  */
-function littleEndianToInt8(data, offset)
-{
+function littleEndianToInt8(data, offset) {
 	var x = littleEndianToUint8(data, offset)
 	if (x & 0x80) x = x - 256
 	return x
@@ -534,9 +500,39 @@ function littleEndianToInt8(data, offset)
  * @return Converted number.
  * @public
  */
-function littleEndianToUint8(data, offset)
-{
+function littleEndianToUint8(data, offset) {
 	return data[offset]
 }
 
 })(); // End of closure for parseAdvertisementData.
+
+
+/**
+ * Returns a canonical UUID.
+ *
+ * Code adopted from the Bleat library by Rob Moran (@thegecko), see this file:
+ * https://github.com/thegecko/bleat/blob/master/dist/bluetooth.helpers.js
+ *
+ * @param {string|number} uuid - The UUID to turn into canonical form.
+ * @return Canonical UUID.
+ */
+exports.getCanonicalUUID = function(uuid) {
+	if (typeof uuid === 'number') {
+		uuid = uuid.toString(16);
+	}
+
+	uuid = uuid.toLowerCase();
+
+	if (uuid.length <= 8) {
+		uuid = ('00000000' + uuid).slice(-8) + '-0000-1000-8000-00805f9b34fb';
+	}
+
+	if (uuid.length === 32) {
+		uuid = uuid
+			.match(/^([0-9a-f]{8})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{12})$/)
+			.splice(1)
+			.join('-');
+	}
+
+	return uuid;
+};

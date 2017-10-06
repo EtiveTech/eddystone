@@ -71,14 +71,14 @@ public class BLE extends CordovaPlugin implements LeScanCallback {
 	// Used to send error messages to the JavaScript side if Bluetooth power-on fails.
 	private CallbackContext mPowerOnCallbackContext;
 
-	private void runAction(Runnable action)
-	{
+	private void runAction(Runnable action) {
 		// Original method, call directly.
 		//action.run();
 
 		// Possibly safer alternative, call on UI thread.
 		// cordova.getActivity().runOnUiThread(action);
-		cordova.getActivity().execute(action);
+		// cordova.getActivity().execute(action);
+		cordova.getThreadPool().execute(action);
 
 		// See issue: https://github.com/evothings/cordova-ble/issues/122
 		// Some links:
@@ -114,13 +114,13 @@ public class BLE extends CordovaPlugin implements LeScanCallback {
 				startScan(args, callbackContext);
 			}
 			else if ("stopScan".equals(action)) {
-				stopScan(args, callbackContext);
+				stopScan(/*args, callbackContext*/);
 			}
 			else {
 				return false;
 			}
 		}
-		catch (JSONException e) {
+		catch (Exception e) {
 			e.printStackTrace();
 			callbackContext.error(e.getMessage());
 			return false;
@@ -275,8 +275,7 @@ public class BLE extends CordovaPlugin implements LeScanCallback {
 		}
 	}
 
-	private void startScanCheckSystemLocationSetting()
-	{
+	private void startScanCheckSystemLocationSetting() {
 		// If below Marshmallow System Location setting does not need to be on.
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
 			// Go ahead and start scanning.
@@ -387,7 +386,7 @@ public class BLE extends CordovaPlugin implements LeScanCallback {
 	}
 
 	// API implementation.
-	private void stopScan(final CordovaArgs args, final CallbackContext callbackContext) {
+	private void stopScan(/*final CordovaArgs args, final CallbackContext callbackContext*/) {
 		// No pending scan results will be reported.
 		mScanCallbackContext = null;
 
@@ -414,5 +413,19 @@ public class BLE extends CordovaPlugin implements LeScanCallback {
 				adapter.stopLeScan(callback);
 			}
 		});
-		*/
+		*/	
 	}
+
+	private class BluetoothStateReceiver extends BroadcastReceiver {
+		public void onReceive(Context context, Intent intent) {
+			BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+			int state = adapter.getState();
+			if (mScanCallbackContext != null) {
+				// Device is scanning - has Bluetooth been turned off?
+				if (state == BluetoothAdapter.STATE_OFF /* && !adapter.enable() */) {
+					mScanCallbackContext.error("Bluetooth disabled");
+				}
+			}
+		}
+	}
+}

@@ -44,7 +44,6 @@ describe("Repository Requests", function() {
 	  	repository.foundBeacon();
 	  	repository.lostBeacon();
 	  	repository._fetchRegions();
-	  	repository.trackStationary(position, timestamp, 180);
 
 	  	assert.strictEqual(server.requests.length, 0);
 	  });
@@ -121,7 +120,6 @@ describe("Repository Requests", function() {
 	    assert.strictEqual(content.eventType, "found");
 	    assert.strictEqual(content.timestamp > 0, true);
 	    assert.strictEqual(content.beaconId, beaconId);
-	    assert.strictEqual(content.address, beaconAddress);
 	    assert.strictEqual(content.rssi, beaconRSSI);
 	    assert.strictEqual(content.txPower, beaconTxPower);
 	    assert.strictEqual(content.token, token);
@@ -168,7 +166,6 @@ describe("Repository Requests", function() {
 	    assert.strictEqual(content.eventType, "lost");
 	    assert.strictEqual(content.timestamp > 0, true);
 	    assert.strictEqual(content.beaconId, beaconId);
-	    assert.strictEqual(content.address, beaconAddress);
 	    assert.strictEqual(content.rssi, beaconRSSI);
 	    assert.strictEqual(content.rssiMax, beaconMaxRSSI);
 	    assert.strictEqual(content.token, token);
@@ -307,7 +304,6 @@ describe("Repository Requests", function() {
 	});
 
 	describe('Sends track request', function() {
-		const trackUrl = baseURL + "track";
 		const deviceUrl = baseURL + "device"
 		const regionUrl = baseURL + "region";
 		let repository = null;
@@ -326,26 +322,11 @@ describe("Repository Requests", function() {
 	  });
 
 	  it('Sends correct arguments', function() {
-	  	repository.trackStationary(position, timestamp, 180);
-	  	assert.strictEqual(server.requests.length, 3);
+	  	assert.strictEqual(server.requests.length, 2);
 	  	assert.strictEqual(server.requests[0].verb, "PUT");
 	  	assert.strictEqual(server.requests[0].url, deviceUrl + "/test-uuid");
 	  	assert.strictEqual(server.requests[1].verb, "GET");
 	  	assert.strictEqual(server.requests[1].url, regionUrl);
-	  	assert.strictEqual(server.requests[2].verb, "POST");
-	  	assert.strictEqual(server.requests[2].url, trackUrl);
-	  	let content = JSON.parse(server.requests[2].content);
-	  	assert.deepStrictEqual(content, {
-	  		_type: "stationary",
-	  		tst: Math.round(timestamp / 1000),
-	  		token: token,
-	  		lat: position.latitude,
-	  		lon: position.longitude,
-	  		acc: Math.round(position.accuracy),
-	  		time: 180,
-	  		t: "s",
-	  		uuid: "Test UUID"
-	  	})
 	  })
 	})
 });
