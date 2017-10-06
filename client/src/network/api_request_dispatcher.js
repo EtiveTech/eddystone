@@ -14,6 +14,7 @@ const ApiRequestDispatcher = function() {
 	if (typeof document !== "undefined") {
 		// document won't exist when running tests outside a browser
 		document.addEventListener("online", this._online.bind(this), false);
+		document.addEventListener("offline", this._offline.bind(this), false);
 		// Pauuse and resume are currenly ignored
 		// document.addEventListener("pause", this._onPause.bind(this), false);
 		// document.addEventListener("resume", this._onResume.bind(this), false);	
@@ -31,7 +32,6 @@ ApiRequestDispatcher.prototype.enqueue = function(request) {
 	request._setTxTimeout(timeoutDuration, function(){this._onTxTimeout(request)}.bind(this));
 	request._setOnError(function(){this._onError(request)}.bind(this));
 
-	logger("Adding request with id", request.id, "to the dispatcher queue.");
 	// How long is the queue allowed to get?
 	this._queue.push(request);
 	if (request.timeout) request._startTimeout(timeoutDuration, this._onTimeout.bind(this));
@@ -47,7 +47,6 @@ ApiRequestDispatcher.prototype._dispatch = function() {
 	while (network.online && !this._dispatchSuspended && (this._queue.length > 0)) {
 		let request = this._queue.shift();
 		request._stopTimeout();
-		logger("Sending request with id", request.id + ".");
 		request._send();
 	}
 };
@@ -98,12 +97,17 @@ ApiRequestDispatcher.prototype._dequeue = function(request) {
 
 ApiRequestDispatcher.prototype._online = function() {
 	logger("Online event received.");
+	logger("Network connection type is:", network.connectionType + ".")
 	this._dispatch();
+};
+
+ApiRequestDispatcher.prototype._offline = function() {
+	logger("Offline event received.");
 };
 
 ApiRequestDispatcher.prototype._onTxTimeout = function(request) {
 	// The request was sent but has not been acknowledged in time
-	logger("Transmission timeout for request with id", request.id +".");
+	logger("Transmission timeout for request with id", request.id + ".");
 	//this._suspendDispatch();
 	if (request.timeout)
 		request.callback(600, null);	

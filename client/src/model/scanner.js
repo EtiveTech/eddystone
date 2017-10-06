@@ -22,7 +22,7 @@ const Scanner = function(repository, onStatusChange){
     function(error) {
       logger("Scan Error:", error);
       this._onStatusChange("Scan Error: " + error);
-      this._resetScan();
+      // Do nothing else, the logic will attempt to restart the scan
     }.bind(this)
   );
 

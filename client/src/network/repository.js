@@ -11,7 +11,6 @@ const regionInterval = ((process.env.NODE_ENV === 'test') ? 10 : 24 * 60 * 60) *
 
 const tokenKey = "token";
 const regionsKey = "regions";
-const beaconRoute = "proximity";
 const authorizeRoute = "receiver";
 const deviceRoute = "device";
 const regionRoute = "region";

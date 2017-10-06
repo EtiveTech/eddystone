@@ -28,7 +28,8 @@ const localStorage = {
 }
 
 const network = {
-  online: true
+  online: true,
+  connectionType: "Unknown connection"
 };
 
 const XMLHttpRequest = function() {

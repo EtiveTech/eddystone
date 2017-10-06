@@ -1,5 +1,7 @@
 "use strict"
 
+let connectionTypes = null;
+
 const getBrowserWidth = function(){
   if (self.innerWidth) return self.innerWidth;
   if (document.documentElement && document.documentElement.clientWidth) {
@@ -50,8 +52,24 @@ const logger = function() {
   }
 };
 
+const _initConnectionTypes = function() {
+  // Can only do this after the device is ready.
+  connectionTypes = {};
+  connectionTypes[Connection.UNKNOWN]  = 'Unknown connection';
+  connectionTypes[Connection.ETHERNET] = 'Ethernet connection';
+  connectionTypes[Connection.WIFI]     = 'WiFi connection';
+  connectionTypes[Connection.CELL_2G]  = 'Cell 2G connection';
+  connectionTypes[Connection.CELL_3G]  = 'Cell 3G connection';
+  connectionTypes[Connection.CELL_4G]  = 'Cell 4G connection';
+  connectionTypes[Connection.CELL]     = 'Cell generic connection';
+  connectionTypes[Connection.NONE]     = 'No network connection';
+}
+
 const network = {
-  get online() { return(navigator.connection.type !== Connection.NONE) }
+  // navigator.connection.type will only exist after the device is ready
+  get online() { return((navigator.connection.type !== Connection.NONE) &&
+                        (navigator.connection.type !== Connection.UNKNOWN)) },
+  get connectionType() { if (!connectionTypes) _initConnectionTypes(); return connectionTypes[navigator.connection.type]; }
 };
 
 const arrayToHex = function(array) {

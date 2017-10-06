@@ -22,7 +22,7 @@ EventFactory.prototype._proximityContent = function(type, beacon) {
     timestamp: Date.now(),
     beaconId: arrayToHex(beacon.bid),
     rssi: beacon.rssi,
-    uuid: this._uniqueId,
+    uuid: this._deviceId,
     token: this._token
   }
 
@@ -67,7 +67,7 @@ EventFactory.prototype.heartbeatEvent = function(onCompleted) {
     timestamp: Date.now(),
     token: this._token
   }
-  const uuid = (process.env.NODE_ENV === 'test') ? "test-uuid" : device.uuid;
+  
   // Let heartbeat requests timeout if not sent. They are sent a few times every hour. No point in stock-piling
   request.makePutRequest(this._baseURL + deviceRoute + "/" + this._deviceId, content, true, function(status) {
     // Might not be authorised to send to the server or the api key may be wrong
