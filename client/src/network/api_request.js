@@ -29,11 +29,12 @@ ApiRequest.prototype._setRequest = function(options) {
 
   this._request.onload = function() {
     // In the callback, 'this' is the request
-    let errorStatus = (options.expected.indexOf(this.status) === -1);
-    let content = ((this.status === 204) || errorStatus ) ? null : JSON.parse(this.responseText);
-    logger( options.verb + " request to " + options.url + " returned status " + this.status);
-    options.callback(this.status, content);
-  };
+    const req = this._request;
+    let errorStatus = (options.expected.indexOf(req.status) === -1);
+    let content = ((req.status === 204) || errorStatus ) ? null : JSON.parse(req.responseText);
+    logger( options.verb + " request (" + this._id + ") to " + options.url + " returned status " + req.status);
+    options.callback(req.status, content);
+  }.bind(this);
 };
 
 ApiRequest.prototype._resetRequest = function() {
@@ -45,7 +46,9 @@ ApiRequest.prototype._resetRequest = function() {
 ApiRequest.prototype._makeRequest = function(options) {
   this._options = options;
   this._setRequest(options);
-  return dispatcher.enqueue(this);
+  const request = dispatcher.enqueue(this);
+  logger( options.verb + " request (" + this._id + ") to " + options.url + " given to the dispatcher.");
+  return request;
 };
 
 ApiRequest.prototype._send = function() {
