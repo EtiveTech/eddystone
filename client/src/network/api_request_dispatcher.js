@@ -4,7 +4,7 @@ const logger = require('../utility').logger;
 const XMLHttpRequest = (process.env.NODE_ENV === 'test') ? require('../stubs').XMLHttpRequest : window.XMLHttpRequest;
 const network = (process.env.NODE_ENV === 'test') ? require('../stubs').network : require('../utility').network;
 const timeoutDuration = (process.env.NODE_ENV === 'test') ? 100 : 15000; // ms
-const suspendPeriod = (process.env.NODE_ENV === 'test') ? 1000 : 1000 * 60 * 2; // 2 minutes
+const suspendPeriod = (process.env.NODE_ENV === 'test') ? 1000 : 1000 * 60; // 1 minute
 const maxQueueLength = (process.env.NODE_ENV === 'test') ? 5 : 500;
 const echoURL = ((process.env.NODE_ENV === 'test') ? "https://cj101d.ifdnrg.com/api/device" : "https://c4a.etive.org:8443/api/device");
 
