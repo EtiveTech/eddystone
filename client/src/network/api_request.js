@@ -11,6 +11,7 @@ const ApiRequest = function() {
   this._timeoutID = null;
   this._id = 0;
   this._tries = 0;
+  this._dispatcher = null;
 
   Object.defineProperty(this, "timeout", { get: function() { return this._options.timeout; } });
   Object.defineProperty(this, "callback", { get: function() { return this._options.callback; } });
@@ -129,5 +130,12 @@ ApiRequest.prototype.makeDeleteRequest = function(url, timeout, callback) {
   };
   return this._makeRequest(options);
 };
+
+ApiRequest.prototype.terminateRequest = function() {
+  if (this._request.readyState === 0) {
+    // the request has not been sent so take it off the queue
+    this._dispatcher.dequeue(this);
+  }
+}
 
 module.exports = ApiRequest;

@@ -1,3 +1,5 @@
+.tmp/
+.native/
 node_modules/
 www/js/bundle.*
 plugins/*

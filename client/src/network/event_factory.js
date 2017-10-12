@@ -12,8 +12,7 @@ const EventFactory = function(baseURL, token) {
   this._baseURL = baseURL;
   this._token = token;
   this._deviceId = (process.env.NODE_ENV === 'test') ? "test-uuid" : device.uuid;
-  this._proximityEvents = [];
-  this._heartbeatEvents = [];
+  this._lastHeartbeat = null;
 }
 
 EventFactory.prototype._proximityContent = function(type, beacon) {
@@ -67,9 +66,13 @@ EventFactory.prototype.heartbeatEvent = function(onCompleted) {
     timestamp: Date.now(),
     token: this._token
   }
+
+  // If the last heartbeat message is still sitting on the queue delete it to stop the requests building up
+  if (this._lastHeartbeat) this._lastHeartbeat.terminateRequest();
   
-  // Let heartbeat requests timeout if not sent. They are sent a few times every hour. No point in stock-piling
-  request.makePutRequest(this._baseURL + deviceRoute + "/" + this._deviceId, content, true, function(status) {
+  // Make a note of the requets so it can be deleted later if needed
+  this._lastHeartbeat = request.makePutRequest(this._baseURL +
+    deviceRoute + "/" + this._deviceId, content, false, function(status) {
     // Might not be authorised to send to the server or the api key may be wrong
     if (onCompleted) onCompleted(status);
   });

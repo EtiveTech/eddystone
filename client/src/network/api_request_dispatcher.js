@@ -21,6 +21,9 @@ const ApiRequestDispatcher = function() {
 		// document.addEventListener("pause", this._onPause.bind(this), false);
 		// document.addEventListener("resume", this._onResume.bind(this), false);	
 	}
+
+	Object.defineProperty(this, "queueLength", { get: function() { return this._queue.length; } });
+	Object.defineProperty(this, "queueEmpty", { get: function() { return this._queue.length === 0; } });
 };
 
 ApiRequestDispatcher.prototype.enqueue = function(request) {
@@ -31,6 +34,7 @@ ApiRequestDispatcher.prototype.enqueue = function(request) {
 	}
 
 	request._id = this._nextId();
+	request._dispatcher = this;
 	request._setTxTimeout(timeoutDuration, function(){this._onTxTimeout(request)}.bind(this));
 	request._setOnError(function(){this._onError(request)}.bind(this));
 
@@ -87,10 +91,11 @@ ApiRequestDispatcher.prototype._retry = function(request) {
 	this._dispatch();
 }
 
-ApiRequestDispatcher.prototype._dequeue = function(request) {
+ApiRequestDispatcher.prototype.dequeue = function(request) {
 	logger("Removing request with id", request.id, "from the dispatcher queue.");
 	for (let i = 0; i < this._queue.length; i++) {
 		if (this._queue[i].id === request.id) {
+			this._queue[i]._stopTimeout();
 			this._queue.splice(i, 1);
 			break;
 		}
