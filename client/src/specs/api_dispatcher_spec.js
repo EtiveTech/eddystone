@@ -414,50 +414,49 @@ describe("API Dispatcher", function() {
       callback.reset();
     });
 
-    it('Handles Timeouts', function(done){
+    it('Handles Timeouts', function(){
       new ApiRequest().makeGetRequest(regionUrl, false, callback);
       // Ignore the region request and report a network timeout
       assert.strictEqual(server.requests.length, 1);
       assert.strictEqual(callback.callCount, 0);
 
-      server.requests[0].ontimeout();
-      server.initialize();
+      const request = server.requests[0];
+      server.initialize(); // Make server forget about the request 
       server.respondWith("GET", regionUrl, [200, regionJson]);
 
-      // The message should be resent after 1 second
       assert.strictEqual(server.requests.length, 0);
-      setTimeout(function() {
-        assert.strictEqual(server.requests.length, 1);
-        server.respond();
-        assert.strictEqual(callback.callCount, 1);
-        const call = callback.getCall(0);
-        assert.strictEqual(call.args[0], 200);
-        assert.deepStrictEqual(call.args[1], regions);
-        done();
-      }, 1500)
+      request.ontimeout();
+
+      // The message should be resent immediately
+
+      assert.strictEqual(server.requests.length, 1);
+      server.respond();
+      assert.strictEqual(callback.callCount, 1);
+      const call = callback.getCall(0);
+      assert.strictEqual(call.args[0], 200);
+      assert.deepStrictEqual(call.args[1], regions);
     })
 
-    it('Handles Errors', function(done){
+    it('Handles Errors', function(){
       new ApiRequest().makeGetRequest(regionUrl, false, callback);
       // Ignore the region request and report a network timeout
       assert.strictEqual(server.requests.length, 1);
       assert.strictEqual(callback.callCount, 0);
 
-      server.requests[0].onerror();
-
-      // The message should be resent after 1 second
-      server.initialize();
+      const request = server.requests[0];
+      server.initialize(); // Make server forget about the request 
       server.respondWith("GET", regionUrl, [200, regionJson]);
+
       assert.strictEqual(server.requests.length, 0);
-      setTimeout(function() {
-        assert.strictEqual(server.requests.length, 1);
-        server.respond();
-        assert.strictEqual(callback.callCount, 1);
-        const call = callback.getCall(0);
-        assert.strictEqual(call.args[0], 200);
-        assert.deepStrictEqual(call.args[1], regions);
-        done();
-      }, 1500)
+      request.onerror();
+
+      // The message should be resent immediately
+      assert.strictEqual(server.requests.length, 1);
+      server.respond();
+      assert.strictEqual(callback.callCount, 1);
+      const call = callback.getCall(0);
+      assert.strictEqual(call.args[0], 200);
+      assert.deepStrictEqual(call.args[1], regions);
     })
   })
 });
