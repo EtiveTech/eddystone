@@ -27,6 +27,97 @@ describe("API Dispatcher", function() {
   };
   const json = JSON.stringify(params);
 
+  describe ("Sends Echo requests", function() {
+    const callback = sinon.spy();
+
+    beforeEach(function() {
+      server.initialize();
+      // will send an echo request at some point
+      server.respondWith("GET", echoURL, [200]);
+      server.respondWith("POST", baseURL + "beacon-log", [201, json]);
+      network.online = false;
+      dispatcher._reset();
+      dispatcher._offline();
+      new ApiRequest().makePostRequest(baseURL + "beacon-log", params, false);
+      new ApiRequest().makePostRequest(baseURL + "beacon-log", params, false);
+    });
+
+
+    it("Sends Echo request", function () {
+      assert.strictEqual(server.requests.length, 0);
+      assert.strictEqual(dispatcher.queueLength, 2);
+
+      network.online = true;
+      dispatcher._online();
+
+      assert.strictEqual(server.requests.length, 1); // The Echo request
+      assert.strictEqual(server.requests[0].verb, "GET");
+      assert.strictEqual(server.requests[0].url, echoURL);
+      assert.strictEqual(dispatcher.queueLength, 2);
+      server.respond()
+      assert.strictEqual(dispatcher.queueLength, 0); 
+    });
+
+    it("Handles Echo timeout", function (done) {
+      assert.strictEqual(server.requests.length, 0);
+      assert.strictEqual(dispatcher.queueLength, 2);
+
+      network.online = true;
+      dispatcher._online();
+
+      const request = server.requests[0];
+      server.initialize()
+      request.ontimeout();
+      assert.strictEqual(server.requests.length, 0);
+
+      setTimeout(function(){
+        // wait for Echo to be resent
+        assert.strictEqual(server.requests.length, 1);
+        assert.strictEqual(server.requests[0].verb, "GET");
+        assert.strictEqual(server.requests[0].url, echoURL);
+        assert.strictEqual(dispatcher.queueLength, 2);
+        server.respond()
+        done();
+      }, 150)
+    });
+
+    it("Handles Echo Error", function (done) {
+      assert.strictEqual(server.requests.length, 0);
+      assert.strictEqual(dispatcher.queueLength, 2);
+
+      network.online = true;
+      dispatcher._online();
+
+      const request = server.requests[0];
+      server.initialize()
+      request.onerror();
+      assert.strictEqual(server.requests.length, 0);
+
+      setTimeout(function(){
+        // wait for Echo to be resent
+        assert.strictEqual(server.requests.length, 1);
+        assert.strictEqual(server.requests[0].verb, "GET");
+        assert.strictEqual(server.requests[0].url, echoURL);
+        assert.strictEqual(dispatcher.queueLength, 2);
+        server.respond();
+        done();
+      }, 150)
+    });
+
+    it("Empties the queue", function () {
+      assert.strictEqual(server.requests.length, 0);
+      assert.strictEqual(dispatcher.queueLength, 2);
+
+      network.online = true;
+      dispatcher._online();
+      server.respond();
+
+      assert.strictEqual(dispatcher.queueLength, 0);
+      assert.strictEqual(server.requests.length, 2);
+
+    });
+  });
+
   describe ("Queue without timeouts", function() {
     const callback = sinon.spy();
 
