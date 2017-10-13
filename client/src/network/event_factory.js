@@ -35,12 +35,12 @@ EventFactory.prototype._persistEvents = function() {
   // persist eventOptions
 }
 
-EventFactory.prototype._addEvent = function(event) {
+EventFactory.prototype._addEvent = function(request) {
   this._events[request.id] = request;
   // now persist the events
 }
 
-EventFactory.prototype._removeEvent = function(event) {
+EventFactory.prototype._removeEvent = function(request) {
   delete this._events[request.id];
   // now persist the events
 } 

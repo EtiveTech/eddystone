@@ -151,7 +151,7 @@ ApiRequestDispatcher.prototype._onTxTimeout = function(request) {
 ApiRequestDispatcher.prototype._onTimeout = function(request) {
 	// The request has been sitting, unsent on the queue for too long and will now be removed
 	logger("Timeout, ending request with id", request.id + ".");
-	this._dequeue(request);
+	this.dequeue(request);
 	request.callback(600, null);
 };
 
