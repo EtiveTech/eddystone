@@ -9,6 +9,8 @@ plugins/*
 !plugins/cordova-plugin-ble
 platforms/android/*
 !platforms/android/res/
+platforms/android/res/values/
+platforms/android/res/xml/
 platforms/ios/*
 client/src/keys.js
 scratch/
