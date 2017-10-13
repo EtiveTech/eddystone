@@ -9,6 +9,7 @@ const assert = require("assert");
 const server = require('../stubs').HttpServer;
 const network = require('../stubs').network;
 const baseURL = "https://cj101d.ifdnrg.com/";
+const echoURL = baseURL + "api/device/test-uuid";
 const route = "api/proximity";
 
 describe("API Dispatcher", function() {
@@ -31,7 +32,10 @@ describe("API Dispatcher", function() {
 
     before(function() {
       server.initialize();
+      // will send an echo request at some point
+      server.respondWith("GET", echoURL, [200]);
       network.online = false;
+      dispatcher._offline();
     });
 
     it("Enqueues three Requests", function () {
@@ -42,15 +46,16 @@ describe("API Dispatcher", function() {
       new ApiRequest().makePostRequest(baseURL + "beacon-log", params, false, callback);
       new ApiRequest().makePostRequest(baseURL + "beacon-log", params, false, callback);
 
-      assert.strictEqual(dispatcher._queue.length, 3);
+      assert.strictEqual(dispatcher.queueLength, 3);
       assert.strictEqual(server.requests.length, 0);
     });
 
     it("Empties the queue", function () {
       network.online = true;
       dispatcher._online();
+      server.respond();
 
-      assert.strictEqual(dispatcher._queue.length, 0);
+      assert.strictEqual(dispatcher.queueLength, 0);
       assert.strictEqual(server.requests.length, 3);
     });
 
@@ -72,6 +77,7 @@ describe("API Dispatcher", function() {
 
     it("Rejects calls when buffer is full", function() {
       network.online = false;
+      dispatcher._offline();
       callback.reset();
 
       new ApiRequest().makePostRequest(baseURL + "beacon-log", params, false, callback);
@@ -89,7 +95,9 @@ describe("API Dispatcher", function() {
       // Flush all the requests
       network.online = true;
       dispatcher._online();
-      server.respond();
+      server.respond(); // Will respond to the Echo request
+
+      server.respond(); // Respond to the Post requests
       assert.strictEqual(callback.callCount, 6);
     })
   });
@@ -101,7 +109,10 @@ describe("API Dispatcher", function() {
 
     before(function(done) {
       server.initialize();
+      // will send an echo request at some point
+      server.respondWith("GET", echoURL, [200]);
       network.online = false;
+      dispatcher._offline();
 
       server.respondWith("GET", baseURL + route, [200, json]);
       server.respondWith("POST", baseURL + route, [201, json]);
@@ -116,7 +127,7 @@ describe("API Dispatcher", function() {
     });
 
     it("Expired one request after timeout", function () {
-      assert.strictEqual(dispatcher._queue.length, 2);
+      assert.strictEqual(dispatcher.queueLength, 2);
       assert.strictEqual(server.requests.length, 0);
       assert.strictEqual(status, 600);
       assert.strictEqual(response, null);
@@ -126,7 +137,9 @@ describe("API Dispatcher", function() {
       network.online = true;
       dispatcher._online();
 
-      assert.strictEqual(dispatcher._queue.length, 0);
+      server.respond() // To Echo request
+
+      assert.strictEqual(dispatcher.queueLength, 0);
       assert.strictEqual(server.requests.length, 2);
     });
 
@@ -168,7 +181,7 @@ describe("API Dispatcher", function() {
     });
 
     it("All messages are sent", function () {
-      assert.strictEqual(dispatcher._queue.length, 0);
+      assert.strictEqual(dispatcher.queueLength, 0);
     });
 
     it("One message is lost", function () {
@@ -215,7 +228,7 @@ describe("API Dispatcher", function() {
     });
 
     it("Sends the message", function () {
-      assert.strictEqual(dispatcher._queue.length, 0);
+      assert.strictEqual(dispatcher.queueLength, 0);
     });
 
     it("Resends the message", function () {
@@ -234,6 +247,8 @@ describe("API Dispatcher", function() {
 
     before(function(done) {
       server.initialize();
+      // will send an echo request at some point
+      server.respondWith("GET", echoURL, [200]);
       network.online = true;
 
       server.respondWith("GET", baseURL + route, [200, json]);
@@ -241,6 +256,7 @@ describe("API Dispatcher", function() {
       request.makeGetRequest(baseURL + route, false, callback);
       setTimeout(function(){
         network.online = false;
+        dispatcher._offline();
         setTimeout(function(){
           // wait for request to complete
           done();
@@ -253,15 +269,17 @@ describe("API Dispatcher", function() {
     });
 
     it("Requeues the message", function () {
-      assert.strictEqual(dispatcher._queue.length, 1);
+      assert.strictEqual(dispatcher.queueLength, 1);
     });
 
     it("Empties the queue", function (done) {
       network.online = true;
       dispatcher._online();
 
+      server.respond() // To Echo request
+
       setTimeout(function() {
-        assert.strictEqual(dispatcher._queue.length, 0);
+        assert.strictEqual(dispatcher.queueLength, 0);
         assert.strictEqual(server.requests.length, 1);
         done();
       }, 1500)
@@ -289,6 +307,8 @@ describe("API Dispatcher", function() {
 
     before(function(done) {
       server.initialize();
+      // will send an echo request at some point
+      server.respondWith("GET", echoURL, [200]);
       network.online = true;
 
       server.respondWith("GET", baseURL + route, [200, json]);
@@ -301,6 +321,7 @@ describe("API Dispatcher", function() {
       id2 = request2.id;
       setTimeout(function(){
         network.online = false;
+        dispatcher._offline();
         request3.makeGetRequest(baseURL + route, false, callback);
         id3 = request3.id;
         setTimeout(function(){
@@ -317,7 +338,7 @@ describe("API Dispatcher", function() {
     });
 
     it("Requeues the message", function () {
-      assert.strictEqual(dispatcher._queue.length, 3);
+      assert.strictEqual(dispatcher.queueLength, 3);
     });
 
     it("Messages are in the right order", function () {
@@ -330,8 +351,10 @@ describe("API Dispatcher", function() {
       network.online = true;
       dispatcher._online();
 
+      server.respond() // To Echo request
+
       setTimeout(function() {
-        assert.strictEqual(dispatcher._queue.length, 0);
+        assert.strictEqual(dispatcher.queueLength, 0);
         assert.strictEqual(server.requests.length, 3);
         done();
       }, 1500);
