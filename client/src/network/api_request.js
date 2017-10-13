@@ -40,7 +40,9 @@ ApiRequest.prototype._setRequest = function(options) {
 };
 
 ApiRequest.prototype._resetRequest = function() {
+  if (!this._options) return null;
   this._request = new XMLHttpRequest();
+  logger("Resetting " + this._options.verb + " request (" + this._id + ") to " + this._options.url + ".");
   this._setRequest(this._options);
   return this;
 };
