@@ -10,7 +10,8 @@ const echoURL = ((process.env.NODE_ENV === 'test') ? "https://cj101d.ifdnrg.com/
 
 const ApiRequestDispatcher = function() {
 	this._queue = [];
-	this._reset();
+	this._id = 0;
+	this._dispatchSuspended = false;
 
 	if (typeof document !== "undefined") {
 		// document won't exist when running tests outside a browser
@@ -22,14 +23,6 @@ const ApiRequestDispatcher = function() {
 	}
 
 	Object.defineProperty(this, "queueLength", { get: function() { return this._queue.length; } });
-};
-
-ApiRequestDispatcher.prototype._reset = function() {
-	if (this._queue) {
-		this._queue = [];
-	}
-	this._id = 0;
-	this._dispatchSuspended = false;
 };
 
 ApiRequestDispatcher.prototype.enqueue = function(request) {
