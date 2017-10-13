@@ -13,8 +13,26 @@ const EventFactory = function(baseURL, token) {
   this._token = token;
   this._deviceId = (process.env.NODE_ENV === 'test') ? "test-uuid" : device.uuid;
   this._lastHeartbeat = null;
-  // Check if there are any persisted events. If there are, resend them.
   this._events = {};
+
+  // Check if there are any persisted events. If there are, resend them.
+  // this._resendEvents()
+}
+
+EventFactory.prototype._resendEvents = function(options) {
+  for (let i = 0; i < options.length; i++) {
+      let request = new Request();
+      request.makeRequest(options[i]);
+      this._addEvent(request);
+  }
+}
+
+EventFactory.prototype._persistEvents = function() {
+  let eventOptions = []
+  for (let event in this._events) {
+    eventOptions << event.options;
+  }
+  // persist eventOptions
 }
 
 EventFactory.prototype._addEvent = function(event) {

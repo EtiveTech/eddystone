@@ -17,6 +17,7 @@ const ApiRequest = function() {
   Object.defineProperty(this, "callback", { get: function() { return this._options.callback; } });
   Object.defineProperty(this, "status", { get: function() { return this._status; } });
   Object.defineProperty(this, "id", { get: function() { return this._id; } });
+  Object.defineProperty(this, "options", { get: function() { return this._options; } });
   Object.defineProperty(this, "retries", { get: function() { return (this._tries > 0) ? this._tries - 1 : 0; } });
 };
 
@@ -44,7 +45,7 @@ ApiRequest.prototype._resetRequest = function() {
   return this;
 };
 
-ApiRequest.prototype._makeRequest = function(options) {
+ApiRequest.prototype.makeRequest = function(options) {
   this._options = options;
   this._setRequest(options);
   const request = dispatcher.enqueue(this);
@@ -89,7 +90,7 @@ ApiRequest.prototype.makeGetRequest = function(url, timeout, callback) {
     timeout: timeout,
     callback: callback
   };
-  return this._makeRequest(options);
+  return this.makeRequest(options);
 };
 
 ApiRequest.prototype.makePostRequest = function(url, content, timeout, callback) {
@@ -102,7 +103,7 @@ ApiRequest.prototype.makePostRequest = function(url, content, timeout, callback)
     timeout: timeout,
     callback: callback
   };
-  return this._makeRequest(options);
+  return this.makeRequest(options);
 };
 
 ApiRequest.prototype.makePutRequest = function(url, content, timeout, callback) {
@@ -115,7 +116,7 @@ ApiRequest.prototype.makePutRequest = function(url, content, timeout, callback) 
     timeout: timeout,
     callback: callback
   };
-  return this._makeRequest(options);
+  return this.makeRequest(options);
 };
 
 ApiRequest.prototype.makeDeleteRequest = function(url, timeout, callback) {
@@ -128,7 +129,7 @@ ApiRequest.prototype.makeDeleteRequest = function(url, timeout, callback) {
     timeout: timeout,
     callback: callback
   };
-  return this._makeRequest(options);
+  return this.makeRequest(options);
 };
 
 ApiRequest.prototype.terminateRequest = function() {
