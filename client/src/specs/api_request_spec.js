@@ -73,20 +73,16 @@ describe("API Request", function() {
       });
       const callback = sinon.spy();
 
-      server.respondWith("GET", url, [200, json]);
-
       apiRequest.makeGetRequest(url, false, callback);
+      server.initialize(); // forget the first request
+      server.respondWith("GET", url, [200, json]);
       apiRequest._resetRequest()._send();
 
-      assert.strictEqual(server.requests.length, 2);
+      assert.strictEqual(server.requests.length, 1);
       server.respond(); // Process all requests so far
       assert.strictEqual(server.requests.length, 0);
-      assert.strictEqual(callback.callCount, 2);
+      assert.strictEqual(callback.callCount, 1);
       let call = callback.getCall(0);
-      assert.strictEqual(call.args.length, 2);
-      assert.strictEqual(call.args[0], 200);
-      assert.deepStrictEqual(call.args[1], JSON.parse(json));
-      call = callback.getCall(1);
       assert.strictEqual(call.args.length, 2);
       assert.strictEqual(call.args[0], 200);
       assert.deepStrictEqual(call.args[1], JSON.parse(json));
@@ -157,20 +153,16 @@ describe("API Request", function() {
       const json = JSON.stringify(params);
       const callback = sinon.spy();
 
-      server.respondWith("POST", url, [201, json]);
-
       apiRequest.makePostRequest(url, params, false, callback);
+      server.initialize() // Forget the first request
+      server.respondWith("POST", url, [201, json]);
       apiRequest._resetRequest()._send();
 
-      assert.strictEqual(server.requests.length, 2);
+      assert.strictEqual(server.requests.length, 1);
       server.respond(); // Process all requests so far
       assert.strictEqual(server.requests.length, 0);
-      assert.strictEqual(callback.callCount, 2);
+      assert.strictEqual(callback.callCount, 1);
       let call = callback.getCall(0);
-      assert.strictEqual(call.args.length, 2);
-      assert.strictEqual(call.args[0], 201);
-      assert.deepStrictEqual(call.args[1], JSON.parse(json));
-      call = callback.getCall(1);
       assert.strictEqual(call.args.length, 2);
       assert.strictEqual(call.args[0], 201);
       assert.deepStrictEqual(call.args[1], JSON.parse(json));
@@ -239,20 +231,16 @@ describe("API Request", function() {
       const json = JSON.stringify(params);
       const callback = sinon.spy();
 
-      server.respondWith("PUT", url, [201, json]);
-
       apiRequest.makePutRequest(url, params, false, callback);
+      server.initialize(); 
+      server.respondWith("PUT", url, [201, json]);
       apiRequest._resetRequest()._send();
 
-      assert.strictEqual(server.requests.length, 2);
+      assert.strictEqual(server.requests.length, 1);
       server.respond();
       assert.strictEqual(server.requests.length, 0);
-      assert.strictEqual(callback.callCount, 2);
+      assert.strictEqual(callback.callCount, 1);
       let call = callback.getCall(0);
-      assert.strictEqual(call.args.length, 2);
-      assert.strictEqual(call.args[0], 201);
-      assert.deepStrictEqual(call.args[1], JSON.parse(json));
-      call = callback.getCall(1);
       assert.strictEqual(call.args.length, 2);
       assert.strictEqual(call.args[0], 201);
       assert.deepStrictEqual(call.args[1], JSON.parse(json));
@@ -289,20 +277,16 @@ describe("API Request", function() {
       const url = baseURL + "beacon-log/5";
       const callback = sinon.spy();
 
-      server.respondWith("DELETE", url, [204]);
-
       apiRequest.makeDeleteRequest(url, false, callback);
+      server.initialize();
+      server.respondWith("DELETE", url, [204]);
       apiRequest._resetRequest()._send();
 
-      assert.strictEqual(server.requests.length, 2);
+      assert.strictEqual(server.requests.length, 1);
       server.respond(); // Process all requests so far
       assert.strictEqual(server.requests.length, 0);
-      assert.strictEqual(callback.callCount, 2);
+      assert.strictEqual(callback.callCount, 1);
       let call = callback.getCall(0);
-      assert.strictEqual(call.args.length, 2);
-      assert.strictEqual(call.args[0], 204);
-      assert.strictEqual(call.args[1], null);
-      call = callback.getCall(1);
       assert.strictEqual(call.args.length, 2);
       assert.strictEqual(call.args[0], 204);
       assert.strictEqual(call.args[1], null);
