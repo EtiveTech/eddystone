@@ -1,5 +1,3 @@
-platforms/android/res/values/strings.xml
-platforms/android/res/xml/config.xml
 .tmp/
 .native/
 node_modules/
@@ -11,6 +9,8 @@ plugins/*
 !plugins/cordova-plugin-ble
 platforms/android/*
 !platforms/android/res/
+platforms/android/res/values/
+platforms/android/res/xml/
 platforms/ios/*
 client/src/keys.js
 scratch/
