@@ -4,7 +4,7 @@ const logger = require('../utility').logger;
 const XMLHttpRequest = (process.env.NODE_ENV === 'test') ? require('../stubs').XMLHttpRequest : window.XMLHttpRequest;
 const network = (process.env.NODE_ENV === 'test') ? require('../stubs').network : require('../utility').network;
 const timeoutDuration = (process.env.NODE_ENV === 'test') ? 100 : 15000; // ms
-const suspendPeriod = (process.env.NODE_ENV === 'test') ? 1000 : 1000 * 60; // 1 minute
+const suspendPeriod = (process.env.NODE_ENV === 'test') ? 100 : 1000 * 60; // 1 minute
 const maxQueueLength = (process.env.NODE_ENV === 'test') ? 5 : 500;
 const echoURL = ((process.env.NODE_ENV === 'test') ? "https://cj101d.ifdnrg.com/api/device" : "https://c4a.etive.org:8443/api/device");
 
@@ -21,6 +21,8 @@ const ApiRequestDispatcher = function() {
 		// document.addEventListener("pause", this._onPause.bind(this), false);
 		// document.addEventListener("resume", this._onResume.bind(this), false);	
 	}
+
+	Object.defineProperty(this, "queueLength", { get: function() { return this._queue.length; } });
 };
 
 ApiRequestDispatcher.prototype.enqueue = function(request) {
@@ -103,7 +105,8 @@ ApiRequestDispatcher.prototype._online = function() {
 	if (this._dispatchSuspended && network.online) {
 		// Stuff to send, let's see if it's possible
 		const echoRequest = new XMLHttpRequest();
-		echoRequest.open("GET", echoURL + "/" + device.uuid);
+		const deviceId = (process.env.NODE_ENV === 'test') ? "test-uuid" : device.uuid;
+		echoRequest.open("GET", echoURL + "/" + deviceId);
 		echoRequest.onload = function() {
 		  if (echoRequest.status === 200) {
 		  	logger("Echo request to", echoURL, "succeeded.");
@@ -115,11 +118,12 @@ ApiRequestDispatcher.prototype._online = function() {
 		echoRequest.ontimeout = function() {
 			logger("Echo request to", echoURL, "failed");
 			setTimeout(this._online.bind(this), suspendPeriod);
-		};
+		}.bind(this);
 		echoRequest.onerror = function() {
 			logger("Echo request to", echoURL, "failed");
 			setTimeout(this._online.bind(this), suspendPeriod);
-		};
+		}.bind(this);
+		logger("Sending Echo request.")
 		echoRequest.send();
 	}
 };
