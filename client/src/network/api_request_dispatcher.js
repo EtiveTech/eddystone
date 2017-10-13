@@ -108,7 +108,8 @@ ApiRequestDispatcher.prototype._online = function() {
 	if (this._dispatchSuspended && network.online) {
 		// Stuff to send, let's see if it's possible
 		const echoRequest = new XMLHttpRequest();
-		echoRequest.open("GET", echoURL + "/" + device.uuid);
+		const deviceId = (process.env.NODE_ENV === 'test') ? "test-uuid" : device.uuid;
+		echoRequest.open("GET", echoURL + "/" + deviceId);
 		echoRequest.onload = function() {
 		  if (echoRequest.status === 200) {
 		  	logger("Echo request to", echoURL, "succeeded.");
@@ -125,6 +126,7 @@ ApiRequestDispatcher.prototype._online = function() {
 			logger("Echo request to", echoURL, "failed");
 			setTimeout(this._online.bind(this), suspendPeriod);
 		};
+		logger("Sending Echo request.")
 		echoRequest.send();
 	}
 };

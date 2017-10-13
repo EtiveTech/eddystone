@@ -30,7 +30,7 @@ const localStorage = {
 const network = {
   online: true,
   offline: false,
-  connectionType: "Unknown connection"
+  connectionType: "WiFi connection"
 };
 
 const XMLHttpRequest = function() {
