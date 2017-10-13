@@ -47,6 +47,7 @@ const XMLHttpRequest = function() {
   // Response
   this.status = undefined;
   this.responseText = undefined;
+  this.readyState = 0;
 }
 
 XMLHttpRequest.prototype.open = function(verb, url) {
@@ -91,7 +92,7 @@ const HttpServer = {
     else
       this.requests.push(request);
   },
-  respondWith: function(verb, url, response, auto) {
+  respondWith: function(verb, url, response, auto = null) {
     this.responses.push({verb: verb, url: url, response: response, auto: auto})
   },
   respond: function() {
@@ -113,9 +114,13 @@ const HttpServer = {
     });
   },
   _makeResponse: function(request, respondWith) {
-    request.status = respondWith.response[0];
-    if (respondWith.response[1]) request.responseText = respondWith.response[1];
-    if (request.onload) request.onload();
+    if (request.onload) {
+      request.status = respondWith.response[0];
+      request.readyState = 4;
+      if (respondWith.response[1]) request.responseText = respondWith.response[1];
+      logger("Mock HTTP server responding to", request.verb, "request to", request.url, "with status", request.status);
+      request.onload();
+    }
   }
 }
 

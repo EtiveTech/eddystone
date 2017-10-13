@@ -54,6 +54,7 @@ describe("API Request", function() {
 
       assert.strictEqual(callback.callCount, 1);
       const call = callback.getCall(0);
+      assert.strictEqual(call.args.length, 2);
       assert.strictEqual(call.args[0], 200);
       assert.deepStrictEqual(call.args[1], JSON.parse(json));
     });
@@ -79,11 +80,14 @@ describe("API Request", function() {
 
       assert.strictEqual(server.requests.length, 2);
       server.respond(); // Process all requests so far
+      assert.strictEqual(server.requests.length, 0);
       assert.strictEqual(callback.callCount, 2);
       let call = callback.getCall(0);
+      assert.strictEqual(call.args.length, 2);
       assert.strictEqual(call.args[0], 200);
       assert.deepStrictEqual(call.args[1], JSON.parse(json));
       call = callback.getCall(1);
+      assert.strictEqual(call.args.length, 2);
       assert.strictEqual(call.args[0], 200);
       assert.deepStrictEqual(call.args[1], JSON.parse(json));
     });
@@ -133,6 +137,7 @@ describe("API Request", function() {
 
       assert.strictEqual(callback.callCount, 1);
       const call = callback.getCall(0);
+      assert.strictEqual(call.args.length, 2);
       assert.strictEqual(call.args[0], 201);
       assert.deepStrictEqual(call.args[1], JSON.parse(json));
     });
@@ -159,11 +164,14 @@ describe("API Request", function() {
 
       assert.strictEqual(server.requests.length, 2);
       server.respond(); // Process all requests so far
+      assert.strictEqual(server.requests.length, 0);
       assert.strictEqual(callback.callCount, 2);
       let call = callback.getCall(0);
+      assert.strictEqual(call.args.length, 2);
       assert.strictEqual(call.args[0], 201);
       assert.deepStrictEqual(call.args[1], JSON.parse(json));
       call = callback.getCall(1);
+      assert.strictEqual(call.args.length, 2);
       assert.strictEqual(call.args[0], 201);
       assert.deepStrictEqual(call.args[1], JSON.parse(json));
     });
@@ -238,6 +246,7 @@ describe("API Request", function() {
 
       assert.strictEqual(server.requests.length, 2);
       server.respond();
+      assert.strictEqual(server.requests.length, 0);
       assert.strictEqual(callback.callCount, 2);
       let call = callback.getCall(0);
       assert.strictEqual(call.args.length, 2);
@@ -287,6 +296,7 @@ describe("API Request", function() {
 
       assert.strictEqual(server.requests.length, 2);
       server.respond(); // Process all requests so far
+      assert.strictEqual(server.requests.length, 0);
       assert.strictEqual(callback.callCount, 2);
       let call = callback.getCall(0);
       assert.strictEqual(call.args.length, 2);
