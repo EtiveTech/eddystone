@@ -1,3 +1,7 @@
+platforms/android/res/values/strings.xml
+platforms/android/res/xml/config.xml
+.tmp/
+.native/
 node_modules/
 www/js/bundle.*
 plugins/*
