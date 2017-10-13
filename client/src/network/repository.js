@@ -140,7 +140,7 @@ Repository.prototype.lostBeacon = function (beacon, onCompleted) {
 Repository.prototype.heartbeat = function(onCompleted) {
 	if (!this._token) return;
 	logger("Sending heartbeat message")
-	this._eventFactory.heartbeatEvent(onCompleted)
+	this._eventFactory.heartbeat(onCompleted)
 }
 
 Repository.prototype._fetchRegions = function() {

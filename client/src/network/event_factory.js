@@ -13,7 +13,19 @@ const EventFactory = function(baseURL, token) {
   this._token = token;
   this._deviceId = (process.env.NODE_ENV === 'test') ? "test-uuid" : device.uuid;
   this._lastHeartbeat = null;
+  // Check if there are any persisted events. If there are, resend them.
+  this._events = {};
 }
+
+EventFactory.prototype._addEvent = function(event) {
+  this._events[request.id] = request;
+  // now persist the events
+}
+
+EventFactory.prototype._removeEvent = function(event) {
+  delete this._events[request.id];
+  // now persist the events
+} 
 
 EventFactory.prototype._proximityContent = function(type, beacon) {
   const content = {
@@ -41,12 +53,15 @@ EventFactory.prototype.foundBeaconEvent = function(beacon, onCompleted) {
 
   // Beacon events are not allowed to time out
   request.makePostRequest(this._baseURL + proximityRoute, content, false, function(status) {
+    this._removeEvent(request);
     // Beacon is confirmed by default now update with the server response
     // Note that the lost event may have been sent before this code is executed
     beacon.confirmed = (status === 201);
     // Might not be authorised to send to the server or the api key may be wrong
     if (onCompleted) onCompleted(status);
   });
+
+  this._addEvent(request);
 }
 
 EventFactory.prototype.lostBeaconEvent = function(beacon, onCompleted) {
@@ -55,12 +70,15 @@ EventFactory.prototype.lostBeaconEvent = function(beacon, onCompleted) {
 
   // Beacon events are not allowed to time out
   request.makePostRequest(this._baseURL + proximityRoute, content, false, function(status) {
+    this._removeEvent(request);
     // Might not be authorised to send to the server or the api key may be wrong
     if (onCompleted) onCompleted(status);
   });
+
+  this._addEvent(request);
 }
 
-EventFactory.prototype.heartbeatEvent = function(onCompleted) {
+EventFactory.prototype.heartbeat = function(onCompleted) {
   const request = new Request();
   const content = {
     timestamp: Date.now(),
