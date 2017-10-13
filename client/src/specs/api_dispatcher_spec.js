@@ -36,7 +36,7 @@ describe("API Dispatcher", function() {
       server.respondWith("GET", echoURL, [200]);
       server.respondWith("POST", baseURL + "beacon-log", [201, json]);
       network.online = false;
-      dispatcher._reset();
+      dispatcher._queue = [];
       dispatcher._offline();
       new ApiRequest().makePostRequest(baseURL + "beacon-log", params, false);
       new ApiRequest().makePostRequest(baseURL + "beacon-log", params, false);
@@ -55,7 +55,6 @@ describe("API Dispatcher", function() {
       assert.strictEqual(server.requests[0].url, echoURL);
       assert.strictEqual(dispatcher.queueLength, 2);
       server.respond()
-      assert.strictEqual(dispatcher.queueLength, 0); 
     });
 
     it("Handles Echo timeout", function (done) {
@@ -114,7 +113,6 @@ describe("API Dispatcher", function() {
 
       assert.strictEqual(dispatcher.queueLength, 0);
       assert.strictEqual(server.requests.length, 2);
-
     });
   });
 
