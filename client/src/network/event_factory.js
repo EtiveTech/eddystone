@@ -77,7 +77,7 @@ EventFactory.prototype.foundBeaconEvent = function(beacon, onCompleted) {
     beacon.confirmed = (status === 201);
     // Might not be authorised to send to the server or the api key may be wrong
     if (onCompleted) onCompleted(status);
-  });
+  }.bind(this));
 
   this._addEvent(request);
 }
@@ -91,7 +91,7 @@ EventFactory.prototype.lostBeaconEvent = function(beacon, onCompleted) {
     this._removeEvent(request);
     // Might not be authorised to send to the server or the api key may be wrong
     if (onCompleted) onCompleted(status);
-  });
+  }.bind(this));
 
   this._addEvent(request);
 }

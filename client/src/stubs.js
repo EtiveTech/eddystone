@@ -121,6 +121,12 @@ const HttpServer = {
       logger("Mock HTTP server responding to", request.verb, "request to", request.url, "with status", request.status);
       request.onload();
     }
+  },
+  queueLength: function() {
+    return this.requests.length;
+  },
+  firstInQueue: function() {
+    return (this.requests.length > 0) ? this.requests[0] : null;
   }
 }
 
