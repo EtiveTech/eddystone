@@ -60,6 +60,7 @@ XMLHttpRequest.prototype.setRequestHeader = function(name, value) {
 }
 
 XMLHttpRequest.prototype.send = function(content) {
+  // logger("Mock XMLHTTPRequest sending", this.verb, "request to", this.url);
   if (!content) content = null;
   this.content = content;
   if (this.loseRequest) {
@@ -86,13 +87,14 @@ const HttpServer = {
     this.responses = [];
   },
   receive: function(request) {
+    // logger("Mock HTTP server received", request.verb, "request to", request.url);
     const respondWith = this._findResponse(request);
     if (respondWith && (respondWith.auto))
       this._makeResponse(request, respondWith);
     else
       this.requests.push(request);
   },
-  respondWith: function(verb, url, response, auto = null) {
+  respondWith: function(verb, url, response, auto = false) {
     this.responses.push({verb: verb, url: url, response: response, auto: auto})
   },
   respond: function() {
@@ -118,7 +120,7 @@ const HttpServer = {
       request.status = respondWith.response[0];
       request.readyState = 4;
       if (respondWith.response[1]) request.responseText = respondWith.response[1];
-      logger("Mock HTTP server responding to", request.verb, "request to", request.url, "with status", request.status);
+      // logger("Mock HTTP server responding to", request.verb, "request to", request.url, "with status", request.status);
       request.onload();
     }
   },

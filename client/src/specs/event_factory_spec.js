@@ -15,7 +15,7 @@ const deviceRoute = "device/";
 const proximityRoute = "proximity"
 const uniqueId = "test-uuid";
 const baseURL = "https://cj101d.ifdnrg.com/";
-const echoURL = baseURL + "api" + deviceRoute + uniqueId;
+const echoURL = baseURL + deviceRoute + uniqueId;
 
 describe("Event Factory", function() {
 	let factory;
@@ -104,7 +104,7 @@ describe("Event Factory", function() {
 		});
 	});
 
-	describe("Hearbeat replacement", function() {
+	describe("Hearbeat with replacement", function() {
 		let timestamp;
 		let lastId;
 
@@ -149,6 +149,10 @@ describe("Event Factory", function() {
     	server.respond();
     	assert.strictEqual(server.queueLength(), 0);
     })
+	});
+
+	describe("Hearbeat without replacement", function() {
+		
 	});
 
 });

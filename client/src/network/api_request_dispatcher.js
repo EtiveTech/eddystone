@@ -6,7 +6,7 @@ const network = (process.env.NODE_ENV === 'test') ? require('../stubs').network 
 const timeoutDuration = (process.env.NODE_ENV === 'test') ? 100 : 15000; // ms
 const suspendPeriod = (process.env.NODE_ENV === 'test') ? 100 : 1000 * 60; // 1 minute
 const maxQueueLength = (process.env.NODE_ENV === 'test') ? 5 : 500;
-const echoURL = ((process.env.NODE_ENV === 'test') ? "https://cj101d.ifdnrg.com/api/device" : "https://c4a.etive.org:8443/api/device");
+const echoURL = ((process.env.NODE_ENV === 'test') ? "https://cj101d.ifdnrg.com/device" : "https://c4a.etive.org:8443/api/device");
 
 const ApiRequestDispatcher = function() {
 	this._queue = [];

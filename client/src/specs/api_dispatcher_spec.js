@@ -9,8 +9,8 @@ const assert = require("assert");
 const server = require('../stubs').HttpServer;
 const network = require('../stubs').network;
 const baseURL = "https://cj101d.ifdnrg.com/";
-const echoURL = baseURL + "api/device/test-uuid";
-const route = "api/proximity";
+const echoURL = baseURL + "device/test-uuid";
+const route = "proximity";
 
 describe("API Dispatcher", function() {
 
