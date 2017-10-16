@@ -104,6 +104,42 @@ describe("Event Factory", function() {
 		});
 	});
 
+	describe("Hearbeat without replacement", function() {
+		let timestamp;
+		let lastId;
+
+		before(function() {
+      server.initialize();
+      server.respondWith("PUT", baseURL + deviceRoute + uniqueId, [201, JSON.stringify({})]);
+      factory = new EventFactory(baseURL, token);
+      dispatcher._queue = [];
+    });
+
+    it ("Sends heartbeat", function() {
+    	assert.strictEqual(factory._lastHeartbeat, null);
+    	factory.heartbeat();
+    	assert.strictEqual(server.queueLength(), 1);
+    	const event = server.requests[0];
+    	assert.strictEqual(factory._lastHeartbeat.id, event.id);
+    	lastId = event.id;
+    	server.respond();
+    });
+
+    it ("Sends another heartbeat", function() {
+    	assert.strictEqual(factory._lastHeartbeat, null);
+    	factory.heartbeat();
+    	assert.strictEqual(server.queueLength(), 1);
+    	const event = server.requests[0];
+    	assert.strictEqual(factory._lastHeartbeat.id, event.id);
+    	assert.notStrictEqual(lastId, event.id);
+    	server.respond();
+    });
+
+    it ("Receives heartbeat response", function() {
+    	assert.strictEqual(factory._lastHeartbeat, null);
+    })
+	});
+
 	describe("Hearbeat with replacement", function() {
 		let timestamp;
 		let lastId;
@@ -119,6 +155,7 @@ describe("Event Factory", function() {
     });
 
     it ("Sends heartbeat", function() {
+    	assert.strictEqual(factory._lastHeartbeat, null);
     	factory.heartbeat();
     	assert.strictEqual(dispatcher.queueLength, 1);
     	const event = dispatcher._queue[0];
@@ -144,15 +181,13 @@ describe("Event Factory", function() {
     it ("Receives heartbeat response", function() {
     	network.online = true;
     	dispatcher._online();
+
     	assert.strictEqual(dispatcher.queueEmpty, true);
     	assert.strictEqual(server.queueLength(), 1);
     	server.respond();
     	assert.strictEqual(server.queueLength(), 0);
+    	assert.strictEqual(factory._lastHeartbeat, null);
     })
-	});
-
-	describe("Hearbeat without replacement", function() {
-		
 	});
 
 });

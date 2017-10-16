@@ -109,6 +109,8 @@ EventFactory.prototype.heartbeat = function(onCompleted) {
   // Make a note of the requets so it can be deleted later if needed
   this._lastHeartbeat = request.makePutRequest(this._baseURL +
     deviceRoute + "/" + this._deviceId, content, false, function(status) {
+    // Got a response so forget about the last heartbeat 
+    this._lastHeartbeat = null;
     // Might not be authorised to send to the server or the api key may be wrong
     if (onCompleted) onCompleted(status);
   });
