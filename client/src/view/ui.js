@@ -169,8 +169,10 @@ const displayDeviceList = function() {
 		let beacons = confirmedBeacons.concat(unconfirmedBeacons);
 
 		let beaconCount = 0;
-		for (let beacon of beacons) {
+		for (let i = 0; i < beacons.length; i++) {
+		// for (let beacon of beacons) {
 			// Create tag for device data.
+			const beacon = beacons[i];
 			const status = (beacon.confirmed) ? "confirmed" : "unconfirmed";
 			const content =
 				'<tr>' +
