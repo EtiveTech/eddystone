@@ -12,6 +12,7 @@ let updateTimer = null;
 let repository = null;
 let scanner = null;
 let uiHidden = false;	// UI cannot be hidden at start-up
+let registrationInProgress = false;
 
 const clearEmail = function() {
 	document.getElementById("ui").removeChild(document.getElementById("email-div"));
@@ -36,6 +37,7 @@ const onResume = function() {
 }
 
 const initialize = function() {
+
 	cordova.plugins.backgroundMode.on('activate', function() {
 		logger("Entering background mode");
 	});
@@ -73,12 +75,12 @@ const initialize = function() {
 		preRegistration();
 	}
 	
-	document.addEventListener("pause", onPause, false);
-	document.addEventListener("resume", onResume, false);	
+	// document.addEventListener("pause", onPause, false);
+	// document.addEventListener("resume", onResume, false);	
 };
 
 const registerPhone = function(onRegistration) {
-	const email = document.getElementById('email-address').value.trim().toLowerCase();
+	const email = document.getElementById("email-address").value.trim().toLowerCase();
 	if (email.length > 0) {
 		repository.authorize(email, function(success, message) {
 			// Need this error to be meaningful
@@ -99,23 +101,23 @@ const registerPhone = function(onRegistration) {
 };
 
 const onSaveButton = function() {
+	logger("'Register' button pressed")
+	// disable the button while attemptiong to register
+	if (registrationInProgress) return;
+	registrationInProgress = true;
 	registerPhone(function(success){
 		if (success) {
 			// Clear the email from the UI and start scanning
 			postRegistration();
-			if (device.platform !== "Android") {
-				startScanning();
-			}
-			else {
-				const permissions = cordova.plugins.permissions
-				permissions.checkPermission(permissions.ACCESS_COARSE_LOCATION, function(checked){
-				  if (checked.hasPermission)
-				  	startScanning();
-				  else
-				  	permissions.requestPermission(permissions.ACCESS_COARSE_LOCATION, function(){ startScanning(); });
-				});
-			}
+			const permissions = cordova.plugins.permissions
+			permissions.checkPermission(permissions.ACCESS_COARSE_LOCATION, function(checked){
+			  if (checked.hasPermission)
+			  	startScanning();
+			  else
+			  	permissions.requestPermission(permissions.ACCESS_COARSE_LOCATION, function(){ startScanning(); });
+			});
 		}
+		registrationInProgress = false;
 	});
 }
 
@@ -169,8 +171,10 @@ const displayDeviceList = function() {
 		let beacons = confirmedBeacons.concat(unconfirmedBeacons);
 
 		let beaconCount = 0;
-		for (let beacon of beacons) {
+		for (let i = 0; i < beacons.length; i++) {
+		// for (let beacon of beacons) {
 			// Create tag for device data.
+			const beacon = beacons[i];
 			const status = (beacon.confirmed) ? "confirmed" : "unconfirmed";
 			const content =
 				'<tr>' +

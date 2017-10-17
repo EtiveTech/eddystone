@@ -6,7 +6,7 @@ const network = (process.env.NODE_ENV === 'test') ? require('../stubs').network 
 const timeoutDuration = (process.env.NODE_ENV === 'test') ? 100 : 15000; // ms
 const suspendPeriod = (process.env.NODE_ENV === 'test') ? 100 : 1000 * 60; // 1 minute
 const maxQueueLength = (process.env.NODE_ENV === 'test') ? 5 : 500;
-const echoURL = ((process.env.NODE_ENV === 'test') ? "https://cj101d.ifdnrg.com/api/device" : "https://c4a.etive.org:8443/api/device");
+const echoURL = ((process.env.NODE_ENV === 'test') ? "https://cj101d.ifdnrg.com/device" : "https://c4a.etive.org:8443/api/device");
 
 const ApiRequestDispatcher = function() {
 	this._queue = [];
@@ -23,6 +23,7 @@ const ApiRequestDispatcher = function() {
 	}
 
 	Object.defineProperty(this, "queueLength", { get: function() { return this._queue.length; } });
+	Object.defineProperty(this, "queueEmpty", { get: function() { return this._queue.length === 0; } });
 };
 
 ApiRequestDispatcher.prototype.enqueue = function(request) {
@@ -33,6 +34,7 @@ ApiRequestDispatcher.prototype.enqueue = function(request) {
 	}
 
 	request._id = this._nextId();
+	request._dispatcher = this;
 	request._setTxTimeout(timeoutDuration, function(){this._onTxTimeout(request)}.bind(this));
 	request._setOnError(function(){this._onError(request)}.bind(this));
 
@@ -89,10 +91,11 @@ ApiRequestDispatcher.prototype._retry = function(request) {
 	this._dispatch();
 }
 
-ApiRequestDispatcher.prototype._dequeue = function(request) {
+ApiRequestDispatcher.prototype.dequeue = function(request) {
 	logger("Removing request with id", request.id, "from the dispatcher queue.");
 	for (let i = 0; i < this._queue.length; i++) {
 		if (this._queue[i].id === request.id) {
+			this._queue[i]._stopTimeout();
 			this._queue.splice(i, 1);
 			break;
 		}
@@ -106,10 +109,11 @@ ApiRequestDispatcher.prototype._online = function() {
 		// Stuff to send, let's see if it's possible
 		const echoRequest = new XMLHttpRequest();
 		const deviceId = (process.env.NODE_ENV === 'test') ? "test-uuid" : device.uuid;
-		echoRequest.open("GET", echoURL + "/" + deviceId);
+		const url = echoURL + "/" + deviceId;
+		echoRequest.open("GET", url);
 		echoRequest.onload = function() {
 		  if (echoRequest.status === 200) {
-		  	logger("Echo request to", echoURL, "succeeded.");
+		  	logger("Echo request to", url, "succeeded.");
 		  	this._dispatchSuspended = false;
 		  	this._dispatch();
 		  }
@@ -148,7 +152,7 @@ ApiRequestDispatcher.prototype._onTxTimeout = function(request) {
 ApiRequestDispatcher.prototype._onTimeout = function(request) {
 	// The request has been sitting, unsent on the queue for too long and will now be removed
 	logger("Timeout, ending request with id", request.id + ".");
-	this._dequeue(request);
+	this.dequeue(request);
 	request.callback(600, null);
 };
 
