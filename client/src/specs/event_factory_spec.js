@@ -191,4 +191,49 @@ describe("Event Factory", function() {
     })
 	});
 
+	describe("Event persistance", function() {
+
+		before(function() {
+      server.initialize();
+      server.respondWith("POST", baseURL + proximityRoute, [201, JSON.stringify({})]);
+      factory = new EventFactory(baseURL, token);
+      dispatcher._queue = [];
+    });
+
+		it ("Persists beacon found events", function() {
+
+	  	assert.strictEqual(Object.keys(factory._events).length, 0);
+
+	  	const request = factory.foundBeaconEvent({
+	  		bid: [0xc4, 0xa0, 0, 0, 0, 1],
+	  		rssi: -90,
+	  		txPower: -72
+	  	});
+
+	  	assert.strictEqual(Object.keys(factory._events).length, 1);
+	  	assert.strictEqual(request, factory._events[request.id]);
+		});
+
+		it ("Persists beacon lost events", function() {
+
+			assert.strictEqual(Object.keys(factory._events).length, 1);
+
+	  	const request = factory.lostBeaconEvent({
+	  		bid: [0xc4, 0xa0, 0, 0, 0, 1],
+	  		rssi: -90,
+	  		rssiMax: -80
+	  	});
+
+	  	assert.strictEqual(Object.keys(factory._events).length, 2);
+	  	assert.strictEqual(request, factory._events[request.id]);
+		});
+
+		it ("Removes beacon found events from persistant storage", function() {
+			server.respond();
+			assert.strictEqual(Object.keys(factory._events).length, 0);	
+		});
+
+
+	});
+
 });

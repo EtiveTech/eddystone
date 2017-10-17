@@ -19,21 +19,21 @@ const EventFactory = function(baseURL, token) {
   // this._resendEvents()
 }
 
-EventFactory.prototype._resendEvents = function(options) {
-  for (let i = 0; i < options.length; i++) {
-      let request = new Request();
-      request.makeRequest(options[i]);
-      this._addEvent(request);
-  }
-}
+// EventFactory.prototype._resendEvents = function(options) {
+//   for (let i = 0; i < options.length; i++) {
+//       let request = new Request();
+//       request.makeRequest(options[i]);
+//       this._addEvent(request);
+//   }
+// }
 
-EventFactory.prototype._persistEvents = function() {
-  let eventOptions = []
-  for (let event in this._events) {
-    eventOptions << event.options;
-  }
-  // persist eventOptions
-}
+// EventFactory.prototype._persistEvents = function() {
+//   let eventOptions = []
+//   for (let event in this._events) {
+//     eventOptions << event.options;
+//   }
+//   // persist eventOptions
+// }
 
 EventFactory.prototype._addEvent = function(request) {
   this._events[request.id] = request;
@@ -80,6 +80,8 @@ EventFactory.prototype.foundBeaconEvent = function(beacon, onCompleted) {
   }.bind(this));
 
   this._addEvent(request);
+
+  return request;
 }
 
 EventFactory.prototype.lostBeaconEvent = function(beacon, onCompleted) {
@@ -94,6 +96,8 @@ EventFactory.prototype.lostBeaconEvent = function(beacon, onCompleted) {
   }.bind(this));
 
   this._addEvent(request);
+
+  return request;
 }
 
 EventFactory.prototype.heartbeat = function(onCompleted) {
