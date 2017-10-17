@@ -36,12 +36,12 @@ const EventFactory = function(baseURL, token) {
 // }
 
 EventFactory.prototype._addEvent = function(request) {
-  this._events[request.id] = request;
+  if (process.env.NODE_ENV === 'test') this._events[request.id] = request;
   // now persist the events
 }
 
 EventFactory.prototype._removeEvent = function(request) {
-  delete this._events[request.id];
+  if (process.env.NODE_ENV === 'test') delete this._events[request.id];
   // now persist the events
 } 
 
