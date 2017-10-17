@@ -12,9 +12,38 @@ const EventFactory = function(baseURL, token) {
   this._baseURL = baseURL;
   this._token = token;
   this._deviceId = (process.env.NODE_ENV === 'test') ? "test-uuid" : device.uuid;
-  this._proximityEvents = [];
-  this._heartbeatEvents = [];
+  this._lastHeartbeat = null;
+  this._events = {};
+
+  // Check if there are any persisted events. If there are, resend them.
+  // this._resendEvents()
 }
+
+// EventFactory.prototype._resendEvents = function(options) {
+//   for (let i = 0; i < options.length; i++) {
+//       let request = new Request();
+//       request.makeRequest(options[i]);
+//       this._addEvent(request);
+//   }
+// }
+
+// EventFactory.prototype._persistEvents = function() {
+//   let eventOptions = []
+//   for (let event in this._events) {
+//     eventOptions << event.options;
+//   }
+//   // persist eventOptions
+// }
+
+EventFactory.prototype._addEvent = function(request) {
+  if (process.env.NODE_ENV === 'test') this._events[request.id] = request;
+  // now persist the events
+}
+
+EventFactory.prototype._removeEvent = function(request) {
+  if (process.env.NODE_ENV === 'test') delete this._events[request.id];
+  // now persist the events
+} 
 
 EventFactory.prototype._proximityContent = function(type, beacon) {
   const content = {
@@ -42,12 +71,17 @@ EventFactory.prototype.foundBeaconEvent = function(beacon, onCompleted) {
 
   // Beacon events are not allowed to time out
   request.makePostRequest(this._baseURL + proximityRoute, content, false, function(status) {
+    this._removeEvent(request);
     // Beacon is confirmed by default now update with the server response
     // Note that the lost event may have been sent before this code is executed
     beacon.confirmed = (status === 201);
     // Might not be authorised to send to the server or the api key may be wrong
     if (onCompleted) onCompleted(status);
-  });
+  }.bind(this));
+
+  this._addEvent(request);
+
+  return request;
 }
 
 EventFactory.prototype.lostBeaconEvent = function(beacon, onCompleted) {
@@ -56,23 +90,34 @@ EventFactory.prototype.lostBeaconEvent = function(beacon, onCompleted) {
 
   // Beacon events are not allowed to time out
   request.makePostRequest(this._baseURL + proximityRoute, content, false, function(status) {
+    this._removeEvent(request);
     // Might not be authorised to send to the server or the api key may be wrong
     if (onCompleted) onCompleted(status);
-  });
+  }.bind(this));
+
+  this._addEvent(request);
+
+  return request;
 }
 
-EventFactory.prototype.heartbeatEvent = function(onCompleted) {
+EventFactory.prototype.heartbeat = function(onCompleted) {
   const request = new Request();
   const content = {
     timestamp: Date.now(),
     token: this._token
   }
-  
-  // Let heartbeat requests timeout if not sent. They are sent a few times every hour. No point in stock-piling
-  request.makePutRequest(this._baseURL + deviceRoute + "/" + this._deviceId, content, true, function(status) {
+
+  // If the last heartbeat message is still sitting on the queue delete it to stop the requests building up
+  if (this._lastHeartbeat) this._lastHeartbeat.terminateRequest();
+
+  // Make a note of the requets so it can be deleted later if needed
+  this._lastHeartbeat = request.makePutRequest(this._baseURL +
+    deviceRoute + "/" + this._deviceId, content, false, function(status) {
+    // Got a response so forget about the last heartbeat 
+    this._lastHeartbeat = null;
     // Might not be authorised to send to the server or the api key may be wrong
     if (onCompleted) onCompleted(status);
-  });
+  }.bind(this));
 }
 
 module.exports = EventFactory;

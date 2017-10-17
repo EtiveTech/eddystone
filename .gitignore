@@ -1,3 +1,5 @@
+.tmp/
+.native/
 node_modules/
 www/js/bundle.*
 plugins/*
@@ -6,7 +8,8 @@ plugins/*
 !plugins/ios.json
 !plugins/cordova-plugin-ble
 platforms/android/*
-!platforms/android/res/
+!platforms/android/res/drawable-*
+!platforms/android/res/mipmap-*
 platforms/ios/*
 client/src/keys.js
 scratch/

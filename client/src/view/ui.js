@@ -103,18 +103,13 @@ const onSaveButton = function() {
 		if (success) {
 			// Clear the email from the UI and start scanning
 			postRegistration();
-			if (device.platform !== "Android") {
-				startScanning();
-			}
-			else {
-				const permissions = cordova.plugins.permissions
-				permissions.checkPermission(permissions.ACCESS_COARSE_LOCATION, function(checked){
-				  if (checked.hasPermission)
-				  	startScanning();
-				  else
-				  	permissions.requestPermission(permissions.ACCESS_COARSE_LOCATION, function(){ startScanning(); });
-				});
-			}
+			const permissions = cordova.plugins.permissions
+			permissions.checkPermission(permissions.ACCESS_COARSE_LOCATION, function(checked){
+			  if (checked.hasPermission)
+			  	startScanning();
+			  else
+			  	permissions.requestPermission(permissions.ACCESS_COARSE_LOCATION, function(){ startScanning(); });
+			});
 		}
 	});
 }
@@ -169,8 +164,10 @@ const displayDeviceList = function() {
 		let beacons = confirmedBeacons.concat(unconfirmedBeacons);
 
 		let beaconCount = 0;
-		for (let beacon of beacons) {
+		for (let i = 0; i < beacons.length; i++) {
+		// for (let beacon of beacons) {
 			// Create tag for device data.
+			const beacon = beacons[i];
 			const status = (beacon.confirmed) ? "confirmed" : "unconfirmed";
 			const content =
 				'<tr>' +
