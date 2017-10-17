@@ -116,28 +116,29 @@ describe("Event Factory", function() {
     });
 
     it ("Sends heartbeat", function() {
+    	const callback = sinon.spy();
     	assert.strictEqual(factory._lastHeartbeat, null);
-    	factory.heartbeat();
-    	assert.strictEqual(server.queueLength(), 1);
-    	const event = server.requests[0];
-    	assert.strictEqual(factory._lastHeartbeat.id, event.id);
-    	lastId = event.id;
+    	factory.heartbeat(callback);
+    	assert.strictEqual(factory._lastHeartbeat._request, server.requests[0]);
+    	lastId = factory._lastHeartbeat.id;
     	server.respond();
+    	assert.strictEqual(callback.callCount, 1);
+      assert.strictEqual(callback.getCall(0).args[0], 201);
+    	assert.strictEqual(factory._lastHeartbeat, null);
     });
 
     it ("Sends another heartbeat", function() {
+    	const callback = sinon.spy();
     	assert.strictEqual(factory._lastHeartbeat, null);
-    	factory.heartbeat();
-    	assert.strictEqual(server.queueLength(), 1);
-    	const event = server.requests[0];
-    	assert.strictEqual(factory._lastHeartbeat.id, event.id);
-    	assert.notStrictEqual(lastId, event.id);
+    	factory.heartbeat(callback);
+    	assert.strictEqual(factory._lastHeartbeat._request, server.requests[0]);
+    	assert.notStrictEqual(factory._lastHeartbeat.id, lastId);
     	server.respond();
+    	assert.strictEqual(callback.callCount, 1);
+      assert.strictEqual(callback.getCall(0).args[0], 201);
+    	assert.strictEqual(factory._lastHeartbeat, null);
     });
 
-    it ("Receives heartbeat response", function() {
-    	assert.strictEqual(factory._lastHeartbeat, null);
-    })
 	});
 
 	describe("Hearbeat with replacement", function() {

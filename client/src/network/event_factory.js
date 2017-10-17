@@ -105,7 +105,7 @@ EventFactory.prototype.heartbeat = function(onCompleted) {
 
   // If the last heartbeat message is still sitting on the queue delete it to stop the requests building up
   if (this._lastHeartbeat) this._lastHeartbeat.terminateRequest();
-  
+
   // Make a note of the requets so it can be deleted later if needed
   this._lastHeartbeat = request.makePutRequest(this._baseURL +
     deviceRoute + "/" + this._deviceId, content, false, function(status) {
@@ -113,7 +113,7 @@ EventFactory.prototype.heartbeat = function(onCompleted) {
     this._lastHeartbeat = null;
     // Might not be authorised to send to the server or the api key may be wrong
     if (onCompleted) onCompleted(status);
-  });
+  }.bind(this));
 }
 
 module.exports = EventFactory;

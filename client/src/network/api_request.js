@@ -138,7 +138,9 @@ ApiRequest.prototype.terminateRequest = function() {
   if ((this._request.readyState === 0) && this._dispatcher) {
     // the request has not been sent so take it off the queue
     this._dispatcher.dequeue(this);
+    return this;
   }
+  return null;
 }
 
 module.exports = ApiRequest;
