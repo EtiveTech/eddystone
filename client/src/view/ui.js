@@ -103,18 +103,13 @@ const onSaveButton = function() {
 		if (success) {
 			// Clear the email from the UI and start scanning
 			postRegistration();
-			if (device.platform !== "Android") {
-				startScanning();
-			}
-			else {
-				const permissions = cordova.plugins.permissions
-				permissions.checkPermission(permissions.ACCESS_COARSE_LOCATION, function(checked){
-				  if (checked.hasPermission)
-				  	startScanning();
-				  else
-				  	permissions.requestPermission(permissions.ACCESS_COARSE_LOCATION, function(){ startScanning(); });
-				});
-			}
+			const permissions = cordova.plugins.permissions
+			permissions.checkPermission(permissions.ACCESS_COARSE_LOCATION, function(checked){
+			  if (checked.hasPermission)
+			  	startScanning();
+			  else
+			  	permissions.requestPermission(permissions.ACCESS_COARSE_LOCATION, function(){ startScanning(); });
+			});
 		}
 	});
 }
