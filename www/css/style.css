@@ -142,11 +142,6 @@ input {
 								BUTTONS
 	---------------------------------------------------------- */
 
-button.clear {
-	margin-left: 1%;
-	background-color: #e15a64; /* Default color: "Soft Red". */
-}
-
 button {
 	display: inline-block;
 	box-sizing: border-box; /* Width & height includes padding & border. */
@@ -171,15 +166,15 @@ button {
 /*body > button {
 	font-size: 63% !important;
 }*/
-button:active, button.pressed,
-input.btn-group:active + label, input.btn-group + label:active,
-input.btn-group:checked + label {
+button:active, button.pressed {
 	box-shadow: inset 0 8px 9px -9px #000;
 	background-color: #2eaac6;
 }
-button:focus,
-input.btn-group:focus {
+button:focus {
 	outline: none;
+}
+button:disabled {
+	background-color: #a1bdc4;
 }
 
 #save-button {
