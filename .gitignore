@@ -7,9 +7,7 @@ plugins/
 !plugins/fetch.json
 !plugins/ios.json
 !plugins/cordova-plugin-ble
-platforms/android/
+platforms/
 !platforms/android/res/drawable-*
 !platforms/android/res/mipmap-*
-platforms/ios/
 client/src/keys.js
-scratch/
