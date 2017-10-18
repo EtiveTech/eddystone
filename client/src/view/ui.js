@@ -38,6 +38,11 @@ const UI = function(repository) {
 		cordova.plugins.backgroundMode.overrideBackButton();
 	}
 
+	// Get the version number
+	cordova.getAppVersion.getVersionNumber(function (version) {
+		document.getElementById('version').innerText = "v" + version;
+	});
+
 	// ***** Add Listeners *****
 
   // Don't update the UI if it's not visible
@@ -66,9 +71,7 @@ UI.prototype.onResume = function() {
 }
 
 UI.prototype.onSaveButton = function(event) {
-	logger("'Register' button pressed")
 	// disable the button while attemptiong to register
-	if (this._registrationInProgress) return;
 	event.target.disabled = true;
 	this._registerPhone(function(success){
 		if (success) {
@@ -81,7 +84,7 @@ UI.prototype.onSaveButton = function(event) {
 			  else
 			  	permissions.requestPermission(permissions.ACCESS_COARSE_LOCATION,
 			  		function(){ this._startScanning(); }.bind(this));
-			});
+			}.bind(this));
 		}
 		event.target.disabled = false;
 	}.bind(this));
@@ -89,11 +92,8 @@ UI.prototype.onSaveButton = function(event) {
 
 UI.prototype._postRegistration = function() {
 	document.getElementById("email-div").setAttribute("style", "display:none;");
-	cordova.getAppVersion.getVersionNumber(function (version) {
-		document.getElementById('version').innerText = "v" + version;
-		document.getElementById("textbox").setAttribute("style", "display:block;");
-		document.getElementById("found-devices-div").setAttribute("style", "display:block;");
-	});
+	document.getElementById("textbox").setAttribute("style", "display:block;");
+	document.getElementById("found-devices-div").setAttribute("style", "display:block;");
 }
 
 UI.prototype._preRegistration = function() {
