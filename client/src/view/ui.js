@@ -3,40 +3,18 @@
 const logger = require('../utility').logger;
 const arrayToHex = require('../utility').arrayToHex;
 const Scanner = require('../model/scanner');
-const Repository = require('../network/repository');
 const maxBeacons = 8;
 
-// Timer that updates the device list and removes inactive
-// devices in case no devices are found by scan.
-let updateTimer = null;
-let repository = null;
-let scanner = null;
-let uiHidden = false;	// UI cannot be hidden at start-up
-let registrationInProgress = false;
+const UI = function(repository) {
 
-const clearEmail = function() {
-	document.getElementById("ui").removeChild(document.getElementById("email-div"));
-}
+	// ***** Initialise variables *****
 
-const postRegistration = function() {
-	document.getElementById("email-div").setAttribute("style", "display:none;");
-	document.getElementById("textbox").setAttribute("style", "display:block;");
-	document.getElementById("found-devices-div").setAttribute("style", "display:block;");
-}
+	this._repository = repository;
+	this._scanner = null;
+	this._updateTimer = null; // Timer that updates the device list and removes inactive devices.
+	this._uiHidden = false;	// UI cannot be hidden at start-up
 
-const preRegistration = function() {
-	document.getElementById("email-div").setAttribute("style", "display:block;");
-}
-
-const onPause = function() {
-	uiHidden = true;
-}
-
-const onResume = function() {
-	uiHidden = false;
-}
-
-const initialize = function() {
+	// ***** Setup plugins *****
 
 	cordova.plugins.backgroundMode.on('activate', function() {
 		logger("Entering background mode");
@@ -60,29 +38,73 @@ const initialize = function() {
 		cordova.plugins.backgroundMode.overrideBackButton();
 	}
 
-	cordova.getAppVersion.getVersionNumber(function (version) {
-		document.getElementById('version').innerText = "v" + version;
-	});
+	// ***** Add Listeners *****
 
-	repository = new Repository((process.env.NODE_ENV === 'test') ? "https://cj101d.ifdnrg.com/api" : "https://c4a.etive.org:8443/api");
-	// repository = new Repository("http://192.168.1.74:8080");
+  // Don't update the UI if it's not visible
+	document.addEventListener("pause", this.onPause.bind(this), false);
+	document.addEventListener("resume", this.onResume.bind(this), false);
 
-	if (repository.hasToken) {
-		postRegistration();
-		startScanning();
+	// ***** Start the scanner *****
+
+	if (this._repository.hasToken) {
+		// The user has already registered.
+		this._postRegistration();
+		this._startScanning();
 	}
 	else {
-		preRegistration();
+		// The user has not yet registered.
+		this._preRegistration();
 	}
-	
-	// document.addEventListener("pause", onPause, false);
-	// document.addEventListener("resume", onResume, false);	
-};
+}
 
-const registerPhone = function(onRegistration) {
+UI.prototype.onPause = function() {
+	this._uiHidden = true;
+}
+
+UI.prototype.onResume = function() {
+	this._uiHidden = false;
+}
+
+UI.prototype.onSaveButton = function(event) {
+	logger("'Register' button pressed")
+	// disable the button while attemptiong to register
+	if (this._registrationInProgress) return;
+	event.target.disabled = true;
+	this._registerPhone(function(success){
+		if (success) {
+			// Clear the email from the UI and start scanning
+			this._postRegistration();
+			const permissions = cordova.plugins.permissions
+			permissions.checkPermission(permissions.ACCESS_COARSE_LOCATION, function(checked){
+			  if (checked.hasPermission)
+			  	this._startScanning();
+			  else
+			  	permissions.requestPermission(permissions.ACCESS_COARSE_LOCATION,
+			  		function(){ this._startScanning(); }.bind(this));
+			});
+		}
+		event.target.disabled = false;
+	}.bind(this));
+}
+
+UI.prototype._postRegistration = function() {
+	document.getElementById("email-div").setAttribute("style", "display:none;");
+	cordova.getAppVersion.getVersionNumber(function (version) {
+		document.getElementById('version').innerText = "v" + version;
+		document.getElementById("textbox").setAttribute("style", "display:block;");
+		document.getElementById("found-devices-div").setAttribute("style", "display:block;");
+	});
+}
+
+UI.prototype._preRegistration = function() {
+	document.getElementById("save-button").onclick = this.onSaveButton.bind(this);
+	document.getElementById("email-div").setAttribute("style", "display:block;");
+}
+
+UI.prototype._registerPhone = function(onRegistration) {
 	const email = document.getElementById("email-address").value.trim().toLowerCase();
 	if (email.length > 0) {
-		repository.authorize(email, function(success, message) {
+		this._repository.authorize(email, function(success, message) {
 			// Need this error to be meaningful
 			if (success) {
 				navigator.notification.alert("Your phone has been successfully registered.",
@@ -100,47 +122,26 @@ const registerPhone = function(onRegistration) {
 	}
 };
 
-const onSaveButton = function() {
-	logger("'Register' button pressed")
-	// disable the button while attemptiong to register
-	if (registrationInProgress) return;
-	registrationInProgress = true;
-	registerPhone(function(success){
-		if (success) {
-			// Clear the email from the UI and start scanning
-			postRegistration();
-			const permissions = cordova.plugins.permissions
-			permissions.checkPermission(permissions.ACCESS_COARSE_LOCATION, function(checked){
-			  if (checked.hasPermission)
-			  	startScanning();
-			  else
-			  	permissions.requestPermission(permissions.ACCESS_COARSE_LOCATION, function(){ startScanning(); });
-			});
-		}
-		registrationInProgress = false;
-	});
-}
-
-const startScanning = function() {
-	scanner = new Scanner(repository,
-		function(message) { displayStatus(message); }
+UI.prototype._startScanning = function() {
+	this._scanner = new Scanner(this._repository,
+		function(message) { this._displayStatus(message); }.bind(this)
 	);
-	scanner.start();
-	updateTimer = setInterval(displayDeviceList, 500);
+	this._scanner.start();
+	this._updateTimer = setInterval(this._displayDeviceList.bind(this), 500);
 };
 
-const beaconOrder = function(a, b) {
+UI.prototype._beaconOrder = function(a, b) {
 	if (a.bid === b.bid) return 0; // This should never happen
 	return (a.bid > b.bid) ? 1 : -1;
 }
 
 // Display the device list.
-const displayDeviceList = function() {
-	const devices = scanner.beacons;
+UI.prototype._displayDeviceList = function() {
+	const devices = this._scanner.beacons;
 	const foundDevices = document.getElementById('found-devices-div');
 
   // If paused, the UI is not visible so there is no need to update the screen
-	if (uiHidden) return;
+	if (this._uiHidden) return;
 
 	// Clear device list.
   while (foundDevices.firstChild) {
@@ -166,8 +167,8 @@ const displayDeviceList = function() {
 			else
 				unconfirmedBeacons.push(device);
 		}
-		confirmedBeacons.sort(beaconOrder);
-		unconfirmedBeacons.sort(beaconOrder);
+		confirmedBeacons.sort(this._beaconOrder);
+		unconfirmedBeacons.sort(this._beaconOrder);
 		let beacons = confirmedBeacons.concat(unconfirmedBeacons);
 
 		let beaconCount = 0;
@@ -197,13 +198,10 @@ const displayDeviceList = function() {
 };
 
 // Display a status message
-const displayStatus = function(message) {
+UI.prototype._displayStatus = function(message) {
 	const scanStatus = document.getElementById('scan-status');
 	scanStatus.innerText = message;
 	cordova.plugins.backgroundMode.configure({ text: message });
 };
 
-module.exports = {
-	onSaveButton: onSaveButton,
-	initialize: initialize
-}
+module.exports = UI;

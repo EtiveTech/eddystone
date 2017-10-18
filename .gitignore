@@ -2,14 +2,14 @@
 .native/
 node_modules/
 www/js/bundle.*
-plugins/*
+plugins/
 !plugins/android.json
 !plugins/fetch.json
 !plugins/ios.json
 !plugins/cordova-plugin-ble
-platforms/android/*
+platforms/android/
 !platforms/android/res/drawable-*
 !platforms/android/res/mipmap-*
-platforms/ios/*
+platforms/ios/
 client/src/keys.js
 scratch/
