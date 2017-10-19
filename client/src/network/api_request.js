@@ -1,6 +1,6 @@
 "use strict"
 
-const logger = require('../utility').logger;
+const logger = require('../logger');
 const dispatcher = require('./api_request_dispatcher');
 const XMLHttpRequest = (process.env.NODE_ENV === 'test') ? require('../stubs').XMLHttpRequest : window.XMLHttpRequest;
 

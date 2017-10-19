@@ -1,6 +1,6 @@
 "use strict"
 
-const logger = require('../utility').logger;
+const logger = require('../logger');
 const arrayToHex = require('../utility').arrayToHex;
 const Scanner = require('../model/scanner');
 const maxBeacons = 8;

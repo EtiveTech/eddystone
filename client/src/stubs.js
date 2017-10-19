@@ -2,7 +2,7 @@
 
 // This file is used for testing only
 
-const logger = require('./utility').logger;
+const logger = require('./logger');
 
 const localStorage = {
   _storage: {},

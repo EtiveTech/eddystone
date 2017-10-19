@@ -1,6 +1,6 @@
 "use strict"
 
-const logger = require('../utility').logger;
+const logger = require('../logger');
 const XMLHttpRequest = (process.env.NODE_ENV === 'test') ? require('../stubs').XMLHttpRequest : window.XMLHttpRequest;
 const network = (process.env.NODE_ENV === 'test') ? require('../stubs').network : require('../utility').network;
 const timeoutDuration = (process.env.NODE_ENV === 'test') ? 100 : 15000; // ms

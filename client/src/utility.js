@@ -36,64 +36,6 @@ const getScript = function(source, callback) {
   script.src = source;
 };
 
-const logger = {
-  _logToFile: true,
-  _logToConsole: true,
-  _logFile: null,
-
-  log: function() {
-    if (this._logToConsole || this._logToFile) {
-      const date = new Date();
-      const ms = date.getMilliseconds();
-      let padding = "";
-      if (ms < 100) {
-        padding = (ms < 10) ? "00" : "0";
-      }
-      let text = date.toTimeString().split(" ")[0] + "." + padding + ms;
-      for (let i = 0; i < arguments.length; i++) {
-        text += " " + arguments[i]
-      }
-
-      if (this._logToConsole) console.log(text);
-      if (this._logToFile && this._logFile) this._fileLog(text + "\n");
-    }
-  },
-
-  init: function(toConsole, toFile, onCompleted) {
-    this._logToConsole = toConsole;
-    this._logToFile = toFile;
-
-    if (toFile && !this._logFile) {
-      window.resolveLocalFileSystemURL(cordova.file.externalDataDirectory, function (dir) {
-        if (toConsole) console.log('file system open: ' + dir.name);
-        dir.getFile("city4age-log.txt", {create:true}, function(file) {
-          if (toConsole) console.log("Creating log file")
-          this._logFile = file;
-          onCompleted();
-        }.bind(this));
-      }.bind(this));
-    }
-    else {
-      onCompleted();
-    }
-  },
-
-  _fileLog: function(text) {
-    if (!this._logFile) return;
-
-    this._logFile.createWriter(function (fileWriter) {
-      if (this._logToConsole) {
-        fileWriter.onerror = function (e) { console.log("Failed file write: " + e.toString()); };
-        fileWriter.onwriteend = function() { console.log("Successful file write..."); };
-      }
-
-      const blob = new Blob([text], { type: 'text/plain' });
-      fileWriter.seek(fileWriter.length);
-      fileWriter.write(blob);
-    }.bind(this));
-  }
-};
-
 const _initConnectionTypes = function() {
   // Can only do this after the device is ready.
   connectionTypes = {};
@@ -144,7 +86,6 @@ module.exports = {
   getBrowserWidth: getBrowserWidth,
   getBrowserHeight: getBrowserHeight,
   getScript: getScript,
-  logger: logger,
   network: network,
   arrayToHex: arrayToHex,
   positionToString: positionToString

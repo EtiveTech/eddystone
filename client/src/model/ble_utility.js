@@ -1,7 +1,7 @@
 "use strict"
 
 const base64 = cordova.require('cordova/base64');
-const logger = require('../utility').logger;
+const logger = require('../logger');
 
 const BLUETOOTH_BASE_UUID = '-0000-1000-8000-00805f9b34fb'
 

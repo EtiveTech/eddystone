@@ -3,7 +3,7 @@
 const Request = require('./api_request');
 const EventFactory = require('./event_factory')
 const apiKey = require('../keys').localRepository;
-const logger = require('../utility').logger;
+const logger = require('../logger');
 const arrayToHex = require('../utility').arrayToHex;
 const localStorage = (process.env.NODE_ENV === 'test') ? require("../stubs").localStorage : window.localStorage;
 const defaultHeartbeatInterval = ((process.env.NODE_ENV === 'test') ? 1 : 60 * 60) * 1000;

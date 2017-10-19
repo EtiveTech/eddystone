@@ -1,7 +1,7 @@
 "use strict"
 
 const Scan = require('./scan');
-const logger = require('../utility').logger;
+const logger = require('../logger');
 const positionToString = require('../utility').positionToString;
 
 const minScanLength = 10000; // milliseconds

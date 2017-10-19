@@ -1,6 +1,6 @@
 "use strict"
 
-const logger = require('../utility').logger;
+const logger = require('../logger');
 const bleUtility = require('./ble_utility');
 
 const CITY4AGE_NAMESPACE = 'edd1ebeac04e5defa017';
