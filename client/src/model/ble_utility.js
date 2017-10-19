@@ -229,7 +229,7 @@ const addAdvertisementData = function(device)
 				for(let i = 0; i < length; i += 2) {
 					uuid = '0000' + toHexString(littleToUint16(byteArray, pos + i), 2) + BLUETOOTH_BASE_UUID;
 					serviceUUIDs.push(uuid);
-					// logger("Found UUID", uuid);
+					// logger.log("Found UUID", uuid);
 				}
 				break;
 
@@ -239,7 +239,7 @@ const addAdvertisementData = function(device)
 				for (let i = 0; i < length; i += 4) {
 					uuid = toHexString(littleToUint32(byteArray, pos + i), 4) + BLUETOOTH_BASE_UUID;
 					serviceUUIDs.push(uuid);
-					// logger("Found UUID", uuid);
+					// logger.log("Found UUID", uuid);
 				}
 				break;
 
@@ -249,7 +249,7 @@ const addAdvertisementData = function(device)
 				for (let i = 0; i < length; i += 16) {
 					uuid = arrayToUUID(byteArray, pos + i);
 					serviceUUIDs.push(uuid);
-					// logger("Found UUID", uuid);
+					// logger.log("Found UUID", uuid);
 				}
 				break;
 
@@ -270,7 +270,7 @@ const addAdvertisementData = function(device)
 				uuid = '0000' + toHexString(littleToUint16(byteArray, pos), 2) + BLUETOOTH_BASE_UUID;
 				data = new Uint8Array(byteArray.buffer, pos + 2, length - 2);
 				serviceData[uuid] = base64.fromArrayBuffer(data);
-				// logger("Found Service Data: UUID", uuid, "Data", data);
+				// logger.log("Found Service Data: UUID", uuid, "Data", data);
 				break;
 
 			case 0x20:
@@ -278,7 +278,7 @@ const addAdvertisementData = function(device)
 				uuid = toHexString(littleToUint32(byteArray, pos), 4) + BLUETOOTH_BASE_UUID;
 				data = new Uint8Array(byteArray.buffer, pos + 4, length - 4);
 				serviceData[uuid] = base64.fromArrayBuffer(data);
-				// logger("Found Service Data: UUID", uuid, "Data", data);
+				// logger.log("Found Service Data: UUID", uuid, "Data", data);
 				break;
 
 			case 0x21:
@@ -286,7 +286,7 @@ const addAdvertisementData = function(device)
 				uuid = arrayToUUID(byteArray, pos);
 				data = new Uint8Array(byteArray.buffer, pos+16, length-16);
 				serviceData[uuid] = base64.fromArrayBuffer(data);
-				// logger("Found Service Data: UUID", uuid, "Data", data);
+				// logger.log("Found Service Data: UUID", uuid, "Data", data);
 				break;
 
 			case 0xff:

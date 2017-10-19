@@ -42,7 +42,7 @@ const Repository = function(baseURL, interval) {
 
 Repository.prototype._startTimers = function(issueHeartbeat) {
 	if (this._token) {
-		logger("Repository starting timers")
+		logger.log("Repository starting timers")
 		if (this._heartbeatInterval > 0) {
 			if (issueHeartbeat) this.heartbeat();
 			this._heartbeatTimerID = setInterval(this.heartbeat.bind(this), this._heartbeatInterval);
@@ -68,12 +68,12 @@ Repository.prototype._stopTimers = function() {
 		count += 1;
 	}
 
-	logger("Repository stopped", count, "timers.");
+	logger.log("Repository stopped", count, "timers.");
 	return count;
 }
 
 Repository.prototype.authorize = function(emailAddress, onCompleted) {
-	logger("Sending authorisation request for", emailAddress);
+	logger.log("Sending authorisation request for", emailAddress);
 	const authorizeRequest = new Request();
 	let url = this._baseURL + authorizeRoute;
 	url += 	"/" + encodeURIComponent(emailAddress) + "?key=" + encodeURIComponent(apiKey);
@@ -118,7 +118,7 @@ Repository.prototype.authorize = function(emailAddress, onCompleted) {
 Repository.prototype.foundBeacon = function(beacon, onCompleted) {
 	if (!this._token) return;
 	this._beaconCount += 1;
-	logger("Sending found beacon message for", arrayToHex(beacon.bid), this.knownBeaconCount);
+	logger.log("Sending found beacon message for", arrayToHex(beacon.bid), this.knownBeaconCount);
 	this._eventFactory.foundBeaconEvent(beacon, onCompleted)
 }
 
@@ -128,24 +128,24 @@ Repository.prototype.lostBeacon = function (beacon, onCompleted) {
 	this._beaconCount -= 1;
 
 	if (!beacon.confirmed){
-		logger("Lost contact with unconfirmed beacon", arrayToHex(beacon.bid), this.knownBeaconCount);
+		logger.log("Lost contact with unconfirmed beacon", arrayToHex(beacon.bid), this.knownBeaconCount);
 		// Don't bother reporting the loss to the server - it doesn't know about it
 		return;
 	}
 	
-	logger("Sending lost beacon message for", arrayToHex(beacon.bid), this.knownBeaconCount);
+	logger.log("Sending lost beacon message for", arrayToHex(beacon.bid), this.knownBeaconCount);
 	this._eventFactory.lostBeaconEvent(beacon, onCompleted)
 }
 
 Repository.prototype.heartbeat = function(onCompleted) {
 	if (!this._token) return;
-	logger("Sending heartbeat message")
+	logger.log("Sending heartbeat message")
 	this._eventFactory.heartbeat(onCompleted)
 }
 
 Repository.prototype._fetchRegions = function() {
 	if (!this._token) return;
-	logger("Sending region request");
+	logger.log("Sending region request");
 	const regionRequest = new Request();
 	let url = this._baseURL + regionRoute;
 	if (this._regions) url += "?stamp=" + this._regions.changed;

@@ -17,11 +17,11 @@ const UI = function(repository) {
 	// ***** Setup plugins *****
 
 	cordova.plugins.backgroundMode.on('activate', function() {
-		logger("Entering background mode");
+		logger.log("Entering background mode");
 	});
 
 	cordova.plugins.backgroundMode.on('deactivate', function() {
-		logger("Entering foreground mode");
+		logger.log("Entering foreground mode");
 	});
 
 	cordova.plugins.backgroundMode.setDefaults({

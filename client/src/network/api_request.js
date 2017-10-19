@@ -11,7 +11,7 @@ const ApiRequest = function() {
   this._timeoutID = null;
   this._id = 0;
   this._tries = 0;
-  this._dispatcher = null;
+  this._dispatcher = dispatcher.getSystemDispatcher();
 
   Object.defineProperty(this, "timeout", { get: function() { return this._options.timeout; } });
   Object.defineProperty(this, "callback", { get: function() { return this._options.callback; } });
@@ -34,7 +34,7 @@ ApiRequest.prototype._setRequest = function(options) {
     const req = this._request;
     let errorStatus = (options.expected.indexOf(req.status) === -1);
     let content = ((req.status === 204) || errorStatus ) ? null : JSON.parse(req.responseText);
-    logger( options.verb + " request (" + this._id + ") to " + options.url + " returned status " + req.status);
+    logger.log( options.verb + " request (" + this._id + ") to " + options.url + " returned status " + req.status);
     options.callback(req.status, content);
   }.bind(this);
 };
@@ -42,7 +42,7 @@ ApiRequest.prototype._setRequest = function(options) {
 ApiRequest.prototype._resetRequest = function() {
   if (!this._options) return null;
   this._request = new XMLHttpRequest();
-  logger("Resetting " + this._options.verb + " request (" + this._id + ") to " + this._options.url + ".");
+  logger.log("Resetting " + this._options.verb + " request (" + this._id + ") to " + this._options.url + ".");
   this._setRequest(this._options);
   return this;
 };
@@ -50,8 +50,8 @@ ApiRequest.prototype._resetRequest = function() {
 ApiRequest.prototype.makeRequest = function(options) {
   this._options = options;
   this._setRequest(options);
-  const request = dispatcher.enqueue(this);
-  logger( options.verb + " request (" + this._id + ") to " + options.url + " given to the dispatcher.");
+  const request = this._dispatcher.enqueue(this);
+  logger.log( options.verb + " request (" + this._id + ") to " + options.url + " given to the dispatcher.");
   return request;
 };
 
@@ -135,7 +135,7 @@ ApiRequest.prototype.makeDeleteRequest = function(url, timeout, callback) {
 };
 
 ApiRequest.prototype.terminateRequest = function() {
-  logger("Attempting to terminate request with id", this._id);
+  logger.log("Attempting to terminate request with id", this._id);
   if ((this._request.readyState <= 1) && this._dispatcher) {
     // the request has not been sent so take it off the queue
     this._dispatcher.dequeue(this);
