@@ -42,8 +42,8 @@ ApiRequest.prototype._setRequest = function(options) {
 ApiRequest.prototype._resetRequest = function() {
   if (!this._options) return null;
   this._request = new XMLHttpRequest();
-  logger.log("Resetting " + this._options.verb + " request (" + this._id + ") to " + this._options.url + ".");
   this._setRequest(this._options);
+  logger.log("Reset " + this._options.verb + " request (" + this._id + ") to " + this._options.url + ".");
   return this;
 };
 
@@ -51,13 +51,14 @@ ApiRequest.prototype.makeRequest = function(options) {
   this._options = options;
   this._setRequest(options);
   const request = this._dispatcher.enqueue(this);
-  logger.log( options.verb + " request (" + this._id + ") to " + options.url + " given to the dispatcher.");
+  logger.log("Gave " + options.verb + " request (" + this._id + ") to " + options.url + " to the dispatcher.");
   return request;
 };
 
 ApiRequest.prototype._send = function() {
   this._tries += 1;
   this._request.send(this._json);
+  logger.log("Sent " + this._options.verb + " request (" + this._id + ") to " + this._options.url + ".");
 };
 
 ApiRequest.prototype._startTimeout = function(duration, callback) {

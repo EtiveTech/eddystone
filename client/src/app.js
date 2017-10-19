@@ -4,9 +4,10 @@ const Repository = require('./network/repository');
 const UI = require('./view/ui');
 const logger = require('./logger');
 const dispatcher = require('./network/api_request_dispatcher');
-const baseURL = "https://c4a.etive.org:8443/api";
+// const baseURL = "https://c4a.etive.org:8443/api";
+const baseURL = "http://c4a.etive.org:8080/api";
 const logToConsole = true;
-const logToFile = true;
+const logToFile = false;
 
 const onDeviceReady = function() {
   // Allow the app to work in background mode

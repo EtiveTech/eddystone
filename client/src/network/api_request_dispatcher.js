@@ -47,6 +47,7 @@ ApiRequestDispatcher.prototype.enqueue = function(request) {
 
 ApiRequestDispatcher.prototype._dispatch = function() {
 	this._dispatchSuspended = this._dispatchSuspended || network.offline;
+	if (this._dispatchSuspended) logger("Dispatch suspended, cannot dispatch (network: " + network.ConnectionType + ")");
 	while (!this._dispatchSuspended && (this._queue.length > 0)) {
 		let request = this._queue.shift();
 		request._stopTimeout();
