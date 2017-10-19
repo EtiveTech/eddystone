@@ -1,5 +1,7 @@
 "use strict"
 
+const maxFileSize = 65536;
+
 const Logger = function() {
 	this._initialised = false;
 	this._logToConsole = true;
@@ -61,6 +63,7 @@ Logger.prototype.log = function() {
 
 Logger.prototype._writeToFile = function(text) {
 	if (!this._fileWriter) return;
+  if (this._fileWriter.length + this._buffer.length >= maxFileSize) return;
 
 	if (this._isWriting) {
 		this._buffer += text;
