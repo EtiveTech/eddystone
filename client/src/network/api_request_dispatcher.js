@@ -6,12 +6,14 @@ const network = (process.env.NODE_ENV === 'test') ? require('../stubs').network 
 const timeoutDuration = (process.env.NODE_ENV === 'test') ? 100 : 15000; // ms
 const suspendPeriod = (process.env.NODE_ENV === 'test') ? 100 : 1000 * 60; // 1 minute
 const maxQueueLength = (process.env.NODE_ENV === 'test') ? 5 : 500;
-const echoURL = ((process.env.NODE_ENV === 'test') ? "https://cj101d.ifdnrg.com/device" : "https://c4a.etive.org:8443/api/device");
 
-const ApiRequestDispatcher = function() {
+const ApiRequestDispatcher = function(baseURL) {
 	this._queue = [];
 	this._id = 0;
 	this._dispatchSuspended = false;
+	this._echoURL = baseURL;
+	if (this._echoURL[this._echoURL.length-1] !== "/") this._echoURL += "/";
+	this._echoURL += "device";
 
 	if (typeof document !== "undefined") {
 		// document won't exist when running tests outside a browser
@@ -47,7 +49,7 @@ ApiRequestDispatcher.prototype.enqueue = function(request) {
 
 ApiRequestDispatcher.prototype._dispatch = function() {
 	this._dispatchSuspended = this._dispatchSuspended || network.offline;
-	if (this._dispatchSuspended) logger("Dispatch suspended, cannot dispatch (network: " + network.ConnectionType + ")");
+	if (this._dispatchSuspended) logger.log("Dispatch suspended, cannot dispatch (network: " + network.ConnectionType + ")");
 	while (!this._dispatchSuspended && (this._queue.length > 0)) {
 		let request = this._queue.shift();
 		request._stopTimeout();
@@ -109,7 +111,7 @@ ApiRequestDispatcher.prototype._online = function() {
 		// Stuff to send, let's see if it's possible
 		const echoRequest = new XMLHttpRequest();
 		const deviceId = (process.env.NODE_ENV === 'test') ? "test-uuid" : device.uuid;
-		const url = echoURL + "/" + deviceId;
+		const url = this._echoURL + "/" + deviceId;
 		echoRequest.open("GET", url);
 		echoRequest.onload = function() {
 		  if (echoRequest.status === 200) {
@@ -120,11 +122,11 @@ ApiRequestDispatcher.prototype._online = function() {
 		}.bind(this);
 		echoRequest.timeout = timeoutDuration;
 		echoRequest.ontimeout = function() {
-			logger.log("Echo request to", echoURL, "failed");
+			logger.log("Echo request to", this._echoURL, "failed");
 			setTimeout(this._online.bind(this), suspendPeriod);
 		}.bind(this);
 		echoRequest.onerror = function() {
-			logger.log("Echo request to", echoURL, "failed");
+			logger.log("Echo request to", this._echoURL, "failed");
 			setTimeout(this._online.bind(this), suspendPeriod);
 		}.bind(this);
 		logger.log("Sending Echo request.")
@@ -184,16 +186,22 @@ ApiRequestDispatcher.prototype._nextId = function() {
 // Singleton
 let _apiDispatcher = null;
 
-const setSystemDispatcher = function() {
-	if (!_apiDispatcher) _apiDispatcher = new ApiRequestDispatcher();
+const getSystemDispatcher = function() {
+	// Create the singleton if it doesnt exist
+	if (!_apiDispatcher) {
+		const baseURL = (process.env.NODE_ENV === 'test') ? "https://cj101d.ifdnrg.com" : "https://c4a.etive.org:8443/api";
+		_apiDispatcher = new ApiRequestDispatcher(baseURL);
+	}
 	return _apiDispatcher;
 }
 
-const getSystemDispatcher = function() {
+const setSystemDispatcher = function(baseURL) {
+	// Create the singleton if it doesnt exist
+	if (!_apiDispatcher) _apiDispatcher = new ApiRequestDispatcher(baseURL);
 	return _apiDispatcher;
 }
 
 module.exports = {
-	getSystemDispatcher: getSystemDispatcher,
-	setSystemDispatcher: setSystemDispatcher
+	setSystemDispatcher: setSystemDispatcher,
+	getSystemDispatcher: getSystemDispatcher
 };

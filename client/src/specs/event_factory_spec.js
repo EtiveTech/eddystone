@@ -18,7 +18,7 @@ const baseURL = "https://cj101d.ifdnrg.com/";
 const echoURL = baseURL + deviceRoute + uniqueId;
 
 describe("Event Factory", function() {
-	const dispatcher = requestDispatcher.setSystemDispatcher();
+	const dispatcher = requestDispatcher.getSystemDispatcher();
 	let factory;
 
 	describe("Initialisation", function() {
