@@ -2,7 +2,7 @@
 
 // This file is used for testing only
 
-const logger = require('./utility').logger;
+const logger = require('./logger');
 
 const localStorage = {
   _storage: {},
@@ -60,7 +60,7 @@ XMLHttpRequest.prototype.setRequestHeader = function(name, value) {
 }
 
 XMLHttpRequest.prototype.send = function(content) {
-  // logger("Mock XMLHTTPRequest sending", this.verb, "request to", this.url);
+  // logger.log("Mock XMLHTTPRequest sending", this.verb, "request to", this.url);
   if (!content) content = null;
   this.content = content;
   if (this.loseRequest) {
@@ -87,7 +87,7 @@ const HttpServer = {
     this.responses = [];
   },
   receive: function(request) {
-    // logger("Mock HTTP server received", request.verb, "request to", request.url);
+    // logger.log("Mock HTTP server received", request.verb, "request to", request.url);
     const respondWith = this._findResponse(request);
     if (respondWith && (respondWith.auto))
       this._makeResponse(request, respondWith);
@@ -105,7 +105,7 @@ const HttpServer = {
       if (respondWith)
         this._makeResponse(request, respondWith);
       else
-        logger("Did not find a response for request.");
+        logger.log("Did not find a response for request.");
     }
     // Remove the requests that have been processeed from the list
     this.requests.splice(0, requests.length);
@@ -120,7 +120,7 @@ const HttpServer = {
       request.status = respondWith.response[0];
       request.readyState = 4;
       if (respondWith.response[1]) request.responseText = respondWith.response[1];
-      // logger("Mock HTTP server responding to", request.verb, "request to", request.url, "with status", request.status);
+      // logger.log("Mock HTTP server responding to", request.verb, "request to", request.url, "with status", request.status);
       request.onload();
     }
   },

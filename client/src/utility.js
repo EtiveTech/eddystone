@@ -36,22 +36,6 @@ const getScript = function(source, callback) {
   script.src = source;
 };
 
-const logger = function() {
-  if (false) {
-    const date = new Date();
-    const ms = date.getMilliseconds();
-    let padding = "";
-    if (ms < 100) {
-      padding = (ms < 10) ? "00" : "0";
-    }
-    let text = date.toTimeString().split(" ")[0] + "." + padding + ms;
-    for (let i = 0; i < arguments.length; i++) {
-      text += " " + arguments[i]
-    }
-    console.log(text);
-  }
-};
-
 const _initConnectionTypes = function() {
   // Can only do this after the device is ready.
   connectionTypes = {};
@@ -102,7 +86,6 @@ module.exports = {
   getBrowserWidth: getBrowserWidth,
   getBrowserHeight: getBrowserHeight,
   getScript: getScript,
-  logger: logger,
   network: network,
   arrayToHex: arrayToHex,
   positionToString: positionToString

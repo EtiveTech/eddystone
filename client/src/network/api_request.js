@@ -1,6 +1,6 @@
 "use strict"
 
-const logger = require('../utility').logger;
+const logger = require('../logger');
 const dispatcher = require('./api_request_dispatcher');
 const XMLHttpRequest = (process.env.NODE_ENV === 'test') ? require('../stubs').XMLHttpRequest : window.XMLHttpRequest;
 
@@ -11,7 +11,7 @@ const ApiRequest = function() {
   this._timeoutID = null;
   this._id = 0;
   this._tries = 0;
-  this._dispatcher = null;
+  this._dispatcher = dispatcher.getSystemDispatcher();
 
   Object.defineProperty(this, "timeout", { get: function() { return this._options.timeout; } });
   Object.defineProperty(this, "callback", { get: function() { return this._options.callback; } });
@@ -34,7 +34,7 @@ ApiRequest.prototype._setRequest = function(options) {
     const req = this._request;
     let errorStatus = (options.expected.indexOf(req.status) === -1);
     let content = ((req.status === 204) || errorStatus ) ? null : JSON.parse(req.responseText);
-    logger( options.verb + " request (" + this._id + ") to " + options.url + " returned status " + req.status);
+    logger.log( options.verb + " request (" + this._id + ") to " + options.url + " returned status " + req.status);
     options.callback(req.status, content);
   }.bind(this);
 };
@@ -42,22 +42,23 @@ ApiRequest.prototype._setRequest = function(options) {
 ApiRequest.prototype._resetRequest = function() {
   if (!this._options) return null;
   this._request = new XMLHttpRequest();
-  logger("Resetting " + this._options.verb + " request (" + this._id + ") to " + this._options.url + ".");
   this._setRequest(this._options);
+  logger.log("Reset " + this._options.verb + " request (" + this._id + ") to " + this._options.url + ".");
   return this;
 };
 
 ApiRequest.prototype.makeRequest = function(options) {
   this._options = options;
   this._setRequest(options);
-  const request = dispatcher.enqueue(this);
-  logger( options.verb + " request (" + this._id + ") to " + options.url + " given to the dispatcher.");
+  const request = this._dispatcher.enqueue(this);
+  logger.log("Gave " + options.verb + " request (" + this._id + ") to " + options.url + " to the dispatcher.");
   return request;
 };
 
 ApiRequest.prototype._send = function() {
   this._tries += 1;
   this._request.send(this._json);
+  logger.log("Sent " + this._options.verb + " request (" + this._id + ") to " + this._options.url + ".");
 };
 
 ApiRequest.prototype._startTimeout = function(duration, callback) {
@@ -135,7 +136,7 @@ ApiRequest.prototype.makeDeleteRequest = function(url, timeout, callback) {
 };
 
 ApiRequest.prototype.terminateRequest = function() {
-  logger("Attempting to terminate request with id", this._id);
+  logger.log("Attempting to terminate request with id", this._id);
   if ((this._request.readyState <= 1) && this._dispatcher) {
     // the request has not been sent so take it off the queue
     this._dispatcher.dequeue(this);

@@ -9,7 +9,7 @@ const network = require('../stubs').network;
 const server = require('../stubs').HttpServer;
 const localStorage = require('../stubs').localStorage;
 const apiKey = require('../keys').localRepository;
-const logger = require('../utility').logger;
+const logger = require('../logger');
 
 const baseURL = "https://cj101d.ifdnrg.com/api/";
 const beaconLog = "proximity";

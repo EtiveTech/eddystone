@@ -1,6 +1,6 @@
 "use strict"
 
-const logger = require('../utility').logger;
+const logger = require('../logger');
 const XMLHttpRequest = (process.env.NODE_ENV === 'test') ? require('../stubs').XMLHttpRequest : window.XMLHttpRequest;
 const network = (process.env.NODE_ENV === 'test') ? require('../stubs').network : require('../utility').network;
 const timeoutDuration = (process.env.NODE_ENV === 'test') ? 100 : 15000; // ms
@@ -28,13 +28,12 @@ const ApiRequestDispatcher = function() {
 
 ApiRequestDispatcher.prototype.enqueue = function(request) {
 	if (this._queue.length >= maxQueueLength) {
-		logger("Dispatch queue too long - rejecting request.");
+		logger.log("Dispatch queue too long - rejecting request.");
 		request.callback(601, null);
 		return null;
 	}
 
 	request._id = this._nextId();
-	request._dispatcher = this;
 	request._setTxTimeout(timeoutDuration, function(){this._onTxTimeout(request)}.bind(this));
 	request._setOnError(function(){this._onError(request)}.bind(this));
 
@@ -48,6 +47,7 @@ ApiRequestDispatcher.prototype.enqueue = function(request) {
 
 ApiRequestDispatcher.prototype._dispatch = function() {
 	this._dispatchSuspended = this._dispatchSuspended || network.offline;
+	if (this._dispatchSuspended) logger("Dispatch suspended, cannot dispatch (network: " + network.ConnectionType + ")");
 	while (!this._dispatchSuspended && (this._queue.length > 0)) {
 		let request = this._queue.shift();
 		request._stopTimeout();
@@ -57,14 +57,14 @@ ApiRequestDispatcher.prototype._dispatch = function() {
 
 // ApiRequestDispatcher.prototype._suspendDispatch = function() {
 // 	if (this._dispatchSuspended) return;
-// 	logger("Suspending dispatch.");
+// 	logger.log("Suspending dispatch.");
 // 	this._dispatchSuspended = true;
 // 	setTimeout(this._restartDispatch.bind(this), suspendPeriod);
 // };
 
 // ApiRequestDispatcher.prototype._restartDispatch = function() {
 // 	if (!this._dispatchSuspended) return;
-// 	logger("Restarting dispatch.");
+// 	logger.log("Restarting dispatch.");
 // 	this._dispatchSuspended = false;
 // 	this._dispatch();
 // };
@@ -77,7 +77,7 @@ ApiRequestDispatcher.prototype._retry = function(request) {
 
 	// This assumes that the value of the request id will always increase (which cannot happen)
 	// However, with only one request being sent out every hour or so, the assumption is safe enough
-	logger("Putting request with id", request.id, "back on the dispatcher queue.");
+	logger.log("Putting request with id", request.id, "back on the dispatcher queue.");
 	// Find the first queued request with an id greater than request id ainsert the request before it.
 	const i = this._queue.findIndex(function(queued) {
 		return queued.id > request.id
@@ -92,7 +92,7 @@ ApiRequestDispatcher.prototype._retry = function(request) {
 }
 
 ApiRequestDispatcher.prototype.dequeue = function(request) {
-	logger("Removing request with id", request.id, "from the dispatcher queue.");
+	logger.log("Removing request with id", request.id, "from the dispatcher queue.");
 	for (let i = 0; i < this._queue.length; i++) {
 		if (this._queue[i].id === request.id) {
 			this._queue[i]._stopTimeout();
@@ -103,8 +103,8 @@ ApiRequestDispatcher.prototype.dequeue = function(request) {
 };
 
 ApiRequestDispatcher.prototype._online = function() {
-	logger("Online event received.");
-	logger("Network connection type is:", network.connectionType + ".")
+	logger.log("Online event received.");
+	logger.log("Network connection type is:", network.connectionType + ".")
 	if (this._dispatchSuspended && network.online) {
 		// Stuff to send, let's see if it's possible
 		const echoRequest = new XMLHttpRequest();
@@ -113,33 +113,33 @@ ApiRequestDispatcher.prototype._online = function() {
 		echoRequest.open("GET", url);
 		echoRequest.onload = function() {
 		  if (echoRequest.status === 200) {
-		  	logger("Echo request to", url, "succeeded.");
+		  	logger.log("Echo request to", url, "succeeded.");
 		  	this._dispatchSuspended = false;
 		  	this._dispatch();
 		  }
 		}.bind(this);
 		echoRequest.timeout = timeoutDuration;
 		echoRequest.ontimeout = function() {
-			logger("Echo request to", echoURL, "failed");
+			logger.log("Echo request to", echoURL, "failed");
 			setTimeout(this._online.bind(this), suspendPeriod);
 		}.bind(this);
 		echoRequest.onerror = function() {
-			logger("Echo request to", echoURL, "failed");
+			logger.log("Echo request to", echoURL, "failed");
 			setTimeout(this._online.bind(this), suspendPeriod);
 		}.bind(this);
-		logger("Sending Echo request.")
+		logger.log("Sending Echo request.")
 		echoRequest.send();
 	}
 };
 
 ApiRequestDispatcher.prototype._offline = function() {
-	logger("Offline event received.");
+	logger.log("Offline event received.");
 	this._dispatchSuspended = true;
 };
 
 ApiRequestDispatcher.prototype._onTxTimeout = function(request) {
 	// The request was sent but has not been acknowledged in time
-	logger("Transmission timeout for request with id", request.id + ".");
+	logger.log("Transmission timeout for request with id", request.id + ".");
 	//this._suspendDispatch();
 	if (request.timeout)
 		request.callback(600, null);	
@@ -151,7 +151,7 @@ ApiRequestDispatcher.prototype._onTxTimeout = function(request) {
 
 ApiRequestDispatcher.prototype._onTimeout = function(request) {
 	// The request has been sitting, unsent on the queue for too long and will now be removed
-	logger("Timeout, ending request with id", request.id + ".");
+	logger.log("Timeout, ending request with id", request.id + ".");
 	this.dequeue(request);
 	request.callback(600, null);
 };
@@ -159,7 +159,7 @@ ApiRequestDispatcher.prototype._onTimeout = function(request) {
 ApiRequestDispatcher.prototype._onError = function(request) {
 	// The request was sent but there has been a network level error
 	// Prepare the request for resending
-	logger("Network error sending request with id", request.id + ".");
+	logger.log("Network error sending request with id", request.id + ".");
 	// this._suspendDispatch();
 	this._retry(request);
 }
@@ -181,6 +181,19 @@ ApiRequestDispatcher.prototype._nextId = function() {
 // 	return "[" + string.substring(0, string.length - 2) + "]";
 // };
 
-let dispatcher = new ApiRequestDispatcher();	// A singleton
+// Singleton
+let _apiDispatcher = null;
 
-module.exports = dispatcher;
+const setSystemDispatcher = function() {
+	if (!_apiDispatcher) _apiDispatcher = new ApiRequestDispatcher();
+	return _apiDispatcher;
+}
+
+const getSystemDispatcher = function() {
+	return _apiDispatcher;
+}
+
+module.exports = {
+	getSystemDispatcher: getSystemDispatcher,
+	setSystemDispatcher: setSystemDispatcher
+};

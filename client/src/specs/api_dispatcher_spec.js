@@ -2,8 +2,8 @@
 
 process.env.NODE_ENV = 'test';
 
+const requestDispatcher = require('../network/api_request_dispatcher');
 const ApiRequest = require('../network/api_request');
-const dispatcher = require('../network/api_request_dispatcher');
 const sinon = require('sinon');
 const assert = require("assert");
 const server = require('../stubs').HttpServer;
@@ -13,6 +13,7 @@ const echoURL = baseURL + "device/test-uuid";
 const route = "proximity";
 
 describe("API Dispatcher", function() {
+  const dispatcher = requestDispatcher.setSystemDispatcher();
 
   var apiRequest;
   const params = {

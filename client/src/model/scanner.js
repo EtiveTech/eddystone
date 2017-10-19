@@ -1,7 +1,7 @@
 "use strict"
 
 const Scan = require('./scan');
-const logger = require('../utility').logger;
+const logger = require('../logger');
 const positionToString = require('../utility').positionToString;
 
 const minScanLength = 10000; // milliseconds
@@ -20,7 +20,7 @@ const Scanner = function(repository, onStatusChange){
     this._repository.foundBeacon.bind(this._repository),
     this._repository.lostBeacon.bind(this._repository),
     function(error) {
-      logger("Scan Error:", error);
+      logger.log("Scan Error:", error);
       this._onStatusChange("Scan Error: " + error);
       // Do nothing else, the logic will attempt to restart the scan
     }.bind(this)
@@ -50,7 +50,7 @@ const Scanner = function(repository, onStatusChange){
 };
 
 Scanner.prototype._startGeolocation = function() {
-  logger("Geolocation starting")
+  logger.log("Geolocation starting")
   backgroundGeolocation.start();
   this._startGeolocationPending = false;
 }
@@ -58,7 +58,7 @@ Scanner.prototype._startGeolocation = function() {
 Scanner.prototype._startScan = function() {
   if (this._stopScanPending) this._stopScanPending = false;
   if (this._scanStartTime) return;
-  logger("Starting the scan")
+  logger.log("Starting the scan")
   this._scan.start();
   this._scanStartTime = Date.now();
   this._onStatusChange("Scanning for Beacons."); 
@@ -75,15 +75,15 @@ Scanner.prototype._stopScan = function(outOfRange) {
   const stopNow = function(scanner) {
     // Don't stop the scan if the pending flag has been reset by a _startScan() request
     if (!scanner._stopScanPending) return;
-    logger("Pausing the scan")
+    logger.log("Pausing the scan")
     scanner._resetScan(outOfRange);
     scanner._onStatusChange("Scanning paused.");
   }
 
   if (!this._scanStartTime) return;
-  logger("Scan pause requested")
+  logger.log("Scan pause requested")
   if (IGNORE_LOCATION) {
-    logger("Debug mode: Will not pause scan");
+    logger.log("Debug mode: Will not pause scan");
     return;
   }
   const diff = Date.now() - this._scanStartTime;
@@ -135,7 +135,7 @@ Scanner.prototype._nearBeacons = function(geoLocation) {
     const region = regions[i];
     const d = this._metresBetween(region.point, position);
     if (d < (region.radius + marginOfError + accuracy)) {
-      logger("Beacons in range:", Math.round(d), "metres away or less")
+      logger.log("Beacons in range:", Math.round(d), "metres away or less")
       return true;
     }
   }
@@ -144,7 +144,7 @@ Scanner.prototype._nearBeacons = function(geoLocation) {
 
 Scanner.prototype._movedTo = function(position) {
   // Only scan whilest close to beacons
-  logger("Device moved")
+  logger.log("Device moved")
   if (this._nearBeacons(position))
     this._startScan();
   else
@@ -154,14 +154,14 @@ Scanner.prototype._movedTo = function(position) {
 
 Scanner.prototype._stationaryAt = function(position) {
   // Don't scan whilst stationary
-  logger("Device stationary");
+  logger.log("Device stationary");
   this._stopScan(false); // still in range
   backgroundGeolocation.finish();
 }
 
 Scanner.prototype._geolocationModeChange = function(enabled) {
   // If the location service is not enabled have to scan all the time
-  logger("Geolocation has been turned", (enabled) ? "on" : "off");
+  logger.log("Geolocation has been turned", (enabled) ? "on" : "off");
   if (!enabled)
     this._startScan();
   else

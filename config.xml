@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget defaultlocale="en" id="org.etive.city4age.app" version="0.4.3" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+<widget defaultlocale="en" id="org.etive.city4age.app" version="0.4.7" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
     <name>City4Age</name>
     <description>
         An app that detects Eddystone beacons and sends proximity info to the City4Age Repository.
@@ -9,6 +9,10 @@
     </author>
     <content src="index.html" />
     <access origin="*" />
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+    <allow-navigation href="https://c4a.etive.org:8443" />
+    <allow-navigation href="http://c4a.etive.org:8080" />
     <preference name="DisallowOverscroll" value="true" />
     <preference name="HideKeyboardFormAccessoryBar" value="true" />
     <platform name="android">
@@ -19,5 +23,7 @@
     <platform name="ios">
         <preference name="BackupWebStorage" value="none" />
     </platform>
+    <engine name="android" spec="^6.2.3" />
     <plugin name="cordova-plugin-whitelist" spec="1" />
+    <plugin name="cordova-plugin-file" spec="^4.3.3" />
 </widget>

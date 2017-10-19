@@ -2,8 +2,8 @@
 
 process.env.NODE_ENV = 'test';
 
+const requestDispatcher = require('../network/api_request_dispatcher');
 const EventFactory = require('../network/event_factory');
-const dispatcher = require('../network/api_request_dispatcher');
 const sinon = require('sinon');
 const assert = require("assert");
 const server = require('../stubs').HttpServer;
@@ -18,6 +18,7 @@ const baseURL = "https://cj101d.ifdnrg.com/";
 const echoURL = baseURL + deviceRoute + uniqueId;
 
 describe("Event Factory", function() {
+	const dispatcher = requestDispatcher.setSystemDispatcher();
 	let factory;
 
 	describe("Initialisation", function() {
