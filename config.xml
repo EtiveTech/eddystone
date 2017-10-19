@@ -5,7 +5,7 @@
         An app that detects Eddystone beacons and sends proximity info to the City4Age Repository.
     </description>
     <author email="p.crooks@etive.org" href="http://www.etive.org">
-        Apache Cordova Team
+        Etive City4Age Team
     </author>
     <content src="index.html" />
     <access origin="*" />
