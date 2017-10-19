@@ -4,8 +4,8 @@ const Repository = require('./network/repository');
 const UI = require('./view/ui');
 const dispatcher = require('./network/api_request_dispatcher');
 const logger = require('./logger');
-// const baseURL = "https://c4a.etive.org:8443/api";
-const baseURL = "http://c4a.etive.org:8080/api";
+const baseURL = "https://c4a.etive.org:8443/api";
+// const baseURL = "http://c4a.etive.org:8080/api";
 const logToConsole = false;
 const logToFile = false;
 
