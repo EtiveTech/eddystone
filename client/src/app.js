@@ -2,8 +2,8 @@
 
 const Repository = require('./network/repository');
 const UI = require('./view/ui');
-const logger = require('./logger');
 const dispatcher = require('./network/api_request_dispatcher');
+const logger = require('./logger');
 // const baseURL = "https://c4a.etive.org:8443/api";
 const baseURL = "http://c4a.etive.org:8080/api";
 const logToConsole = true;
@@ -16,7 +16,7 @@ const onDeviceReady = function() {
   cordova.plugins.autoStart.enable();
   // Initialise the logger
   logger.initialise({file: logToFile, console: logToConsole}, function() {
-    dispatcher.setSystemDispatcher(); // Create the Singleton
+  	dispatcher.setSystemDispatcher(baseURL);
     const ui = new UI(new Repository(baseURL));
   });
 };
