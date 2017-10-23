@@ -19,6 +19,7 @@ Logger.prototype.initialise = function(options, onCompleted) {
   this._logToConsole = options.console;
   this._logToFile = options.file;
 
+    // If logging to a file then create the file
   if (this._logToFile && !this._fileWriter) {
   	this._logFilename = this._getFilename();
     window.resolveLocalFileSystemURL(cordova.file.externalDataDirectory, function (dir) {
@@ -63,12 +64,16 @@ Logger.prototype.log = function() {
 
 Logger.prototype._writeToFile = function(text) {
 	if (!this._fileWriter) return;
+
+  // Stop writing if the log file is longer tham 64KB
   if (this._fileWriter.length + this._buffer.length >= maxFileSize) return;
 
 	if (this._isWriting) {
+    // If already writing to the file, buffer this output
 		this._buffer += text;
 	}
 	else {
+    // Not writing to the file so seg the flag to indicate writing has started and write the text
 		this._isWriting = true;
 		const blob = new Blob([text], { type: 'text/plain' });
 		this._fileWriter.write(blob);
@@ -78,8 +83,10 @@ Logger.prototype._writeToFile = function(text) {
 Logger.prototype._doneWriting = function() {
 	if (!this._fileWriter) return;
 
+  // Finished writing
 	this._isWriting = false;
 	if (this._buffer) {
+    // If any text has been buffered up whilst writing, write the buffer and clear it
 		this._isWriting = true;
 		const blob = new Blob([this._buffer], { type: 'text/plain' });
 		this._buffer = "";
