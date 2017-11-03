@@ -81,13 +81,23 @@ ApiRequestDispatcher.prototype._retry = function(request) {
 	// However, with only one request being sent out every hour or so, the assumption is safe enough
 	logger.log("Putting request with id", request.id, "back on the dispatcher queue.");
 	// Find the first queued request with an id greater than request id ainsert the request before it.
-	const i = this._queue.findIndex(function(queued) {
-		return queued.id > request.id
+	// const i = this._queue.findIndex(function(queued) {
+	// 	return queued.id > request.id
+	// })
+	// if (i < 0)
+	// 	this._queue.push(request);
+	// else
+	// 	this._queue.splice(i, 0, request);
+
+	// Put the event back on the queue
+	this._queue << request;
+	// Re-sort the queue
+	// Strictly speaking this is unnecessary but dispatching in order makes the date easier to read server-side
+	this._queue.sort(function(a, b) {
+		if (a.id < b.id) return -1;
+		if (a.id > b.id) return 1;
+		return 0;
 	})
-	if (i < 0)
-		this._queue.push(request);
-	else
-		this._queue.splice(i, 0, request);
 
 	if (request.timeout) request._startTimeout(timeoutDuration, this._onTimeout.bind(this));
 	this._dispatch();
