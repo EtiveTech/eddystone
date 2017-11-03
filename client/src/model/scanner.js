@@ -4,10 +4,9 @@ const Scan = require('./scan');
 const logger = require('../logger');
 const positionToString = require('../utility').positionToString;
 
-const minScanLength = 10000; // milliseconds
-const desiredAccuracy = 100; // metres
-const marginOfError = desiredAccuracy;
-const reportPosition = false;
+const minScanLength = 10000;  // milliseconds
+const DESIRED_ACCURACY = 100; // metres
+// const marginOfError = desiredAccuracy;
 const IGNORE_LOCATION = false;
 
 const Scanner = function(repository, onStatusChange){
@@ -30,15 +29,23 @@ const Scanner = function(repository, onStatusChange){
     this._movedTo.bind(this),
     this._onGeoError.bind(this),
     {
-      desiredAccuracy: desiredAccuracy,
-      stationaryRadius: 3,
-      distanceFilter: 3,
-      stopOnTerminate: true,
+      desiredAccuracy: DESIRED_ACCURACY, // Desired accuracy in meters. Possible values [0, 10, 100, 1000].
+                                         // The lower the number, the more power devoted to GeoLocation.
+                                         // 1000 results in lowest power drain and least accurate readings.
+      stationaryRadius: 3, // Stationary radius in metres. The minimum distance the device must
+                           // move beyond the stationary location for background-tracking to engage
+      distanceFilter: 3,   // The minimum distance in meters a device must move before an update event is generated
+      stopOnTerminate: true,  // Force a stop() when the application terminated
+
+      // Location provider settings
       // locationProvider: backgroundGeolocation.provider.ANDROID_DISTANCE_FILTER_PROVIDER
       locationProvider: backgroundGeolocation.provider.ANDROID_ACTIVITY_PROVIDER,
-      interval: 15000,
-      fastestInterval: 5000,
-      activitiesInterval: 30000
+      interval: 15000,            // Rate in milliseconds at which the app prefers to receive location updates
+      fastestInterval: 5000,      // Fastest rate in milliseconds at which your app can handle location updates
+      activitiesInterval: 30000,  // Rate in milliseconds at which activity recognition occurs
+                                  // Larger values will result in fewer activity detections while improving battery life
+
+      notificationTitle: "Beacon Proximity Detector"
     }
   );
   backgroundGeolocation.onStationary(this._stationaryAt.bind(this), this._onGeoError)
@@ -134,7 +141,8 @@ Scanner.prototype._nearBeacons = function(geoLocation) {
     // If they are then return true
     const region = regions[i];
     const d = this._metresBetween(region.point, position);
-    if (d < (region.radius + marginOfError + accuracy)) {
+    // if (d < (region.radius + marginOfError + accuracy)) {
+    if (d < (region.radius + accuracy)) {
       logger.log("Beacons in range:", Math.round(d), "metres away or less")
       return true;
     }
@@ -144,7 +152,8 @@ Scanner.prototype._nearBeacons = function(geoLocation) {
 
 Scanner.prototype._movedTo = function(position) {
   // Only scan whilest close to beacons
-  logger.log("Device moved")
+  logger.log("Device moved to lat:", position.latitude,
+    "lng:", position.longitude, "(accuracy:", position.accuracy + ")");
   if (this._nearBeacons(position))
     this._startScan();
   else
