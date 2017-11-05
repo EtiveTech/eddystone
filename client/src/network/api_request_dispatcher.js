@@ -1,5 +1,6 @@
 "use strict"
 
+const RequestId = require('../model/request_id');
 const logger = require('../logger');
 const XMLHttpRequest = (process.env.NODE_ENV === 'test') ? require('../stubs').XMLHttpRequest : window.XMLHttpRequest;
 const network = (process.env.NODE_ENV === 'test') ? require('../stubs').network : require('../utility').network;
@@ -9,7 +10,7 @@ const maxQueueLength = (process.env.NODE_ENV === 'test') ? 5 : 500;
 
 const ApiRequestDispatcher = function(baseURL) {
 	this._queue = [];
-	this._id = 0;
+	//this._id = 0;
 	this._dispatchSuspended = false;
 	this._echoURL = baseURL;
 	if (this._echoURL[this._echoURL.length-1] !== "/") this._echoURL += "/";
@@ -35,7 +36,7 @@ ApiRequestDispatcher.prototype.enqueue = function(request) {
 		return null;
 	}
 
-	request._id = this._nextId();
+	request._id = new RequestId();
 	request._setTxTimeout(timeoutDuration, function(){this._onTxTimeout(request)}.bind(this));
 	request._setOnError(function(){this._onError(request)}.bind(this));
 
@@ -88,8 +89,8 @@ ApiRequestDispatcher.prototype._retry = function(request) {
 	// Re-sort the queue
 	// Strictly speaking this is unnecessary but dispatching in order makes the date easier to read server-side
 	this._queue.sort(function(a, b) {
-		if (a.id < b.id) return -1;
-		if (a.id > b.id) return 1;
+		if (a.id.lessThan(b.id)) return -1;
+		if (a.id.greaterThan(b.id)) return 1;
 		return 0;
 	})
 
@@ -169,23 +170,6 @@ ApiRequestDispatcher.prototype._onError = function(request) {
 	// this._suspendDispatch();
 	this._retry(request);
 }
-
-ApiRequestDispatcher.prototype._nextId = function() {
-	// MAX_SAFE_INTEGER === 9007199254740991
-	// This equates to over 2 billion years of messages if sending one message every 10 seconds (which is realistic)
-	// So don't really have to worry about the wrap around
-	if (this._id === Number.MAX_SAFE_INTEGER) this._id = 0;
-	this._id += 1;
-	return this._id;
-};
-
-// ApiRequestDispatcher.prototype._queueToString = function() {
-// 	let string = "";
-// 	for (let i = 0; i < this._queue.length; i++) {
-// 		string += this._queue[i].id.toString() + ", ";
-// 	}
-// 	return "[" + string.substring(0, string.length - 2) + "]";
-// };
 
 // Singleton
 let _apiDispatcher = null;
