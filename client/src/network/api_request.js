@@ -9,7 +9,7 @@ const ApiRequest = function() {
   this._options = null;
   this._json = null;
   this._timeoutID = null;
-  this._id = 0;
+  this._id = null;
   this._tries = 0;
   this._dispatcher = dispatcher.getSystemDispatcher();
 
