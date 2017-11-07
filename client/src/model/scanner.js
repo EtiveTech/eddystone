@@ -4,7 +4,7 @@ const Scan = require('./scan');
 const logger = require('../logger');
 const positionToString = require('../utility').positionToString;
 
-const minScanLength = 10000;  // milliseconds
+const minScanDuration = 15000;  // milliseconds
 const DESIRED_ACCURACY = 100; // metres
 // const marginOfError = desiredAccuracy;
 const IGNORE_LOCATION = false;
@@ -82,7 +82,6 @@ Scanner.prototype._stopScan = function(outOfRange) {
   const stopNow = function(scanner) {
     // Don't stop the scan if the pending flag has been reset by a _startScan() request
     if (!scanner._stopScanPending) return;
-    logger.log("Pausing the scan")
     scanner._resetScan(outOfRange);
     scanner._onStatusChange("Scanning paused.");
   }
@@ -93,12 +92,16 @@ Scanner.prototype._stopScan = function(outOfRange) {
     logger.log("Debug mode: Will not pause scan");
     return;
   }
-  const diff = Date.now() - this._scanStartTime;
+  const duration = Date.now() - this._scanStartTime;
   this._stopScanPending = true;
-  if (diff >= minScanLength)
+  if (duration >= minScanDuration) {
     stopNow(this);
-  else
-    setTimeout(function() { stopNow(this) }.bind(this), minScanLength - diff);
+  }
+  else {
+    const remainingDuration = minScanDuration - duration;
+    logger.log("Pausing scan in", remainingDuration + "ms");
+    setTimeout(function() { stopNow(this) }.bind(this), remainingDuration);
+  }
 }
 
 Scanner.prototype._metresBetween = function( latLngA, latLngB ) {
@@ -115,10 +118,10 @@ Scanner.prototype._metresBetween = function( latLngA, latLngB ) {
   }
 
   const R = 6371e3; // metres
-  const φ1 = toRadians(latLngA.lat);
-  const φ2 = toRadians(latLngB.lat);
-  const Δφ = toRadians(latLngB.lat - latLngA.lat);
-  const Δλ = toRadians(latLngB.lng - latLngA.lng);
+  const φ1 = toRadians(latLngA.latitude);
+  const φ2 = toRadians(latLngB.latitude);
+  const Δφ = toRadians(latLngB.latitude - latLngA.latitude);
+  const Δλ = toRadians(latLngB.longitude - latLngA.longitude);
 
   const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
           Math.cos(φ1) * Math.cos(φ2) *
@@ -131,23 +134,39 @@ Scanner.prototype._metresBetween = function( latLngA, latLngB ) {
 }
 
 Scanner.prototype._nearBeacons = function(geoLocation) {
-  if (!this._repository.regions) return true;
-
-  const position = { lat: geoLocation.latitude, lng: geoLocation.longitude };
-  const accuracy = geoLocation.accuracy;
   const regions = this._repository.regions;
+
+  if (!regions) return true;
+
+  const accuracy = geoLocation.accuracy;
+
   for (let i = 0; i < regions.length; i++) {
-    // Check if region and position centres are closer together than the sum of the radii
-    // If they are then return true
     const region = regions[i];
-    const d = this._metresBetween(region.point, position);
-    // if (d < (region.radius + marginOfError + accuracy)) {
-    if (d < (region.radius + accuracy)) {
-      logger.log("Beacons in range:", Math.round(d), "metres away or less")
+    const range = this._metresBetween(region.point, geoLocation);
+    // Check if region and position centres are closer together than the sum of the radii
+    // If they are then exit the loop and return true
+    if (range < (region.radius + accuracy)) {
+      logger.log("Beacons in range:", Math.round(range), "metres away");
       return true;
     }
   }
+  this._logDistanceToBeacons(geoLocation);
   return false;
+}
+
+Scanner.prototype._logDistanceToBeacons = function(geoLocation) {
+  const regions = this._repository.regions;
+
+  if (!(regions && logger.isLogging)) return;
+
+  let range = 0;
+  let minDistance = Number.MAX_VALUE;
+  for (let i = 0; i < regions.length; i++) {
+    const region = regions[i];
+    range = this._metresBetween(region.point, geoLocation);
+    minDistance = Math.min(minDistance, range);
+  }
+  logger.log("Beacons", Math.round(minDistance), "metres away");
 }
 
 Scanner.prototype._movedTo = function(position) {
@@ -163,7 +182,9 @@ Scanner.prototype._movedTo = function(position) {
 
 Scanner.prototype._stationaryAt = function(position) {
   // Don't scan whilst stationary
-  logger.log("Device stationary");
+  logger.log("Device stationary at lat:", position.latitude,
+    "lng:", position.longitude, "(accuracy:", position.accuracy + ")");
+  this._logDistanceToBeacons(position);
   this._stopScan(false); // still in range
   backgroundGeolocation.finish();
 }
