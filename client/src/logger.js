@@ -10,6 +10,8 @@ const Logger = function() {
 	this._fileWriter = null;
 	this._isWriting = false;
 	this._buffer = "";
+
+  Object.defineProperty(this, "isLogging", { get: function() { return (this._logToConsole || this._logToFile); } });
 }
 
 Logger.prototype.initialise = function(options, onCompleted) {
@@ -45,7 +47,7 @@ Logger.prototype._initComplete = function(onCompleted) {
 };
 
 Logger.prototype.log = function() {
-  if (this._logToConsole || this._logToFile) {
+  if (this.isLogging) {
     const date = new Date();
     const ms = date.getMilliseconds();
     let padding = "";

@@ -136,19 +136,27 @@ Scanner.prototype._nearBeacons = function(geoLocation) {
   const position = { lat: geoLocation.latitude, lng: geoLocation.longitude };
   const accuracy = geoLocation.accuracy;
   const regions = this._repository.regions;
+
+  let range = 0;
+  let minDistance = Number.MAX_VALUE;
+  let inRange = false;
   for (let i = 0; i < regions.length; i++) {
-    // Check if region and position centres are closer together than the sum of the radii
-    // If they are then return true
     const region = regions[i];
-    const d = this._metresBetween(region.point, position);
-    logger.log("Beacons", Math.round(d), "metres away or less")
-    // if (d < (region.radius + marginOfError + accuracy)) {
-    if (d < (region.radius + accuracy)) {
-      logger.log("Beacons in range")
-      return true;
-    }
+    range = this._metresBetween(region.point, position);
+    minDistance = min(minDistance, range);
+    // Check if region and position centres are closer together than the sum of the radii
+    // If they are then exit the loop and return true
+    inRange = (range < (region.radius + accuracy));
+    if (inRange) break;
   }
-  return false;
+  if (logger.isLogging) {
+    if (inRange)
+      logger.log("Beacons in range:", Math.round(range), "metres away");
+    else
+      logger.log("Beacons", Math.round(minDistance), "metres away");
+  }
+
+  return inRange;
 }
 
 Scanner.prototype._movedTo = function(position) {
