@@ -141,9 +141,10 @@ Scanner.prototype._nearBeacons = function(geoLocation) {
     // If they are then return true
     const region = regions[i];
     const d = this._metresBetween(region.point, position);
+    logger.log("Beacons", Math.round(d), "metres away or less")
     // if (d < (region.radius + marginOfError + accuracy)) {
     if (d < (region.radius + accuracy)) {
-      logger.log("Beacons in range:", Math.round(d), "metres away or less")
+      logger.log("Beacons in range")
       return true;
     }
   }
@@ -163,7 +164,8 @@ Scanner.prototype._movedTo = function(position) {
 
 Scanner.prototype._stationaryAt = function(position) {
   // Don't scan whilst stationary
-  logger.log("Device stationary");
+  logger.log("Device stationary at lat:", position.latitude,
+    "lng:", position.longitude, "(accuracy:", position.accuracy + ")");
   this._stopScan(false); // still in range
   backgroundGeolocation.finish();
 }
