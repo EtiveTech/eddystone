@@ -4,7 +4,7 @@ const maxFileSize = 65536;
 
 const Logger = function() {
 	this._initialised = false;
-	this._logToConsole = false;
+	this._logToConsole = true;
 	this._logToFile = false;
 	this._logFilename = "";
 	this._fileWriter = null;

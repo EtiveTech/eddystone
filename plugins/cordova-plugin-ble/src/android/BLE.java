@@ -55,37 +55,33 @@ public class BLE extends CordovaPlugin implements LeScanCallback {
 	private static final int ACTIVITY_REQUEST_ENABLE_LOCATION = 2;
 
 	// Used by startScan().
-	private CallbackContext mScanCallbackContext = null;
-	private CordovaArgs mScanArgs;
+	private CallbackContext scanCallbackContext = null;
+	private JSONArray scanArgs;
+	private BluetoothAdapter adapter;
 
 	// The Android application Context.
-	private Context mContext;
+	private Context context;
 
-	private boolean mRegisteredReceivers = false;
+	private boolean registeredReceivers = false;
 
 	// Called when the device's Bluetooth powers on.
 	// Used by startScan() to wait for power-on if Bluetooth was
 	// off when the function was called.
-	private Runnable mOnPowerOn;
+	private Runnable onPowerOn;
 
 	// Used to send error messages to the JavaScript side if Bluetooth power-on fails.
-	private CallbackContext mPowerOnCallbackContext;
+	private CallbackContext powerCallbackContext;
 
-	private void runAction(Runnable action) {
-		// Original method, call directly.
-		//action.run();
+	private CallbackContext getScanCallback() {
+		return this.scanCallbackContext;
+	}
 
-		// Possibly safer alternative, call on UI thread.
-		// cordova.getActivity().runOnUiThread(action);
-		// cordova.getActivity().execute(action);
-		cordova.getThreadPool().execute(action);
+	private void setScanCallback(CallbackContext callbackContext) {
+		this.scanCallbackContext = callbackContext;
+	}
 
-		// See issue: https://github.com/evothings/cordova-ble/issues/122
-		// Some links:
-		//http://stackoverflow.com/questions/28894111/android-ble-gatt-error133-on-connecting-to-device
-		//http://stackoverflow.com/questions/20839018/while-connecting-to-ble113-from-android-4-3-is-logging-client-registered-waiti/23478737#23478737
-		// http://stackoverflow.com/questions/23762278/status-codes-132-and-133-from-ble112
-
+	private void unsetScanCallback() {
+		this.scanCallbackContext = null;
 	}
 
 	// Called each time cordova.js is loaded.
@@ -93,40 +89,66 @@ public class BLE extends CordovaPlugin implements LeScanCallback {
 	public void initialize(final CordovaInterface cordova, CordovaWebView webView) {
 		super.initialize(cordova, webView);
 
-		mContext = webView.getContext();
+		this.context = webView.getContext();
 
-		if (!mRegisteredReceivers) {
-			mContext.registerReceiver(
+		if (!this.registeredReceivers) {
+			this.context.registerReceiver(
 				new BluetoothStateReceiver(),
 				new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED));
 
-			mRegisteredReceivers = true;
+			this.registeredReceivers = true;
 		}
 	}
 
 	// Handles JavaScript-to-native function calls.
 	// Returns true if a supported function was called, false otherwise.
 	@Override
-	public boolean execute(String action, CordovaArgs args, final CallbackContext callbackContext) {
-		try {
-			// Central API
-			if ("startScan".equals(action)) {
-				startScan(args, callbackContext);
-			}
-			else if ("stopScan".equals(action)) {
-				stopScan(/*args, callbackContext*/);
+	public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException {
+		// Central API
+		if (action.equals("startScan")) {
+			// Don't attempt to start scanning if there is a scan in progress
+			if (getScanCallback() != null) return true;
+
+			// Save callback context.
+			setScanCallback(callbackContext);
+			this.scanArgs = args;
+
+			// Check permissions needed for scanning: Application location permission and system location setting.
+			if (hasLocationPermission() && isLocationEnabled()) {
+				// This is the "normal" route through the code
+				startScanning(args, callbackContext);
 			}
 			else {
-				return false;
+				// Don't have permission to start the scan immediately
+				// Check for permission to use the location service first
+				if (!hasLocationPermission()) {
+					// This will call back to onRequestPermissionResult()
+					cordova.requestPermission(this, PERMISSION_REQUEST_COARSE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION);
+				}
+				else {
+					// Have permission to use the service but it isn't turned on - ask for it to be turned on
+					// This will call back to onActivityResult()
+					enableLocation();
+				}
 			}
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-			callbackContext.error(e.getMessage());
-			return false;
+
+			return true;
 		}
 
-		return true;
+		if (action.equals("stopScan")) {
+			// No pending scan results will be reported.
+			unsetScanCallback();
+
+			final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+			final BluetoothAdapter.LeScanCallback callback = this;
+
+			// Call stopLeScan without checking if bluetooth is on.
+			adapter.stopLeScan(callback);
+
+			return true;
+		}
+
+		return false; // Method not found
 	}
 
 	/**
@@ -140,10 +162,32 @@ public class BLE extends CordovaPlugin implements LeScanCallback {
 	*/
 	@Override
 	public void onReset() {
-		if (mScanCallbackContext != null) {
+		if (getScanCallback() != null) {
 			BluetoothAdapter a = BluetoothAdapter.getDefaultAdapter();
 			a.stopLeScan(this);
-			mScanCallbackContext = null;
+			unsetScanCallback();
+		}
+	}
+
+	// Callback from cordova.requestPermission().
+	@Override
+	public void onRequestPermissionResult(int requestCode, String[] permissions, int[] grantResults) throws JSONException {
+		if (PERMISSION_REQUEST_COARSE_LOCATION == requestCode) {
+			if (PackageManager.PERMISSION_GRANTED == grantResults[0]) {
+				// Permission ok, check system location setting.
+				if (isLocationEnabled()) {
+					startScanning(this.scanArgs, getScanCallback());
+				}
+				else {
+					// A callback will start the scan if it can
+					enableLocation();
+				}
+			}
+			else {
+				// Permission NOT ok, send callback error.
+				getScanCallback().error("Location permission not granted");
+				unsetScanCallback();
+			}
 		}
 	}
 
@@ -157,11 +201,11 @@ public class BLE extends CordovaPlugin implements LeScanCallback {
 		}
 		if (adapter.getState() == BluetoothAdapter.STATE_ON) {
 			// Bluetooth is ON
-			runAction(onPowerOn);
+			cordova.getThreadPool().execute(onPowerOn);
 		}
 		else {
-			mOnPowerOn = onPowerOn;
-			mPowerOnCallbackContext = cc;
+			this.onPowerOn = onPowerOn;
+			this.powerCallbackContext = cc;
 			Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
 			cordova.startActivityForResult(this, enableBtIntent, ACTIVITY_REQUEST_ENABLE_BLUETOOTH);
 		}
@@ -171,13 +215,13 @@ public class BLE extends CordovaPlugin implements LeScanCallback {
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent intent) {
 		if (ACTIVITY_REQUEST_ENABLE_BLUETOOTH == requestCode) {
-			Runnable onPowerOn = mOnPowerOn;
-			CallbackContext cc = mPowerOnCallbackContext;
-			mOnPowerOn = null;
-			mPowerOnCallbackContext = null;
+			Runnable onPowerOn = this.onPowerOn;
+			CallbackContext cc = this.powerCallbackContext;
+			this.onPowerOn = null;
+			this.powerCallbackContext = null;
 			if (resultCode == Activity.RESULT_OK) {
 				if (null != onPowerOn) {
-					runAction(onPowerOn);
+					cordova.getThreadPool().execute(onPowerOn);
 				}
 				else {
 					// Runnable was null.
@@ -194,14 +238,14 @@ public class BLE extends CordovaPlugin implements LeScanCallback {
 			}
 		}
 		else if (ACTIVITY_REQUEST_ENABLE_LOCATION == requestCode) {
-			if (isSystemLocationEnabled(mContext)) {
+			if (isSystemLocationEnabled(this.context)) {
 				// All prerequisites ok, go ahead and start scanning.
-				startScanImpl(mScanArgs, mScanCallbackContext);
+				startScanning(this.scanArgs, getScanCallback());
 			}
 			else {
 				// System Location is off, send callback error.
-				mScanCallbackContext.error("System Location is off");
-				mScanCallbackContext = null;
+				getScanCallback().error("System Location is off");
+				unsetScanCallback();
 			}
 		}
 	}
@@ -209,93 +253,37 @@ public class BLE extends CordovaPlugin implements LeScanCallback {
 	// These three functions each send a JavaScript callback *without* removing
 	// the callback context, as is default.
 
-	private void keepCallback(final CallbackContext callbackContext, JSONObject message) {
-		PluginResult r = new PluginResult(PluginResult.Status.OK, message);
-		r.setKeepCallback(true);
-		if (callbackContext != null) {
-			callbackContext.sendPluginResult(r);
-		}
-	}
+//	private void keepCallback(final CallbackContext callbackContext, JSONObject message) {
+//		PluginResult r = new PluginResult(PluginResult.Status.OK, message);
+//		r.setKeepCallback(true);
+//		if (callbackContext != null) {
+//			callbackContext.sendPluginResult(r);
+//		}
+//	}
+//
+//	private void keepCallback(final CallbackContext callbackContext, String message) {
+//		PluginResult r = new PluginResult(PluginResult.Status.OK, message);
+//		r.setKeepCallback(true);
+//		if (callbackContext != null) {
+//			callbackContext.sendPluginResult(r);
+//		}
+//	}
+//
+//	private void keepCallback(final CallbackContext callbackContext, byte[] message) {
+//		PluginResult r = new PluginResult(PluginResult.Status.OK, message);
+//		r.setKeepCallback(true);
+//		if (callbackContext != null) {
+//			callbackContext.sendPluginResult(r);
+//		}
+//	}
 
-	private void keepCallback(final CallbackContext callbackContext, String message) {
-		PluginResult r = new PluginResult(PluginResult.Status.OK, message);
-		r.setKeepCallback(true);
-		if (callbackContext != null) {
-			callbackContext.sendPluginResult(r);
-		}
-	}
-
-	private void keepCallback(final CallbackContext callbackContext, byte[] message) {
-		PluginResult r = new PluginResult(PluginResult.Status.OK, message);
-		r.setKeepCallback(true);
-		if (callbackContext != null) {
-			callbackContext.sendPluginResult(r);
-		}
-	}
-
-	// API implementation. See ble.js for documentation.
-	private void startScan(final CordovaArgs args, final CallbackContext callbackContext) {
-		// Scanning must not be in progress.
-		if (mScanCallbackContext != null) return;
-
-		// Save callback context.
-		mScanCallbackContext = callbackContext;
-		mScanArgs = args;
-
-		// Check permissions needed for scanning, starting with
-		// application location permission.
-		startScanCheckApplicationLocationPermission();
-	}
-
-	// Callback from cordova.requestPermission().
-	@Override
-	public void onRequestPermissionResult(int requestCode, String[] permissions, int[] grantResults) throws JSONException {
-		if (PERMISSION_REQUEST_COARSE_LOCATION == requestCode) {
-			if (PackageManager.PERMISSION_GRANTED == grantResults[0]) {
-				// Permission ok, check system location setting.
-				startScanCheckSystemLocationSetting();
-			}
-			else {
-				// Permission NOT ok, send callback error.
-				mScanCallbackContext.error("Location permission not granted");
-				mScanCallbackContext = null;
-			}
-		}
-	}
-
-	private void startScanCheckApplicationLocationPermission() {
-		// Location permission check.
-		if (cordova.hasPermission(Manifest.permission.ACCESS_COARSE_LOCATION)) {
-			// Location permission ok, next check system location setting.
-			startScanCheckSystemLocationSetting();
-		}
-		else {
-			// Location permission needed. Ask user.
-			cordova.requestPermission(this, PERMISSION_REQUEST_COARSE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION);
-		}
-	}
-
-	private void startScanCheckSystemLocationSetting() {
-		// If below Marshmallow System Location setting does not need to be on.
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-			// Go ahead and start scanning.
-			startScanImpl(mScanArgs, mScanCallbackContext);
-			return;
-		}
-
-		// We are on Marshmallow or higher, check/ask for System Location to be enabled.
-		if (isSystemLocationEnabled(mContext)) {
-			// All prerequisites ok, now we can go ahead and start scanning.
-			startScanImpl(mScanArgs, mScanCallbackContext);
-		}
-		else {
-			// Ask user to enable system location.
-			// TODO: Make it possible to set strings from JavaScript (for localisation).
-			AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
-			builder.setTitle("Please enable Location in System Settings");
-			builder.setMessage("Location setting needs to be turned On for Bluetooth scanning to work");
-			final CordovaPlugin self = this;
-			builder.setPositiveButton(
+	private void enableLocation() {
+		// Create a dialog box to ask user to enable system location.
+		AlertDialog.Builder builder = new AlertDialog.Builder(this.context);
+		builder.setTitle("Please enable Location in System Settings");
+		builder.setMessage("Location setting needs to be turned On for Bluetooth scanning to work");
+		final CordovaPlugin self = this;
+		builder.setPositiveButton(
 				"Open System Settings",
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialogInterface, int i) {
@@ -303,17 +291,16 @@ public class BLE extends CordovaPlugin implements LeScanCallback {
 						cordova.startActivityForResult(self, enableLocationIntent, ACTIVITY_REQUEST_ENABLE_LOCATION);
 					}
 				});
-			builder.setNegativeButton(
+		builder.setNegativeButton(
 				"Cancel",
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialogInterface, int i) {
 						// Permission NOT ok, send callback error.
-						mScanCallbackContext.error("System Location is off");
-						mScanCallbackContext = null;
+						getScanCallback().error("System Location is off");
+						unsetScanCallback();
 					}
 				});
-			builder.create().show();
-		}
+		builder.create().show();	
 	}
 
 	private boolean isSystemLocationEnabled(Context context) {
@@ -335,7 +322,16 @@ public class BLE extends CordovaPlugin implements LeScanCallback {
 		}
 	}
 
-	private void startScanImpl(final CordovaArgs args, final CallbackContext callbackContext) {
+	private boolean isLocationEnabled() {
+		// If below Marshmallow System Location setting does not need to be on.
+		return ((Build.VERSION.SDK_INT < Build.VERSION_CODES.M) || isSystemLocationEnabled(this.context));
+	}
+	
+	private boolean hasLocationPermission() {
+		return (cordova.hasPermission(Manifest.permission.ACCESS_COARSE_LOCATION));
+	}
+
+	private void startScanning(final JSONArray args, final CallbackContext callbackContext) {
 		final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
 		final LeScanCallback self = this;
 
@@ -361,7 +357,7 @@ public class BLE extends CordovaPlugin implements LeScanCallback {
 			public void run() {
 				if (!adapter.startLeScan(serviceUUIDs, self)) {
 					callbackContext.error("Android function startLeScan failed");
-					mScanCallbackContext = null;
+					unsetScanCallback();
 				}
 			}
 		});
@@ -369,7 +365,8 @@ public class BLE extends CordovaPlugin implements LeScanCallback {
 
 	// Called during scan, when a device advertisement is received.
 	public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
-		if (mScanCallbackContext == null) return;
+		CallbackContext callbackContext = getScanCallback();
+		if (callbackContext == null) return;
 
 		try {
 			//Log.i("@@@@@@", "onLeScan "+device.getAddress()+" "+rssi+" "+device.getName());
@@ -378,52 +375,27 @@ public class BLE extends CordovaPlugin implements LeScanCallback {
 			jsonObject.put("rssi", rssi);
 			jsonObject.put("name", device.getName());
 			jsonObject.put("scanRecord", Base64.encodeToString(scanRecord, Base64.NO_WRAP));
-			keepCallback(mScanCallbackContext, jsonObject);
+			// Send result
+			PluginResult r = new PluginResult(PluginResult.Status.OK, jsonObject);
+			r.setKeepCallback(true);
+			if (callbackContext != null) {
+				callbackContext.sendPluginResult(r);
+			}
 		}
 		catch(JSONException e) {
-			mScanCallbackContext.error(e.toString());
+			callbackContext.error(e.toString());
 		}
-	}
-
-	// API implementation.
-	private void stopScan(/*final CordovaArgs args, final CallbackContext callbackContext*/) {
-		// No pending scan results will be reported.
-		mScanCallbackContext = null;
-
-		final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-		final BluetoothAdapter.LeScanCallback callback = this;
-
-		// Call stopLeScan without checking if bluetooth is on.
-		adapter.stopLeScan(callback);
-
-		/*
-		// TODO: Since there is no callback given to stopScan, there can be other
-		// calls (typically startScan) that are called before the BLE enable dialog
-		// is closed, causing BLE enabling to be aborted. We therefore call stopLeScan
-		// directly, without checking if BLE is on. It would be better design to queue
-		// calls, and to also add callbacks for stopScan (and also to close).
-		// All operations that are not related to a device should be queued
-		// (the operations for a device are already queued, but close is
-		// missing callbacks).
-		checkPowerState(adapter, callbackContext, new Runnable()
-		{
-			@Override
-			public void run()
-			{
-				adapter.stopLeScan(callback);
-			}
-		});
-		*/	
 	}
 
 	private class BluetoothStateReceiver extends BroadcastReceiver {
 		public void onReceive(Context context, Intent intent) {
 			BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
 			int state = adapter.getState();
-			if (mScanCallbackContext != null) {
+			CallbackContext callbackContext = getScanCallback();
+			if (callbackContext != null) {
 				// Device is scanning - has Bluetooth been turned off?
 				if (state == BluetoothAdapter.STATE_OFF /* && !adapter.enable() */) {
-					mScanCallbackContext.error("Bluetooth disabled");
+					callbackContext.error("Bluetooth disabled");
 				}
 			}
 		}
