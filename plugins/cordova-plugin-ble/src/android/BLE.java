@@ -45,7 +45,7 @@ import android.provider.Settings.SettingNotFoundException;
 import android.app.AlertDialog;
 import android.text.TextUtils;
 
-public class BLE extends CordovaPlugin implements LeScanCallback {
+public class BLE extends CordovaPlugin /* implements LeScanCallback */ {
 	// ************* BLE CENTRAL ROLE *************
 
 	// Implementation of BLE Central API.
@@ -116,7 +116,7 @@ public class BLE extends CordovaPlugin implements LeScanCallback {
 			// Check permissions needed for scanning: Application location permission and system location setting.
 			if (hasLocationPermission() && isLocationEnabled()) {
 				// This is the "normal" route through the code
-				startScanning(args, callbackContext);
+				startLeScanning(args, callbackContext);
 			}
 			else {
 				// Don't have permission to start the scan immediately
@@ -176,7 +176,7 @@ public class BLE extends CordovaPlugin implements LeScanCallback {
 			if (PackageManager.PERMISSION_GRANTED == grantResults[0]) {
 				// Permission ok, check system location setting.
 				if (isLocationEnabled()) {
-					startScanning(this.scanArgs, getScanCallback());
+					startLeScanning(this.scanArgs, getScanCallback());
 				}
 				else {
 					// A callback will start the scan if it can
@@ -191,27 +191,7 @@ public class BLE extends CordovaPlugin implements LeScanCallback {
 		}
 	}
 
-	// Possibly asynchronous.
-	// Ensures Bluetooth is powered on, then calls the Runnable \a onPowerOn.
-	// Calls cc.error if power-on fails.
-	private void checkPowerState(BluetoothAdapter adapter, CallbackContext cc, Runnable onPowerOn) {
-		if (adapter == null) {
-			cc.error("Bluetooth not supported");
-			return;
-		}
-		if (adapter.getState() == BluetoothAdapter.STATE_ON) {
-			// Bluetooth is ON
-			cordova.getThreadPool().execute(onPowerOn);
-		}
-		else {
-			this.onPowerOn = onPowerOn;
-			this.powerCallbackContext = cc;
-			Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-			cordova.startActivityForResult(this, enableBtIntent, ACTIVITY_REQUEST_ENABLE_BLUETOOTH);
-		}
-	}
-
-	// Called when the Bluetooth power-on request is completed.
+		// Called when the Bluetooth power-on request is completed.
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent intent) {
 		if (ACTIVITY_REQUEST_ENABLE_BLUETOOTH == requestCode) {
@@ -240,7 +220,7 @@ public class BLE extends CordovaPlugin implements LeScanCallback {
 		else if (ACTIVITY_REQUEST_ENABLE_LOCATION == requestCode) {
 			if (isSystemLocationEnabled(this.context)) {
 				// All prerequisites ok, go ahead and start scanning.
-				startScanning(this.scanArgs, getScanCallback());
+				startLeScanning(this.scanArgs, getScanCallback());
 			}
 			else {
 				// System Location is off, send callback error.
@@ -250,32 +230,25 @@ public class BLE extends CordovaPlugin implements LeScanCallback {
 		}
 	}
 
-	// These three functions each send a JavaScript callback *without* removing
-	// the callback context, as is default.
-
-//	private void keepCallback(final CallbackContext callbackContext, JSONObject message) {
-//		PluginResult r = new PluginResult(PluginResult.Status.OK, message);
-//		r.setKeepCallback(true);
-//		if (callbackContext != null) {
-//			callbackContext.sendPluginResult(r);
-//		}
-//	}
-//
-//	private void keepCallback(final CallbackContext callbackContext, String message) {
-//		PluginResult r = new PluginResult(PluginResult.Status.OK, message);
-//		r.setKeepCallback(true);
-//		if (callbackContext != null) {
-//			callbackContext.sendPluginResult(r);
-//		}
-//	}
-//
-//	private void keepCallback(final CallbackContext callbackContext, byte[] message) {
-//		PluginResult r = new PluginResult(PluginResult.Status.OK, message);
-//		r.setKeepCallback(true);
-//		if (callbackContext != null) {
-//			callbackContext.sendPluginResult(r);
-//		}
-//	}
+	// Possibly asynchronous.
+	// Ensures Bluetooth is powered on, then calls the Runnable \a onPowerOn.
+	// Calls cc.error if power-on fails.
+	private void checkPowerState(BluetoothAdapter adapter, CallbackContext cc, Runnable onPowerOn) {
+		if (adapter == null) {
+			cc.error("Bluetooth not supported");
+			return;
+		}
+		if (adapter.getState() == BluetoothAdapter.STATE_ON) {
+			// Bluetooth is ON
+			cordova.getThreadPool().execute(onPowerOn);
+		}
+		else {
+			this.onPowerOn = onPowerOn;
+			this.powerCallbackContext = cc;
+			Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+			cordova.startActivityForResult(this, enableBtIntent, ACTIVITY_REQUEST_ENABLE_BLUETOOTH);
+		}
+	}
 
 	private void enableLocation() {
 		// Create a dialog box to ask user to enable system location.
@@ -331,7 +304,8 @@ public class BLE extends CordovaPlugin implements LeScanCallback {
 		return (cordova.hasPermission(Manifest.permission.ACCESS_COARSE_LOCATION));
 	}
 
-	private void startScanning(final JSONArray args, final CallbackContext callbackContext) {
+	@Deprecated
+	private void startLeScanning(final JSONArray args, final CallbackContext callbackContext) {
 		final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
 		final LeScanCallback self = this;
 
@@ -355,7 +329,34 @@ public class BLE extends CordovaPlugin implements LeScanCallback {
 		checkPowerState(adapter, callbackContext, new Runnable() {
 			@Override
 			public void run() {
-				if (!adapter.startLeScan(serviceUUIDs, self)) {
+				var scanStarted = adapter.startLeScan(serviceUUIDs, new LeScanCallback() {
+					// Called during scan, when a device advertisement is received.
+					// scanrecord is the content of the advertisement record offered by the remote device.
+					@Override
+					public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
+						CallbackContext callbackContext = getScanCallback();
+						if (callbackContext == null) return;
+
+						try {
+							//Log.i("@@@@@@", "onLeScan "+device.getAddress()+" "+rssi+" "+device.getName());
+							JSONObject jsonObject = new JSONObject();
+							jsonObject.put("address", device.getAddress());
+							jsonObject.put("rssi", rssi);
+							jsonObject.put("name", device.getName());
+							jsonObject.put("scanRecord", Base64.encodeToString(scanRecord, Base64.NO_WRAP));
+							// Send result
+							PluginResult r = new PluginResult(PluginResult.Status.OK, jsonObject);
+							r.setKeepCallback(true);
+							if (callbackContext != null) {
+								callbackContext.sendPluginResult(r);
+							}
+						}
+						catch(JSONException e) {
+							callbackContext.error(e.toString());
+						}
+					}
+				});
+				if (!scanStarted) {
 					callbackContext.error("Android function startLeScan failed");
 					unsetScanCallback();
 				}
@@ -363,29 +364,101 @@ public class BLE extends CordovaPlugin implements LeScanCallback {
 		});
 	}
 
-	// Called during scan, when a device advertisement is received.
-	public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
-		CallbackContext callbackContext = getScanCallback();
-		if (callbackContext == null) return;
+	private void startScanning(final JSONArray args, final CallbackContext callbackContext) {
+		final BluetoothLeScanner scanner = getBluetoothLeScanner();
+	    if (scanner == null) {
+	        callbackContext.error("Cannot get BluetoothLeScanner");
+	        return false;
+	    }
 
+		ScanSettings settings = new ScanSettings.Builder()
+		    .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
+		    .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build();
+
+		// Get service UUIDs.
+		UUID[] serviceUUIDs= null;
 		try {
-			//Log.i("@@@@@@", "onLeScan "+device.getAddress()+" "+rssi+" "+device.getName());
-			JSONObject jsonObject = new JSONObject();
-			jsonObject.put("address", device.getAddress());
-			jsonObject.put("rssi", rssi);
-			jsonObject.put("name", device.getName());
-			jsonObject.put("scanRecord", Base64.encodeToString(scanRecord, Base64.NO_WRAP));
-			// Send result
-			PluginResult r = new PluginResult(PluginResult.Status.OK, jsonObject);
-			r.setKeepCallback(true);
-			if (callbackContext != null) {
-				callbackContext.sendPluginResult(r);
+			JSONArray uuids = args.getJSONArray(0);
+			if (null != uuids) {
+				serviceUUIDs = new UUID[uuids.length()];
+				for (int i = 0; i < uuids.length(); ++i) {
+					serviceUUIDs[i] = UUID.fromString(uuids.getString(i));
+				}
 			}
 		}
-		catch(JSONException e) {
-			callbackContext.error(e.toString());
+		catch(JSONException ex) {
+			serviceUUIDs = null;
 		}
+
+		List<ScanFilter> filters = new ArrayList<ScanFilter>();
+		if (serviceUUIDs != null && serviceUUIDs.length > 0) {
+		    // Note scan filter does not support matching an UUID array so we put one
+		    // UUID to hardware and match the whole array in callback.
+		    ScanFilter filter =
+		    	new ScanFilter.Builder().setServiceUuid(new ParcelUuid(serviceUUIDs[0])).build();
+		    filters.add(filter);
+		}
+
+		scanner.startScan(filters, settings, new ScanCallback() {
+		    @Override
+		    public void onScanResult(int callbackType, ScanResult result) {
+		    	CallbackContext callbackContext = getScanCallback();
+				if (callbackContext == null) return;
+
+				ScanRecord scanRecord = result.getScanRecord();
+		        if (scanRecord == null) return;
+
+		        if (callbackType != ScanSettings.CALLBACK_TYPE_ALL_MATCHES) {
+		            // Should not happen.
+		            callbackContext.error("LE Scan has already started");
+		            return;
+		        }
+
+				try {
+					BluetoothDevice device = result.getDevice()
+					JSONObject jsonObject = new JSONObject();
+					jsonObject.put("address", device.getAddress());
+					jsonObject.put("rssi", result.getRssi());
+					jsonObject.put("name", device.getName());
+					jsonObject.put("scanRecord", Base64.encodeToString(scanRecord.getBytes(), Base64.NO_WRAP));
+					// Send result
+					PluginResult r = new PluginResult(PluginResult.Status.OK, jsonObject);
+					r.setKeepCallback(true);
+					if (callbackContext != null) {
+						callbackContext.sendPluginResult(r);
+					}
+				}
+				catch(JSONException e) {
+					callbackContext.error(e.toString());
+				}
+		    }
+		});
 	}
+
+	// // Called during scan, when a device advertisement is received.
+	// // scanrecord is the content of the advertisement record offered by the remote device.
+	// public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
+	// 	CallbackContext callbackContext = getScanCallback();
+	// 	if (callbackContext == null) return;
+
+	// 	try {
+	// 		//Log.i("@@@@@@", "onLeScan "+device.getAddress()+" "+rssi+" "+device.getName());
+	// 		JSONObject jsonObject = new JSONObject();
+	// 		jsonObject.put("address", device.getAddress());
+	// 		jsonObject.put("rssi", rssi);
+	// 		jsonObject.put("name", device.getName());
+	// 		jsonObject.put("scanRecord", Base64.encodeToString(scanRecord, Base64.NO_WRAP));
+	// 		// Send result
+	// 		PluginResult r = new PluginResult(PluginResult.Status.OK, jsonObject);
+	// 		r.setKeepCallback(true);
+	// 		if (callbackContext != null) {
+	// 			callbackContext.sendPluginResult(r);
+	// 		}
+	// 	}
+	// 	catch(JSONException e) {
+	// 		callbackContext.error(e.toString());
+	// 	}
+	// }
 
 	private class BluetoothStateReceiver extends BroadcastReceiver {
 		public void onReceive(Context context, Intent intent) {

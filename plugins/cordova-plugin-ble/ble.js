@@ -79,8 +79,7 @@ exports.startScan = function(arg1, arg2, arg3, arg4)
 	function onSuccess(device) {
 		// Only report results while scanning is requested.
 		if (isScanning) {
-			if (parseAdvertisementData)
-			{
+			if (parseAdvertisementData) {
 				exports.parseAdvertisementData(device);
 			}
 			success(device);
