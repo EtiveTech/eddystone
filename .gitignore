@@ -8,6 +8,7 @@ plugins/
 !plugins/ios.json
 !plugins/cordova-plugin-ble
 platforms/
+!platforms/platforms.json
 !platforms/android/res/drawable-*
 !platforms/android/res/mipmap-*
 client/src/keys.js

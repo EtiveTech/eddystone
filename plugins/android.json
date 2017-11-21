@@ -19,16 +19,21 @@
     "cordova-plugin-background-mode": {
       "PACKAGE_NAME": "org.etive.city4age.app"
     },
-    "cordova-plugin-ble": {
-      "PACKAGE_NAME": "org.etive.city4age.app"
-    },
     "cordova-plugin-device": {
       "PACKAGE_NAME": "org.etive.city4age.app"
     },
     "cordova-plugin-dialogs": {
       "PACKAGE_NAME": "org.etive.city4age.app"
     },
+    "cordova-plugin-file": {
+      "PACKAGE_NAME": "org.etive.city4age.app"
+    },
     "cordova-plugin-mauron85-background-geolocation": {
+      "GOOGLE_PLAY_SERVICES_VERSION": "+",
+      "ICON": "@mipmap/icon",
+      "SMALL_ICON": "@mipmap/icon",
+      "ACCOUNT_NAME": "@string/app_name",
+      "ACCOUNT_LABEL": "@string/app_name",
       "ACCOUNT_TYPE": "$PACKAGE_NAME.account",
       "CONTENT_AUTHORITY": "$PACKAGE_NAME",
       "PACKAGE_NAME": "org.etive.city4age.app"
@@ -38,10 +43,11 @@
     },
     "cordova-plugin-whitelist": {
       "PACKAGE_NAME": "org.etive.city4age.app"
-    },
-    "cordova-plugin-file": {
-      "PACKAGE_NAME": "org.etive.city4age.app"
     }
   },
-  "dependent_plugins": {}
+  "dependent_plugins": {
+    "cordova-plugin-ble": {
+      "PACKAGE_NAME": "org.etive.city4age.app"
+    }
+  }
 }

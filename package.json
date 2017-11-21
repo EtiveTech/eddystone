@@ -6,8 +6,8 @@
   "scripts": {
     "test": "mocha ./client/src/specs/",
     "start": "cordova emulate android",
-    "bundle": "cd client && webpack -w",
-    "bundle-p": "cd client && webpack -p"
+    "bundle": "cd /Users/phil/Development/City4Age/app/client && ../node_modules/.bin/webpack -w",
+    "bundle-p": "cd /Users/phil/Development/City4Age/app/client && ../node_modules/.bin/webpack -p"
   },
   "author": {
     "name": "Etive Technologies Limited",
@@ -26,9 +26,17 @@
   "homepage": "http://www.city4ageproject.eu/index.php/testbed-birmingham/",
   "license": "ISC",
   "dependencies": {
-    "cordova-android": "^6.2.3",
+    "cordova-android": "^6.3.0",
+    "cordova-plugin-android-permissions": "^1.0.0",
+    "cordova-plugin-app-version": "^0.1.9",
+    "cordova-plugin-autostart": "^2.0.1",
+    "cordova-plugin-background-mode": "^0.7.2",
     "cordova-plugin-compat": "^1.2.0",
+    "cordova-plugin-device": "^1.1.7",
+    "cordova-plugin-dialogs": "^1.3.4",
     "cordova-plugin-file": "^4.3.3",
+    "cordova-plugin-mauron85-background-geolocation": "^2.3.3",
+    "cordova-plugin-network-information": "^1.3.4",
     "cordova-plugin-whitelist": "1"
   },
   "devDependencies": {
@@ -40,12 +48,20 @@
     "mocha": "^3.2.0",
     "sinon": "^2.1.0",
     "style-loader": "^0.13.1",
-    "webpack": "^1.13.3"
+    "webpack": "^2.7.0"
   },
   "cordova": {
     "plugins": {
       "cordova-plugin-whitelist": {},
-      "cordova-plugin-file": {}
+      "cordova-plugin-file": {},
+      "cordova-plugin-android-permissions": {},
+      "cordova-plugin-app-version": {},
+      "cordova-plugin-autostart": {},
+      "cordova-plugin-background-mode": {},
+      "cordova-plugin-device": {},
+      "cordova-plugin-dialogs": {},
+      "cordova-plugin-mauron85-background-geolocation": {},
+      "cordova-plugin-network-information": {}
     },
     "platforms": [
       "android"
