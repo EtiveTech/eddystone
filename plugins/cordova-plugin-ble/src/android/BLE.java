@@ -188,7 +188,8 @@ public class BLE extends CordovaPlugin {
 			// Check permissions needed for scanning: Application location permission and system location setting.
 			if (hasLocationPermission() && isLocationEnabled()) {
 				// This is the "normal" route through the code
-				startLeScanning(args, callbackContext);
+				// startLeScanning(args, callbackContext);
+				startScanning(args, callbackContext);
 			}
 			else {
 				// Don't have permission to start the scan immediately
@@ -212,9 +213,11 @@ public class BLE extends CordovaPlugin {
 			unsetScanCallbackContext();
 
 			final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+			final BluetoothLeScanner scanner = adapter.getBluetoothLeScanner();
 
 			// Call stopLeScan without checking if bluetooth is on.
-			adapter.stopLeScan(getLeScanCallback());
+			// adapter.stopLeScan(getLeScanCallback());
+			scanner.stopScan(getScanCallback());
 
 			return true;
 		}
@@ -417,9 +420,14 @@ public class BLE extends CordovaPlugin {
         return;
     }
 
+		// ScanSettings settings = new ScanSettings.Builder()
+		//     .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
+		//     .setScanMode(ScanSettings.SCAN_MODE_BALANCED)
+		//     .setMatchMode(ScanSettings.MATCH_MODE_STICKY).build();
+
 		ScanSettings settings = new ScanSettings.Builder()
 		    .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
-		    .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build();
+		    .setScanMode(ScanSettings.SCAN_MODE_BALANCED).build();
 
 		// Get service UUIDs.
 		UUID[] serviceUUIDs= null;
@@ -447,31 +455,6 @@ public class BLE extends CordovaPlugin {
 
 		scanner.startScan(filters, settings, getScanCallback());
 	}
-
-	// // Called during scan, when a device advertisement is received.
-	// // scanrecord is the content of the advertisement record offered by the remote device.
-	// public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
-	// 	CallbackContext callbackContext = getScanCallbackContext();
-	// 	if (callbackContext == null) return;
-
-	// 	try {
-	// 		//Log.i("@@@@@@", "onLeScan "+device.getAddress()+" "+rssi+" "+device.getName());
-	// 		JSONObject jsonObject = new JSONObject();
-	// 		jsonObject.put("address", device.getAddress());
-	// 		jsonObject.put("rssi", rssi);
-	// 		jsonObject.put("name", device.getName());
-	// 		jsonObject.put("scanRecord", Base64.encodeToString(scanRecord, Base64.NO_WRAP));
-	// 		// Send result
-	// 		PluginResult r = new PluginResult(PluginResult.Status.OK, jsonObject);
-	// 		r.setKeepCallback(true);
-	// 		if (callbackContext != null) {
-	// 			callbackContext.sendPluginResult(r);
-	// 		}
-	// 	}
-	// 	catch(JSONException e) {
-	// 		callbackContext.error(e.toString());
-	// 	}
-	// }
 
 	private class BluetoothStateReceiver extends BroadcastReceiver {
 		public void onReceive(Context context, Intent intent) {
