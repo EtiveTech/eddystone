@@ -415,19 +415,15 @@ public class BLE extends CordovaPlugin {
 		final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
 		final BluetoothLeScanner scanner = adapter.getBluetoothLeScanner();
 
-    if (scanner == null) {
-        callbackContext.error("Cannot get BluetoothLeScanner");
-        return;
-    }
-
-		// ScanSettings settings = new ScanSettings.Builder()
-		//     .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
-		//     .setScanMode(ScanSettings.SCAN_MODE_BALANCED)
-		//     .setMatchMode(ScanSettings.MATCH_MODE_STICKY).build();
+	    if (scanner == null) {
+	        callbackContext.error("Cannot get BluetoothLeScanner");
+	        return;
+	    }
 
 		ScanSettings settings = new ScanSettings.Builder()
 		    .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
-		    .setScanMode(ScanSettings.SCAN_MODE_BALANCED).build();
+		    .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+		    .setMatchMode(ScanSettings.MATCH_MODE_STICKY).build();
 
 		// Get service UUIDs.
 		UUID[] serviceUUIDs= null;

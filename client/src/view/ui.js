@@ -4,6 +4,7 @@ const logger = require('../logger');
 const arrayToHex = require('../utility').arrayToHex;
 const Scanner = require('../model/scanner');
 const maxBeacons = 8;
+const adminDevices = ["37096731dafc6f56", "52795c9383e88e3", "c6d293cca49cffe0"]; // Phil, Nicola and Stuart
 
 const UI = function(repository) {
 
@@ -123,11 +124,28 @@ UI.prototype._registerPhone = function(onRegistration) {
 };
 
 UI.prototype._startScanning = function() {
-	this._scanner = new Scanner(this._repository,
-		function(message) { this._displayStatus(message); }.bind(this)
-	);
-	this._scanner.start();
-	this._updateTimer = setInterval(this._displayDeviceList.bind(this), 500);
+
+	function _start(ignoreLocation) {
+		this._scanner = new Scanner(
+			this._repository,
+			function(message) { this._displayStatus(message); }.bind(this),
+			ignoreLocation
+		);
+		this._scanner.start();
+		this._updateTimer = setInterval(this._displayDeviceList.bind(this), 500);
+	};
+
+	if (adminDevices.includes(device.uuid)) {
+		const msg = "As an admin user you have ability to ignore location and turn on BLE scanning even " +
+			"if no beacons are judged to be in range. Do you want to do this?"
+		navigator.notification.confirm(msg, function(btnNum) {
+			const ignoreLocation = (btnNum === 2);
+			_start.call(this, ignoreLocation);
+		}.bind(this), "BLE Scanning", "No, Yes");
+	}
+	else {
+		_start.call(this, false);
+	}
 };
 
 UI.prototype._beaconOrder = function(a, b) {

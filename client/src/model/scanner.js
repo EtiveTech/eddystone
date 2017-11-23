@@ -6,15 +6,14 @@ const positionToString = require('../utility').positionToString;
 
 const minScanDuration = 15000;  // milliseconds
 const DESIRED_ACCURACY = 100; // metres
-// const marginOfError = desiredAccuracy;
-const IGNORE_LOCATION = false;
 
-const Scanner = function(repository, onStatusChange){
+const Scanner = function(repository, onStatusChange, ignoreLocation = false){
   this._repository = repository;
   this._onStatusChange = onStatusChange;
   this._scanStartTime = null;
   this._startGeolocationPending = false;
   this._stopScanPending = false;
+  this._ignoreLocation = ignoreLocation;
   this._scan = new Scan(
     this._repository.foundBeacon.bind(this._repository),
     this._repository.lostBeacon.bind(this._repository),
@@ -88,7 +87,7 @@ Scanner.prototype._stopScan = function(outOfRange) {
 
   if (!this._scanStartTime) return;
   logger.log("Scan pause requested")
-  if (IGNORE_LOCATION) {
+  if (this._ignoreLocation) {
     logger.log("Debug mode: Will not pause scan");
     return;
   }
