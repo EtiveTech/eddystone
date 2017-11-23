@@ -422,8 +422,7 @@ public class BLE extends CordovaPlugin {
 
 		ScanSettings settings = new ScanSettings.Builder()
 		    .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
-		    .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-		    .setMatchMode(ScanSettings.MATCH_MODE_STICKY).build();
+		    .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build();
 
 		// Get service UUIDs.
 		UUID[] serviceUUIDs= null;
