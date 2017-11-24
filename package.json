@@ -1,6 +1,6 @@
 {
   "name": "City4Age",
-  "version": "1.0.0",
+  "version": "0.5.5",
   "description": "App that scans for Bluetooth Low Energy (BLE) Eddystone beacons and reports found devices to a server",
   "main": "app.js",
   "scripts": {
