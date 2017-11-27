@@ -141,7 +141,7 @@ UI.prototype._startScanning = function() {
 		navigator.notification.confirm(msg, function(btnNum) {
 			const ignoreLocation = (btnNum === 2);
 			_start.call(this, ignoreLocation);
-		}.bind(this), "BLE Scanning", "No, Yes");
+		}.bind(this), "BLE Scanning", ["No", "Yes"]);
 	}
 	else {
 		_start.call(this, false);
