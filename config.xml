@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget defaultlocale="en" id="org.etive.city4age.app" version="0.5.6" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+<widget defaultlocale="en" id="org.etive.city4age.app" version="0.6.1" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
     <name>City4Age</name>
     <description>
         An app that detects Eddystone beacons and sends proximity info to the City4Age Repository.
@@ -32,6 +32,7 @@
     <plugin name="cordova-plugin-background-mode" spec="^0.7.2" />
     <plugin name="cordova-plugin-device" spec="^1.1.7" />
     <plugin name="cordova-plugin-dialogs" spec="^1.3.4" />
-    <plugin name="cordova-plugin-mauron85-background-geolocation" spec="^2.3.3" />
     <plugin name="cordova-plugin-network-information" spec="^1.3.4" />
+    <plugin name="cordova-plugin-device-motion" spec="^1.2.5" />
+    <plugin name="cordova-plugin-geolocation" spec="^3.0.0" />
 </widget>

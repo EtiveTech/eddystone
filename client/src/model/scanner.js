@@ -3,63 +3,48 @@
 const Scan = require('./scan');
 const logger = require('../logger');
 const positionToString = require('../utility').positionToString;
+const Location = require('../sensors/location');
 
 const minScanDuration = 15000;  // milliseconds
-const DESIRED_ACCURACY = 100; // metres
+
+// Location reporting intervals in seconds
+const _shortInterval = 5;
+const _midInterval = 10;
+const _longInterval = 20;
+let _defaultInterval = _midInterval;
 
 const Scanner = function(repository, onStatusChange, ignoreLocation = false){
   this._repository = repository;
   this._onStatusChange = onStatusChange;
   this._scanStartTime = null;
-  this._startGeolocationPending = false;
   this._stopScanPending = false;
   this._ignoreLocation = ignoreLocation;
+
   this._scan = new Scan(
     this._repository.foundBeacon.bind(this._repository),
     this._repository.lostBeacon.bind(this._repository),
     function(error) {
-      logger.log("Scan Error:", error);
-      this._onStatusChange("Scan Error: " + error);
+      const string = "Scan Error: " + error;
+      logger.log(string);
+      this._onStatusChange(string);
       // Do nothing else, the logic will attempt to restart the scan
     }.bind(this)
   );
 
-  backgroundGeolocation.configure(
+  this._location = new Location(
+    this._stationaryAt.bind(this),
     this._movedTo.bind(this),
-    this._onGeoError.bind(this),
-    {
-      desiredAccuracy: DESIRED_ACCURACY, // Desired accuracy in meters. Possible values [0, 10, 100, 1000].
-                                         // The lower the number, the more power devoted to GeoLocation.
-                                         // 1000 results in lowest power drain and least accurate readings.
-      stationaryRadius: 3, // Stationary radius in metres. The minimum distance the device must
-                           // move beyond the stationary location for background-tracking to engage
-      distanceFilter: 3,   // The minimum distance in meters a device must move before an update event is generated
-      stopOnTerminate: true,  // Force a stop() when the application terminated
-
-      // Location provider settings
-      // locationProvider: backgroundGeolocation.provider.ANDROID_DISTANCE_FILTER_PROVIDER
-      locationProvider: backgroundGeolocation.provider.ANDROID_ACTIVITY_PROVIDER,
-      interval: 15000,            // Rate in milliseconds at which the app prefers to receive location updates
-      fastestInterval: 5000,      // Fastest rate in milliseconds at which your app can handle location updates
-      activitiesInterval: 30000,  // Rate in milliseconds at which activity recognition occurs
-                                  // Larger values will result in fewer activity detections while improving battery life
-
-      notificationTitle: "Beacon Proximity Detector"
-    }
+    function(error) {
+      const string = "Location Error: " + error;
+      logger.log(string);
+      this._onStatusChange(string);
+    }.bind(this)
   );
-  backgroundGeolocation.onStationary(this._stationaryAt.bind(this), this._onGeoError)
-  backgroundGeolocation.watchLocationMode(this._geolocationModeChange.bind(this), this._onGeoError)
 
   Object.defineProperty(this, "beacons",
     { get: function(){ return this._scan.beacons; } }
   );
 };
-
-Scanner.prototype._startGeolocation = function() {
-  logger.log("Geolocation starting")
-  backgroundGeolocation.start();
-  this._startGeolocationPending = false;
-}
 
 Scanner.prototype._startScan = function() {
   if (this._stopScanPending) this._stopScanPending = false;
@@ -170,52 +155,29 @@ Scanner.prototype._logDistanceToBeacons = function(geoLocation) {
 
 Scanner.prototype._movedTo = function(position) {
   // Only scan whilest close to beacons
-  logger.log("Device moved to lat:", position.latitude,
-    "lng:", position.longitude, "(accuracy:", position.accuracy + ")");
   if (this._nearBeacons(position))
     this._startScan();
   else
     this._stopScan(true); // out of range
-  backgroundGeolocation.finish();
 };
 
 Scanner.prototype._stationaryAt = function(position) {
   // Don't scan whilst stationary
-  logger.log("Device stationary at lat:", position.latitude,
-    "lng:", position.longitude, "(accuracy:", position.accuracy + ")");
   this._logDistanceToBeacons(position);
   this._stopScan(false); // still in range
-  backgroundGeolocation.finish();
-}
-
-Scanner.prototype._geolocationModeChange = function(enabled) {
-  // If the location service is not enabled have to scan all the time
-  logger.log("Geolocation has been turned", (enabled) ? "on" : "off");
-  if (!enabled)
-    this._startScan();
-  else
-    if (this._startGeolocationPending) this._startGeolocation();
-}
-
-Scanner.prototype._onGeoError = function(geolocationError) {
-  this._onStatusChange(geolocationError.message);
 }
 
 Scanner.prototype.start = function() {
   // this._onStatusChange("Scan pending.");
   // Start the scan immediately - if stationary it will be turned off quickly.
   this._startScan();
-  // Turn ON the background-geolocation system.  The user will be tracked whenever they suspend the app.
-  backgroundGeolocation.isLocationEnabled(function(enabled){
-    this._startGeolocationPending = true;
-    if (enabled) this._startGeolocation();
-  }.bind(this), this._onGeoError);
+  this._location.start(_defaultInterval);
 }
 
 Scanner.prototype.stop = function() {
   this._scan.stop();
   this._onStatusChange('Scanning stopped.');
-  backgroundGeolocation.stop();
+  this._location.stop();
 }
 
 module.exports = Scanner;
